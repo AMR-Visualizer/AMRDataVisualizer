@@ -591,6 +591,21 @@ h6{
   margin-top: 10px;
 }
 
+.changeLogButton {
+  border-radius: 25px;
+  color: white;
+  background-color: #44CDC4;
+  border-color: white;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.changeLogButton.white {
+  border-color: #44CDC4;
+  background-color: white;
+  color: #44CDC4;
+}
+
 .panel-group .panel {
     margin-bottom: 0;
     margin-top: 10px;
@@ -656,3 +671,66 @@ h6{
 }
 
 
+
+
+/* Change log table */
+
+.changelog-table table tbody tr td:first-child,
+.changelog-table table tbody tr td:last-child {
+  /* Stop original name and action columns from being clickable */
+  pointer-events: none;
+}
+
+.changelog-table table tbody tr td:nth-child(2) {
+  /* Add border inside cell to mimic text input */
+  position: relative;
+  padding: .8rem 1rem;
+  cursor: pointer;
+}
+
+.changelog-table table tbody tr td:nth-child(2)::before {
+  /* Style the renamed column to be more visually obviously editable */
+  content: "";
+  position: absolute;
+  top: .5rem;
+  left: .4rem;
+  width: calc(100% - 1rem);
+  height: calc(100% - .8rem);
+  border: 1px solid grey;
+}
+
+.changelog-table table tbody tr td:nth-child(2) input {
+  /* Remove default input styles */
+  border: none;
+  outline: none;
+  background: transparent;
+}
+
+
+/* Modal footer styles */
+#import-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#import-modal-footer .warning-parent {
+  text-align: left;
+}
+
+#import-modal-footer .warning-parent > p {
+  color: red;
+  display: none;
+}
+
+#import-modal-footer.microorganism-close-disabled .microorganism-warning,
+#import-modal-footer.antimicrobial-close-disabled .antimicrobial-warning {
+  display: block;
+  text-wrap: nowrap;
+}
+
+#import-modal-footer.microorganism-close-disabled .btn,
+#import-modal-footer.antimicrobial-close-disabled .btn {
+  pointer-events: none;
+  opacity: 0.5;
+}

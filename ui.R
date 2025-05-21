@@ -22,6 +22,7 @@ dashboardPage(
   
   dashboardBody(
     includeCSS("styles.css"),
+    includeScript("script.js"),
     use_googlefont("Carme"),
     use_theme(create_theme(
       theme = "default",

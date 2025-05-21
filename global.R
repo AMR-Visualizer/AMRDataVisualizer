@@ -41,6 +41,11 @@ library(webshot2)
 library(chromote)
 library(writexl)
 
+
+# install.packages("devtools")
+# devtools::install_github("statnmap/HatchedPolygons")
+# devtools::install_github("JohnCoene/typedjs")
+
 # renv::init()
 
 # Run this line and select option 2 for dockerizing.
@@ -60,6 +65,7 @@ source("Modules/pathogenPage.R")
 source("Modules/explorePage.R")
 source("Modules/importDataModule.R")
 source("Modules/filterPanelModule.R")
+source("Modules/changeLogModule.R")
 
 #Functions
 source("Functions/dataCleaningFunction.R")
@@ -67,6 +73,7 @@ source("Functions/columnDetectFunctions.R")
 source("Functions/regionMatching.R")
 source("Functions/parseWideColumns.R")
 source("Functions/formatAntibiogram.R")
+source("Functions/dataUtilityFunctions.R")
 
 #Data
 awareList <- read.csv("./Data/2023AwareClassifications.csv")

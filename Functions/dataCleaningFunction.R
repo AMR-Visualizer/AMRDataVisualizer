@@ -69,6 +69,24 @@ dataCleaner <- function(rawData, additionalCols = NULL) {
   numCores <- detectCores() - 1
   cl <- makeCluster(numCores)
   registerDoParallel(cl)
+
+  #' Get the valid year value.
+  #'
+  #' If the year is less than 1900 it is assumed to be a two digit
+  #' representation of a year in the 2000s.
+  #' For example, 19 would be interpreted as 2019.
+  #'
+  #' @param year The year value to be validated.
+  #' @returns The valid year value as an integer.
+  getValidYear <- function(years) {
+    years <- as.integer(years)
+  
+    # Replace NAs and NULLs with NA
+    years[is.na(years) | is.null(years)] <- NA_integer_
+    
+    # If year < 1900, assume 2000 + year
+    years <- ifelse(!is.na(years) & years < 1900, 2000 + years, years)
+  }
   
   # Parallel processing with foreach
   cleanData <- foreach(chunk = split(rawData, cut(seq(nrow(rawData)), numCores, labels = FALSE)), 
@@ -83,8 +101,9 @@ dataCleaner <- function(rawData, additionalCols = NULL) {
                          # Replace microorganism and antimicrobial columns with precomputed values
                          cleanedChunk <- chunk %>%
                            mutate(
+                            InternalID = as.character(InternalID),
                              ID = as.character(ID),
-                             Year = if ("Year" %in% names(.)) as.integer(Year) else NA_integer_,
+                             Year = if ("Year" %in% names(.)) getValidYear(Year) else NA_integer_,
                              
                              Month = if ("Month" %in% names(.)) {
                                ifelse(is.na(Month), 1, as.integer(Month))
@@ -131,7 +150,7 @@ dataCleaner <- function(rawData, additionalCols = NULL) {
                              Interpretation = sapply(Interpretation, normalize_interpretation)
                            ) %>%
                            select(
-                             ID, Date, Region, Subregion, Species, Source, 
+                             InternalID, ID, Date, Region, Subregion, Species, Source, 
                              Microorganism, Antimicrobial, Class, Interpretation
                            )
                          

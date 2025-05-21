@@ -10,7 +10,12 @@ output:
 # Microorganisms
 ## Change Log
 ```{r, echo = FALSE}
-cat(paste0("- ", mo_change_log), sep = "\n")
+datatable(
+  mo_change_log,
+  rownames = FALSE,
+  selection = "none",
+  filter = "top"
+)
 ```
 
 ## Uncertainties
@@ -34,5 +39,10 @@ cat(paste0(mo_renamed_log), sep = "\n")
 # Antimicrobials
 ## Change Log
 ```{r, echo = FALSE}
-cat(paste0("- ", ab_change_log), sep = "\n")
+datatable(
+  ab_change_log,
+  rownames = FALSE,
+  selection = "none",
+  filter = "top"
+)
 ```
