@@ -10,14 +10,14 @@ importDataUI <- function(id) {
 # Module Server -----------------------------------------------------------
 importDataServer <- function(id) {
   moduleServer(id, function(input, output, session) {
-
+    
     # Sub-modules --------------------------------------------------------
     changeLogDataMo <- changeLogServer("moChangeLog", changeLogData = mo_change_log, cleanedData = cleanedData, availableData = availableData)
     changeLogDataAb <- changeLogServer("abChangeLog", changeLogData = ab_change_log, cleanedData = cleanedData, availableData = availableData, type = "antimicrobial")
     
     ns <- session$ns
     
-# Initiate reactive variables ---------------------------------------------
+    # Initiate reactive variables ---------------------------------------------
     upload <- reactiveValues(content = NULL, file = NULL)
     formattedData <- reactiveVal(NULL)
     cleanedData <- reactiveVal(NULL)
@@ -44,12 +44,10 @@ importDataServer <- function(id) {
     displayCleanedData <- reactiveVal(FALSE)
     
     mo_change_log <- reactiveVal(NULL)
-    mo_uncertain_log <- reactiveVal(NULL)
-    mo_failure_log <- reactiveVal(NULL)
-    mo_renamed_log <- reactiveVal(NULL)
     ab_change_log <- reactiveVal(NULL)
-
-# Logic to disable dropdown menu if file is uploaded ----------------------
+    bp_log <- reactiveVal(NULL)
+    
+    # Logic to disable dropdown menu if file is uploaded ----------------------
     observe({
       if (!is.null(input$fileUploader$datapath)) {
         updateSelectInput(session, "dataSelect", selected = "Select a dataset")
@@ -58,62 +56,62 @@ importDataServer <- function(id) {
         enable("dataSelect")
       }
     })
-
-# Assign read-in data to 'upload' variable ----------------------------------
+    
+    # Assign read-in data to 'upload' variable ----------------------------------
     observeEvent(input$fileUploader, {
       upload$file <- input$fileUploader
     })
-
-# Read-in selected data (either upload or dropdown) -----------------------
-##Checks if "verified" (doesn't need to be cleaned) -----------------------
+    
+    # Read-in selected data (either upload or dropdown) -----------------------
+    ##Checks if "verified" (doesn't need to be cleaned) -----------------------
     observeEvent(input$submit, {
-        if (!is.null(upload$file)) {
-          ext <- file_ext(upload$file$name)
-          upload$content <- switch(ext,
-                                   "csv" = {
-                                     data <- vroom(upload$file$datapath, delim = ",")
-                                     verifiedData(FALSE)  # Always set CSV as not verified
-                                     getLongData(data)
-                                   },
-                                   "parquet" = {
-                                     parquet_file <- read_parquet(upload$file$datapath)
-                                     metadata <- parquet_metadata(upload$file$datapath)
-                                     # Check if 'verified' key exists and if its value is TRUE
-                                     verified <- metadata$file_meta_data$key_value_metadata[[1]]$value[metadata$file_meta_data$key_value_metadata[[1]]$key == "verified"]
-                                     # Store if data is verified
-                                     if (length(verified) > 0 && verified == "TRUE") {
-                                       verifiedData(TRUE)
-                                     } else {
-                                       verifiedData(FALSE)
-                                     }
-                                     # TODO: Test with this file type
-                                     getLongData(parquet_file)  # Use only the data for the 'content'
-                                   },
-                                   NULL)
-        } else if (input$dataSelect != "Select a dataset") {
-          dataName <- input$dataSelect
-          upload$content <- read.csv(paste("./Data/", dataName, sep = ""))
+      if (!is.null(upload$file)) {
+        ext <- file_ext(upload$file$name)
+        upload$content <- switch(ext,
+                                 "csv" = {
+                                   data <- vroom(upload$file$datapath, delim = ",")
+                                   verifiedData(FALSE)  # Always set CSV as not verified
+                                   getLongData(data)
+                                 },
+                                 "parquet" = {
+                                   parquet_file <- read_parquet(upload$file$datapath)
+                                   metadata <- parquet_metadata(upload$file$datapath)
+                                   # Check if 'verified' key exists and if its value is TRUE
+                                   verified <- metadata$file_meta_data$key_value_metadata[[1]]$value[metadata$file_meta_data$key_value_metadata[[1]]$key == "verified"]
+                                   # Store if data is verified
+                                   if (length(verified) > 0 && verified == "TRUE") {
+                                     verifiedData(TRUE)
+                                   } else {
+                                     verifiedData(FALSE)
+                                   }
+                                   # TODO: Test with this file type
+                                   getLongData(parquet_file)  # Use only the data for the 'content'
+                                 },
+                                 NULL)
+      } else if (input$dataSelect != "Select a dataset") {
+        dataName <- input$dataSelect
+        upload$content <- read.csv(paste("./Data/", dataName, sep = ""))
         
-          verifiedData(FALSE)
-          
-          # Get latest NARMS data automatically
-          # download.file("https://www.fda.gov/media/132928/download?attachment", "FDA_data.xlsx", mode = "wb")
-          # data <- read_excel("FDA_data.xlsx")
-          
-        } else {
-          showModal(modalDialog(
-            title = "Error",
-            "Please import a file or select a dataset before clicking submit.",
-            easyClose = TRUE
-          ))
-          upload$content <- NULL
-        }
+        verifiedData(FALSE)
+        
+        # Get latest NARMS data automatically
+        # download.file("https://www.fda.gov/media/132928/download?attachment", "FDA_data.xlsx", mode = "wb")
+        # data <- read_excel("FDA_data.xlsx")
+        
+      } else {
+        showModal(modalDialog(
+          title = "Error",
+          "Please import a file or select a dataset before clicking submit.",
+          easyClose = TRUE
+        ))
+        upload$content <- NULL
+      }
       
       reactiveData(upload$content)
     })
     
-# Button logic ------------------------------------------------------------
-## Logic for "Clear" button -----------------------------------------------
+    # Button logic ------------------------------------------------------------
+    ## Logic for "Clear" button -----------------------------------------------
     observeEvent(input$clear, {
       upload$content <- NULL
       upload$file <- NULL
@@ -127,7 +125,7 @@ importDataServer <- function(id) {
       verifiedData(FALSE)
     })
     
-## Logic for "Reset" button -----------------------------------------------
+    ## Logic for "Reset" button -----------------------------------------------
     observeEvent(input$resetUploader, {
       upload$content <- NULL
       upload$file <- NULL
@@ -135,66 +133,61 @@ importDataServer <- function(id) {
       enable("dataSelect")
     })
     
-## Logic for "Process Data" button ----------------------------------------
+    ## Logic for "Process Data" button ----------------------------------------
     observeEvent(input$processData, {
       req(availableData())
       
       # Reset the change log data
       mo_change_log(NULL)
       ab_change_log(NULL)
+      bp_log(NULL)
       showModal(modalDialog(
-        title = "Processing Data",
-        h4("Your data are being processed, please wait."),
-        br(), br(),
+        title = tags$div(style = "text-align: center;", "Processing Your Data"),
         div(
-          style = "font-size: 24px; text-align: center; padding-bottom: 75px;",
-          "Loading", span(class = "dot", "."), span(class = "dot", "."), span(class = "dot", ".")
+          style = "text-align: center;",
+          tags$img(src = "loading.gif", height = "150px"),
+          h5("Please wait while we..."),
+          tags$h4(id = "processingStep", "Standardize dates", style = "font-weight: 900;"),
+          tags$div(
+            style = "font-size: 14px; color: grey; margin-top: 10px;",
+            "This may take a few moments depending on your dataset size."
+          )
         ),
-        br(),
-        h5("After your data are processed, you will have the option to download the processed version for future use. If you upload data that have already been processed through the data visualizer, this processing step will automatically be skipped."),
+        tags$script(HTML(sprintf("
+    const steps = [
+      'Standardize dates',
+      'Harmonize antimicrobial names',
+      'Assign antimicrobial classes',
+      'Standardize microorganism names'%s
+    ];
+    let i = 0;
+    setInterval(() => {
+      document.getElementById('processingStep').innerText = steps[i];
+      i = (i + 1) %% steps.length;
+    }, 4000);
+  ", if (is.null(input$valueType) || input$valueType != "SIR") ", 'Interpret MIC values'" else ""))),
         tags$style(HTML("
-      @keyframes dot {
-        0% { opacity: 0; }
-        20% { opacity: 1; }
-        40% { opacity: 0; }
-      }
-      .dot:nth-child(1) { animation: dot 1s infinite 0.2s; }
-      .dot:nth-child(2) { animation: dot 1s infinite 0.4s; }
-      .dot:nth-child(3) { animation: dot 1s infinite 0.6s; }
-    ")),
+    .modal-content {
+      border-radius: 15px;
+      padding: 30px;
+    }
+    .modal-title {
+      font-size: 22px;
+      font-weight: bold;
+    }
+  ")),
         footer = NULL,
         easyClose = FALSE
       ))
       
-      results <- dataCleaner(availableData(), additionalCols = selections$additionalCols)
+      results <- dataCleaner(availableData(), additionalCols = selections$additionalCols,
+                             breakpoint = selections$selectedBreakpoint)
       mo_change_log(results$mo_log)
       ab_change_log(results$ab_log)
+      bp_log(results$bp_log)
       cleanedData(results$cleaned_data)
       displayCleanedData(TRUE)
       removeModal()
-      
-      mo_renamed_log <- if (is.null(results$mo_renamed) || nrow(results$mo_renamed) < 1) {
-        "No renamed microorganisms were found."
-      } else {
-        paste0(
-          "* ", 
-          results$mo_renamed$old, 
-          " (", results$mo_renamed$ref_old, ")  ->  ", 
-          results$mo_renamed$new, 
-          " (", results$mo_renamed$ref_new, ")"
-        )
-      }
-      mo_renamed_log(mo_renamed_log)
-      
-      mo_uncertain_log <- capture.output(print(results$mo_uncertainties, n = Inf))
-      mo_uncertain_log(mo_uncertain_log)
-      
-      mo_failure_log <- if (is.null(results$mo_failures) || length(results$mo_failures) < 1) {
-        "No failures."
-      } else {
-        results$mo_failures
-      }
-      mo_failure_log(mo_failure_log)
       
       shinyjs::delay(500, {
         showModal(modalDialog(
@@ -208,29 +201,21 @@ importDataServer <- function(id) {
           
           tabsetPanel(
             tabPanel("Microorganisms",
-                     tabsetPanel(type = "tabs",
-                                 tabPanel("Change Log",
-                                          changeLogUI(ns("moChangeLog"))
-                                          
-                                 ),
-                                 tabPanel("Uncertainties",
-                                          pre(paste(mo_uncertain_log, collapse = "\n"))
-                                 ),
-                                 tabPanel("Failures",
-                                          pre(paste(mo_failure_log, collapse = "\n"))
-                                 ),
-                                 tabPanel("Renames",
-                                          pre(paste(mo_renamed_log, collapse = "\n"))
-                                 )
-                     )
+                     changeLogUI(ns("moChangeLog"))
+                     
             ),
             tabPanel("Antimicrobials",
-                     tabsetPanel(type = "tabs",
-                                 tabPanel("Change Log",
-                                          changeLogUI(ns("abChangeLog"))
-                                 )
-                     )
-            )
+                     changeLogUI(ns("abChangeLog"))
+            ),
+            if (!is.null(input$valueType) && input$valueType == "MIC") {
+              tabPanel(
+                "Interpretations",
+                div(
+                  class = "readonly-table",
+                  DT::dataTableOutput(ns("interpretation_log"))
+                )
+              )
+            }
           ),
           
           easyClose = FALSE,
@@ -249,6 +234,26 @@ importDataServer <- function(id) {
       
     })
     
+    output$interpretation_log <- DT::renderDataTable({
+      DT::datatable(
+        bp_log(),
+        rownames = FALSE,
+        style = 'bootstrap',
+        class = 'table-bordered',
+        options = list(
+          dom = 't', 
+          paging = FALSE,
+          ordering = FALSE,
+          scrollX = TRUE
+        )
+      ) %>% 
+        DT::formatStyle(
+          "Interpretation",
+          target = "cell",
+          fontStyle = DT::styleEqual("Could not interpret", "italic"),
+          color = DT::styleEqual("Could not interpret", "#666")  # optional: muted grey
+        )
+    })
     
     observe({
       req(input$sirCol)
@@ -264,11 +269,12 @@ importDataServer <- function(id) {
       selections$moCol <- input$moCol
       selections$drugCol <- input$drugCol
       selections$sirCol <- input$sirCol
-
+      
       # req here to stop setting these as NULL if inputs are not yet created
       req(input$micSignCol, input$micValCol)
       selections$micSignCol <- input$micSignCol
       selections$micValCol <- input$micValCol
+      selections$selectedBreakpoint <- input$selectedBreakpoint
     })
     
     observe({
@@ -276,14 +282,14 @@ importDataServer <- function(id) {
       selections$additionalCols <- cols %||% NULL
     })
     
-# Assign columns modal ----------------------------------------------------
+    # Assign columns modal ----------------------------------------------------
     observeEvent(input$assignMenu, {
       showModal(modalDialog(
         title = "Data Configuration",
         wellPanel(
           tabsetPanel(
             
-## Main configuration tab -------------------------------------------------
+            ## Main configuration tab -------------------------------------------------
             tabPanel(
               title = "Main Configuration",
               fluidRow(
@@ -314,8 +320,8 @@ importDataServer <- function(id) {
               ),
               class = "colAssignWell"
             ),
-
-## Additional columns tab -------------------------------------------------
+            
+            ## Additional columns tab -------------------------------------------------
             tabPanel(
               title = "Additional Columns",
               br(),
@@ -330,7 +336,7 @@ importDataServer <- function(id) {
       ))
     })
     
-# Render input for additional columns -------------------------------------
+    # Render input for additional columns -------------------------------------
     output$additionalColsCheckbox <- renderUI({
       req(availableData())
       allColumns <- names(upload$content)
@@ -341,7 +347,7 @@ importDataServer <- function(id) {
         selections$valueType, selections$yearCol, selections$dateCol
       )
       unassignedColumns <- setdiff(allColumns, assignedColumns)
-
+      
       tagList(
         h5("Please select any additional columns to include with your data. These columns will be available as custom filters."),
         h6(em("These columns will not be cleaned or standardized.")),
@@ -375,12 +381,12 @@ importDataServer <- function(id) {
         )
       }
     })
-  
-# Main Dynamic UI ---------------------------------------------------------
+    
+    # Main Dynamic UI ---------------------------------------------------------
     output$importTabUI <- renderUI({
       ns <- session$ns
       
-## If no file is uploaded or selected -------------------------------------
+      ## If no file is uploaded or selected -------------------------------------
       if (is.null(upload$content)) {
         wellPanel(
           icon("file-import", class = "uploadIcon"),
@@ -402,8 +408,8 @@ importDataServer <- function(id) {
         )
         
       } else {
-
-## If data have been processed --------------------------------------------
+        
+        ## If data have been processed --------------------------------------------
         if (displayCleanedData()) {
           tagList(
             fluidRow(
@@ -436,7 +442,13 @@ importDataServer <- function(id) {
                 h6(
                   span(icon("circle-check", style = "color: #44CDC4;")),
                   "Assigned classes to antimicrobials"
-                )
+                ),
+                if(valueType() == "MIC"){
+                  h6(
+                    span(icon("circle-check", style = "color: #44CDC4;")),
+                    paste("Interpretted MIC values according to", selections$selectedBreakpoint)
+                  )
+                }
               ),
               
               column(
@@ -470,53 +482,53 @@ importDataServer <- function(id) {
           )
           
         } else {
-
-## If cleaned data are uploaded -------------------------------------------
+          
+          ## If cleaned data are uploaded -------------------------------------------
           if(verifiedData()){
             cleanedData(upload$content)
             displayCleanedData(TRUE)
             
           } else {
             
-
-## If data have been uploaded but not yet cleaned -------------------------
-        tagList(
-          actionButton(ns("clear"), "Clear Data", class = "clearButton"),
-          h4("Raw Data"),
-          wellPanel(
-            h5(HTML(paste("Your data has <font color = #44CDC4>", format(nrow(upload$content), big.mark = ","), "</font> rows, previewing the first 100.")), align = "left"),
-            hr(),
-            div(
-              tableOutput(ns("rawDataPreview")),
-              class = "dataPreview"
-            ),
-            class = "dataPreviewWell"
-          ),
-          
-          div(
-              span(icon("chevron-down"), class = "icon"),
-              actionButton(ns("assignMenu"), "Adjust Data Columns", class = "clearButton"),
-              class = "container"
-          ),
-          h4("Formatted Data", style = "margin-top: -25px"),
-          wellPanel(
-            uiOutput(ns("availableRows")),
-            hr(),
-            div(
-              tableOutput(ns("availableDataPreview")),
-              class = "dataPreview"
-            ),
-            class = "dataPreviewWell"
-          ),
-          
-          actionButton(ns("processData"), "Process Data", class = "processButton"),
-        )
-      }
+            
+            ## If data have been uploaded but not yet cleaned -------------------------
+            tagList(
+              actionButton(ns("clear"), "Clear Data", class = "clearButton"),
+              h4("Raw Data"),
+              wellPanel(
+                h5(HTML(paste("Your data has <font color = #44CDC4>", format(nrow(upload$content), big.mark = ","), "</font> rows, previewing the first 100.")), align = "left"),
+                hr(),
+                div(
+                  tableOutput(ns("rawDataPreview")),
+                  class = "dataPreview"
+                ),
+                class = "dataPreviewWell"
+              ),
+              
+              div(
+                span(icon("chevron-down"), class = "icon"),
+                actionButton(ns("assignMenu"), "Adjust Data Columns", class = "clearButton"),
+                class = "container"
+              ),
+              h4("Formatted Data", style = "margin-top: -25px"),
+              wellPanel(
+                uiOutput(ns("availableRows")),
+                hr(),
+                div(
+                  tableOutput(ns("availableDataPreview")),
+                  class = "dataPreview"
+                ),
+                class = "dataPreviewWell"
+              ),
+              
+              actionButton(ns("processData"), "Process Data", class = "processButton"),
+            )
+          }
         }
       }
     })
-
-# Preview raw data --------------------------------------------------------
+    
+    # Preview raw data --------------------------------------------------------
     output$rawDataPreview <- renderTable({
       
       rawData <- head(upload$content, 100)
@@ -524,11 +536,11 @@ importDataServer <- function(id) {
       rawData <- rawData %>% 
         mutate(across(everything(), as.character))
       rawData
-
+      
     })
     
-
-# Set "SIR" mode as default -----------------------------------------------
+    
+    # Set "SIR" mode as default -----------------------------------------------
     valueType <- reactive({
       if(is.null(input$valueType) || input$valueType == "") {
         "SIR"
@@ -536,8 +548,8 @@ importDataServer <- function(id) {
         input$valueType
       }
     })
-
-# Make column assignment guesses ------------------------------------------
+    
+    # Make column assignment guesses ------------------------------------------
     observeEvent(upload$content, {
       req(upload$content)
       selections$idCol <- detectIdColumn(upload$content) %||% "Not Present"
@@ -555,14 +567,14 @@ importDataServer <- function(id) {
       selections$micValCol <- detectMICValueColumn(upload$content) %||% "Not Present"
     })
     
-
-# Define Formatted Data ---------------------------------------------------
+    
+    # Define Formatted Data ---------------------------------------------------
     observe({
       req(reactiveData())
       req(valueType())
       
       data <- reactiveData()
-
+      
       safeExtract <- function(colName) {
         if(colName %in% names(data) && !is.null(colName) && colName != "Not Present") {
           return(data[[colName]])
@@ -572,7 +584,7 @@ importDataServer <- function(id) {
       }
       
       date_present <- selections$dateCol != "Not Present"
-
+      
       column_list <- list(
         ID = safeExtract(selections$idCol)
       )
@@ -620,11 +632,11 @@ importDataServer <- function(id) {
         formattedDataFrame$Sign <- safeExtract(selections$micSignCol)
         formattedDataFrame$Value <- safeExtract(selections$micValCol)
       }
-
+      
       formattedData(formattedDataFrame)
     })
     
-# Define Available Data ---------------------------------------------------
+    # Define Available Data ---------------------------------------------------
     availableData <- reactive({
       data <- formattedData()
       if (is.null(data)) {
@@ -649,23 +661,23 @@ importDataServer <- function(id) {
         filteredData <- data %>%
           filter(
             !is.na(Antimicrobial),
-            !is.na(Sign),
-            !is.na(Value)
+            !is.na(Sign) | !is.na(Value)
           )
+        
       }
       filteredData$InternalID <- seq_len(nrow(filteredData))
       
       return(filteredData)
     })
     
-# Number of Rows in Available Data ----------------------------------------
+    # Number of Rows in Available Data ----------------------------------------
     
     output$availableRows <- renderUI({
       req(availableData())
       h5(HTML(paste("<font color = #44CDC4>", format(nrow(availableData()), big.mark = ","), "</font> rows are suitable for processing")), align = "left")
     })
     
-# Preview of Available Data (Bottom Well) ---------------------------------
+    # Preview of Available Data (Bottom Well) ---------------------------------
     output$availableDataPreview <- renderTable({
       req(availableData())
       availableData <- availableData()
@@ -679,7 +691,7 @@ importDataServer <- function(id) {
         select(-InternalID)
     })
     
-# Preview of Cleaned Data -------------------------------------------------
+    # Preview of Cleaned Data -------------------------------------------------
     output$cleanedDataPreview <- renderDT({
       req(cleanedData())
       data <- head(cleanedData(), 100) %>%
@@ -696,7 +708,7 @@ importDataServer <- function(id) {
       
     })
     
-# Download Cleaned Data ---------------------------------------------------
+    # Download Cleaned Data ---------------------------------------------------
     output$downloadCleanedData <- downloadHandler(
       filename = function() {
         paste0(Sys.Date(), "_CleanedAMRVisualizerData.parquet")
@@ -707,8 +719,8 @@ importDataServer <- function(id) {
         nanoparquet::write_parquet(data, metadata = verified, file)
       }
     )
-
-# Combine Cleaned Data ----------------------------------------------------
+    
+    # Combine Cleaned Data ----------------------------------------------------
     observeEvent(input$combineSubmit, {
       
       if (is.null(input$combineUploader)) {
@@ -731,7 +743,7 @@ importDataServer <- function(id) {
         cleanedData(combined_df)
         
       } else {
-
+        
         showModal(modalDialog(
           title = "Error",
           "This file has not been previously cleaned. Please process all files before attempting to combine.",
@@ -740,9 +752,9 @@ importDataServer <- function(id) {
       }
     })
     
-
-# Download Processing Log -------------------------------------------------
-
+    
+    # Download Processing Log -------------------------------------------------
+    
     output$download_log <- downloadHandler(
       filename = "ProcessingLog.html",
       content = function(file) {
@@ -761,9 +773,6 @@ importDataServer <- function(id) {
           
           render_env <- new.env()
           render_env$mo_change_log    <- changeLogDataMo()
-          render_env$mo_uncertain_log <- mo_uncertain_log()
-          render_env$mo_failure_log   <- mo_failure_log()
-          render_env$mo_renamed_log   <- mo_renamed_log()
           render_env$ab_change_log    <- changeLogDataAb()
           
           rmarkdown::render(

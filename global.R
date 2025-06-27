@@ -29,7 +29,6 @@ library(tigris)
 library(stringdist)
 library(colorspace)
 library(HatchedPolygons)
-library(tidyverse)
 library(plotly)
 library(zoo)
 library(renv)
@@ -66,6 +65,7 @@ source("Modules/explorePage.R")
 source("Modules/importDataModule.R")
 source("Modules/filterPanelModule.R")
 source("Modules/changeLogModule.R")
+
 
 #Functions
 source("Functions/dataCleaningFunction.R")

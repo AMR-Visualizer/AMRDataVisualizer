@@ -140,6 +140,6 @@ detectMICSignColumn <- function(data) {
 #' @returns The name of the column containing the MIC value, or \code{NULL} if not found.
 #' @seealso \code{\link{detectColumnByName}
 detectMICValueColumn <- function(data) {
-  keywords <- c("mic value", "value")
+  keywords <- c("mic value", "value", "mic", "concentration")
   detectColumnByName(data, keywords)
 }
