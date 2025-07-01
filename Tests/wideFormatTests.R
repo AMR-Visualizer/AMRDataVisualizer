@@ -11,7 +11,6 @@ singleNamedTestWideData <- read_csv(file.path(testDataDir, singleNamedTestName))
 singleNamedTestResult <- getLongData(singleNamedTestWideData)
 twoTestResult <- getLongData(read_csv(file.path(testDataDir, wideFormatFile)) %>% head(50))
 threeTestResult <- getLongData(read_csv(file.path(testDataDir, threeTestsName)))
-
 spiltMicWideData <- read_csv(file.path(testDataDir, splitMicName))
 split_mic_result <- getLongData(spiltMicWideData)
 
@@ -46,6 +45,15 @@ oneDrugPerRowTest <- function(data) {
     pull(n) %>%
     unique()
   expect_equal(one, 1)
+}
+
+#' Does the data have no blank columns.
+#'
+#' @param data  The data to check.
+#' @returns     None.
+noBlankColsTest <- function(data) {
+  # Check that there are no blank columns in the data
+  expect_true(all(trimws(colnames(data)) != ""))
 }
 
 test_that("Single test (unnamed) data is correctly transformed", {
@@ -88,4 +96,31 @@ test_that("Spilt MIC column test data is correctly transformed", {
   expectedNrowTest(splitMicResult2)
   expectedColnamesTest(splitMicResult2, c("MIC_Sign", "MIC_Value"))
   oneDrugPerRowTest(splitMicResult2)
+})
+
+test_that("Removing blank columns from data", {
+  data <- singleNamedTestWideData
+  # Add some blank columns to the data
+  data$blank1 <- NA
+  data$blank2 <- NA
+  data$blank3 <- NA
+
+  #' Set the first one to contain a single data value.
+  #' Because of this the first column should not be removed.
+  data$blank1[1] <- "This is a test"
+
+  # Spread them throughout the data and make them have blank column names
+  data <- data %>%
+    select(
+      all_of(c(colnames(data)[1:5], "blank1", colnames(data)[6:8], "blank2")),
+      everything()
+    ) %>%
+    rename(" " = blank1, "  " = blank2, "      " = blank3)
+
+  longData <- getLongData(data)
+
+  expectedNrowTest(longData)
+  expectedColnamesTest(longData)
+  oneDrugPerRowTest(longData)
+  noBlankColsTest(longData)
 })

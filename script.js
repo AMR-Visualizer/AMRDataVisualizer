@@ -23,6 +23,8 @@ function watchDTCellChange(tableId, tableInputId) {
       // Return the input holding current data in shiny
       getCurrentDTData(tableId, tableInputId);
     });
+    // Update once on initialization to ensure the data is correct
+    getCurrentDTData(tableId, tableInputId);
   }
 }
 
@@ -56,6 +58,10 @@ function getCurrentDTData(tableId, tableInputId) {
  */
 function enableModalClose(changeLogType, enable = true) {
   const modalCloseFooter = document.getElementById("import-modal-footer");
+  if (!modalCloseFooter) {
+    console.error("Modal footer element not found.");
+    return;
+  }
   if (enable) {
     modalCloseFooter.classList.remove(`${changeLogType}-close-disabled`);
   } else {
