@@ -161,25 +161,29 @@ dataCleaner <- function(rawData,
   }
   
     cleanData <- clean_chunk(chunk = rawData, additionalCols = additionalCols)
-    bp_log <- sir_interpretation_history() %>%
-      select(
-        "Antimicrobial" = ab_given,
-        "Microorganism" = mo_given,
-        "Species" = host,
-        "AB Used" = ab,
-        "MO used" = mo,
-        "UTI" = uti,
-        "Guideline" = guideline,
-        "Reference" = ref_table,
-        "Breakpoint (S-R)" = breakpoint_S_R,
-        "MIC" = input_given,
-        "Interpretation" = outcome
-      ) %>%
-      mutate(
-        Interpretation = as.character(Interpretation),
-        Interpretation = replace_na(Interpretation, "Could not interpret")
-      ) %>%
-      distinct()
+    bp_log <- sir_interpretation_history()
+    if (!is.null(bp_log)) {
+      # An error is thrown if this is the first time this is run and `sir_interpretation_history()` is empty.
+      bp_log <- bp_log %>%
+        select(
+          "Antimicrobial" = ab_given,
+          "Microorganism" = mo_given,
+          "Species" = host,
+          "AB Used" = ab,
+          "MO used" = mo,
+          "UTI" = uti,
+          "Guideline" = guideline,
+          "Reference" = ref_table,
+          "Breakpoint (S-R)" = breakpoint_S_R,
+          "MIC" = input_given,
+          "Interpretation" = outcome
+        ) %>%
+        mutate(
+          Interpretation = as.character(Interpretation),
+          Interpretation = replace_na(Interpretation, "Could not interpret")
+        ) %>%
+        distinct()
+    }
     
   
   return(list(
