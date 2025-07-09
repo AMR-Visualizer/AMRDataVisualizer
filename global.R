@@ -39,6 +39,7 @@ library(quarto)
 library(webshot2)
 library(chromote)
 library(writexl)
+library(gt)
 
 
 # install.packages("devtools")
@@ -56,6 +57,7 @@ library(writexl)
 #Modules
 source("Modules/homePage.R")
 source("Modules/ovPage.R")
+source("Modules/micPage.R")
 source("Modules/abPage.R")
 source("Modules/mapPage.R")
 source("Modules/tsPage.R")
@@ -74,6 +76,7 @@ source("Functions/regionMatching.R")
 source("Functions/parseWideColumns.R")
 source("Functions/formatAntibiogram.R")
 source("Functions/dataUtilityFunctions.R")
+source("Functions/micTableFunction.R")
 
 #Data
 awareList <- read.csv("./Data/2023AwareClassifications.csv")

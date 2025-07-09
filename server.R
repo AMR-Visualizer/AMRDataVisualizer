@@ -12,7 +12,9 @@ server <- function(input, output, session) {
   
   # Get Clean Data ----------------------------------------------------------------
   
-  clean <- importDataServer("dataImport")
+  results <- importDataServer("dataImport")
+  clean <- results$data
+  guideline <- results$guideline
   
   # Determine if full sidebar should be shown -------------------------------
   showMenu <- reactiveVal(FALSE)
@@ -24,8 +26,7 @@ server <- function(input, output, session) {
   })
   output$menu <- renderUI({
     if (dataPresent()) {
-      sidebarMenu(
-        id = "tabs",
+      menu_items <- list(
         menuItem("Overview", tabName = "ovTab", icon = icon("chart-simple", class = "nav-icon")),
         menuItem("Antibiogram", tabName = "abTab", icon = icon("braille", class = "nav-icon")),
         menuItem("Map", tabName = "mapTab", icon = icon("map-location-dot", class = "nav-icon")),
@@ -34,6 +35,13 @@ server <- function(input, output, session) {
         menuItem("MDR", tabName = "mdrTab", icon = icon("pills", class = "nav-icon")),
         menuItem("Explore", tabName = "exploreTab", icon = icon("table-list", class = "nav-icon"))
       )
+    
+      if ("MIC" %in% names(clean())) {
+        mic_item <- menuItem("MIC Tables", tabName = "micTab", icon = icon("vial", class = "nav-icon"))
+        menu_items <- c(list(mic_item), menu_items)
+      }
+      
+      sidebarMenu(id = "tabs", menu_items)
     } else {
       tagList(
         sidebarMenu(id = "tabs"),
@@ -78,6 +86,16 @@ server <- function(input, output, session) {
     ovPageServer("overviewModule", clean())
   })
   
+  # MIC Page --------------------------------------------------------
+  output$micUI <- renderUI({
+    req(clean())
+    micPageUI("micModule", clean())
+  })
+  
+  observe({
+    req(clean())
+    micPageServer("micModule", data = clean(), guideline = guideline())
+  })
   
   # Antibiogram Page --------------------------------------------------------
   output$antibiogramUI <- renderUI({

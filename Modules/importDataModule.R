@@ -788,7 +788,10 @@ importDataServer <- function(id) {
     )
     
     return(
-      data = reactive({ cleanedData() })
+      list(
+        data = reactive({ cleanedData() }),
+        guideline = reactive({ selections$selectedBreakpoint })  # <- wrap observe as reactive
+      )
     )
     
   })

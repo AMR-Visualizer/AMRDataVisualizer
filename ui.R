@@ -49,6 +49,8 @@ dashboardPage(
       
       tabItem("ovTab", ovPageUI("overviewModule")),
       
+      tabItem("micTab", micPageUI("micModule")),
+      
       tabItem("abTab", uiOutput("antibiogramUI")),
     
       tabItem("mapTab", uiOutput("mapUI")),
