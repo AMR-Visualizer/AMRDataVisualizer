@@ -1,10 +1,8 @@
----
-editor_options:
-  markdown:
-    wrap: 72
----
+<p align="center">
 
-# AMR Visualizer
+<img src="www/logoDark.png" alt="AMR Visualizer Logo" width="400"/>
+
+</p>
 
 An interactive **R Shiny** application for cleaning, harmonising,
 interpreting, and visualising antimicrobial resistance (AMR) data
@@ -94,13 +92,13 @@ detailed examples and naming conventions.
 
 ## 📊 Included Visualisations
 
-| Category                                         | Examples                                                             |
-|----------------------|--------------------------------------------------|
+| Category                                          | Examples                                                             |
+|------------------------|-----------------------------------------------|
 | [**Antibiograms**](Documentation/antibiograms.md) | Summarize the susceptibility of microorganism to various antibiotics |
-| [**Trends**](Documentation/trends.md)            | Resistance prevalence over time, time-series plots                   |
-| [**Spatial**](Documentation/maps.md)             | Interactive maps by region or sub-region                             |
-| [**MDR Correlation**](Documentation/mdr.md)      | Multi-drug-resistance matrices                                       |
-| [**Summaries**](Documentation/data-explore.md)   | Customizable data tables with on-the-fly filtering                   |
+| [**Trends**](Documentation/trends.md)             | Resistance prevalence over time, time-series plots                   |
+| [**Spatial**](Documentation/maps.md)              | Interactive maps by region or sub-region                             |
+| [**MDR Correlation**](Documentation/mdr.md)       | Multi-drug-resistance matrices                                       |
+| [**Summaries**](Documentation/data-explore.md)    | Customizable data tables with on-the-fly filtering                   |
 
 Each page includes help text explaining its structure and
 interpretation.
