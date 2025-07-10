@@ -63,14 +63,15 @@ server <- function(input, output, session) {
         ),
         switch(
           input$tabs,
-          importTab   = includeMarkdown("./Documentation/import.rmd"),
-          ovTab       = includeMarkdown("./Documentation/overview.rmd"),
-          abTab       = includeMarkdown("./Documentation/antibiogram.rmd"),
-          mapTab      = includeMarkdown("./Documentation/map.rmd"),
-          trendsTab   = includeMarkdown("./Documentation/trends.rmd"),
-          pathogenTab = includeMarkdown("./Documentation/pathogens.rmd"),
-          mdrTab      = includeMarkdown("./Documentation/mdr.rmd"),
-          exploreTab  = includeMarkdown("./Documentation/explore.rmd"),
+          importTab   = includeMarkdown("./Documentation/data-import.md"),
+          ovTab       = includeMarkdown("./Documentation/overview-plots.md"),
+          micTab.     = includeMarkdown("./Documentation/mic-tables.md"),
+          abTab       = includeMarkdown("./Documentation/antibiograms.md"),
+          mapTab      = includeMarkdown("./Documentation/maps.md"),
+          trendsTab   = includeMarkdown("./Documentation/trends.md"),
+          pathogenTab = includeMarkdown("./Documentation/microguide.md"),
+          mdrTab      = includeMarkdown("./Documentation/mdr-matrices.md"),
+          exploreTab  = includeMarkdown("./Documentation/data-explore.md"),
           "Documentation Coming Soon."
         ),
         

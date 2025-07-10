@@ -9,7 +9,7 @@ changeLogUI <- function(id) {
       actionButton(ns('reset'), 'Reset', class = "changeLogButton white"),
       actionButton(ns('save'), 'Save', class = "changeLogButton")
     ),
-    dataTableOutput(ns("table"))
+    DT::dataTableOutput(ns("table"))
   )
 }
 
@@ -23,27 +23,27 @@ changeLogUI <- function(id) {
 changeLogServer <- function(id, changeLogData, cleanedData, availableData, type = "microorganism") {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-
+    
     currentChangeLogData <- reactiveVal(NULL)
     tableChangeLogData <- reactiveVal(NULL) # Data passed back to be saved in html
-
+    
     # Save the original change log data so that we can compare it to the current data.
     observe({
       currentChangeLogData(changeLogData())
     }) %>%
       bindEvent(changeLogData())
-
+    
     # Set this initially to populate it with the original data
     observe({
       data <- formattedData()
       tableChangeLogData(data)
     }) %>%
       bindEvent(formattedData(), input$reset)
-
+    
     #' Format the change log data to be displayed in the table.
     formattedData <- reactive({
       input$reset # Reset the table to the original data when the reset button is clicked
-
+      
       shinyjs::runjs(sprintf('enableModalClose("%s");', type))
       if (is.null(currentChangeLogData())) {
         return(NULL)
@@ -73,9 +73,9 @@ changeLogServer <- function(id, changeLogData, cleanedData, availableData, type 
     
     #' `server = FALSE` ensures that any changes made to the table via JS are persisted and not
     #' reset by the server side when doing things like filtering or sorting.
-    output$table <- renderDataTable({
+    output$table <- DT::renderDataTable({
       req(!is.null(formattedData()))
-
+      
       data <- formattedData()
       columnNames <- colnames(data)
       if (type == "microorganism") {
@@ -104,18 +104,18 @@ changeLogServer <- function(id, changeLogData, cleanedData, availableData, type 
         callback = JS(sprintf('watchDTCellChange("%s", "%s");', ns("table"), ns("updateTableData")))
       )
     }, server = FALSE)
-
+    
     #' This observe is triggered each time the table is edited.
     #' It allow the `input$updateTableData` value to be the current table data at all times.
     observe({
       newData <- fromJSON(input$updateTableData)
       req(!is.null(newData))
-
+      
       #' At this point need to update any rows with the value "Changed by user" (in the `action`
       #' column) in the cleaned data.
       updatedByUser <- newData %>%
         filter(action == "Changed by user")
-
+      
       if (nrow(updatedByUser) <= 0) {
         # Enable the modal close button if no changes were made
         shinyjs::runjs(sprintf('enableModalClose("%s");', type))
@@ -124,20 +124,20 @@ changeLogServer <- function(id, changeLogData, cleanedData, availableData, type 
       }
     }) %>%
       bindEvent(input$updateTableData)
-      
+    
     # Triggered on the save button click.
     observe({
       newData <- fromJSON(input$updateTableData)
       tableChangeLogData(newData)
       req(!is.null(newData))
-
+      
       #' At this point need to update any rows with the value "Changed by user" (in the `action`
       #' column) in the cleaned data.
       updatedByUser <- newData %>%
         filter(action == "Changed by user")
       # If no changes were made, do not proceed.
       req(nrow(updatedByUser) > 0)
-
+      
       #' Join the original renamed data (from `cleanedData`) with the newly renamed data.
       #'
       #' Also need to update the `currentChangeLogData` with the new values.
@@ -152,16 +152,16 @@ changeLogServer <- function(id, changeLogData, cleanedData, availableData, type 
       cleanedData <- cleanedData()
       availableData <- availableData() %>%
         mutate(InternalID = as.character(InternalID))
-
+      
       originalTargetColumn <- switch(
         type,
         microorganism = "Microorganism",
         antimicrobial = "Antimicrobial"
       )
-  
+      
       availableData <- availableData %>%
         filter(!!sym(originalTargetColumn) %in% updatedByUser$original)
-
+      
       for (x in seq_along(unique(availableData[[originalTargetColumn]]))) {
         targetValue <- unique(availableData[[originalTargetColumn]])[x]
         targetIDs <- availableData$InternalID[availableData[[originalTargetColumn]] == targetValue]
@@ -169,14 +169,14 @@ changeLogServer <- function(id, changeLogData, cleanedData, availableData, type 
         cleanedData[[originalTargetColumn]][cleanedData$InternalID %in% targetIDs] <- newValue
         oldChangeLogData[, 2][oldChangeLogData[[originalTargetColumn]] == targetValue] <- newValue
       }
-
+      
       # Update the cleaned data with the new values changed by the user.
       cleanedData(cleanedData)
       currentChangeLogData(oldChangeLogData)
       shinyjs::runjs(sprintf('enableModalClose("%s");', type))
     }) %>%
       bindEvent(input$save)
-
+    
     # Return the current change log data reactive
     return(tableChangeLogData)
   })

@@ -5,13 +5,22 @@
 #' @param data A data frame.
 #' @param keywords A character vector of keywords to search for in the column names.
 #' @returns The name of the first column that matches any of the keywords, or \code{NULL} if not found.
-detectColumnByName <- function(data, keywords) {
+detectColumnByName <- function(data, keywords, all_matches = FALSE) {
+  matches <- NULL
   for (col_name in names(data)) {
-    if (any(grepl(paste(keywords, collapse = "|"), col_name, ignore.case = TRUE))) {
+    if (tolower(col_name) %in% tolower(keywords)) {
+      # Exact match found - return right away
       return(col_name)
     }
+    if (any(grepl(paste(keywords, collapse = "|"), col_name, ignore.case = TRUE))) {
+      matches <- c(matches, col_name)
+    }
   }
-  return(NULL)
+  if (all_matches) {
+    return(matches)
+  }
+  # Still works even if matches is NULL
+  matches[1]
 }
 
 #' Detect ID column
@@ -120,8 +129,7 @@ detectDrugColumn <- function(data) {
 #' @returns The name of the column containing the SIR, or \code{NULL} if not found.
 #' @seealso \code{\link{detectColumnByName}
 detectSIRColumn <- function(data) {
-  keywords <- c("sir", "value", "interpretation", "resistance", "status", "result", "interp")
-  detectColumnByName(data, keywords)
+  detectColumnByName(data, g_sir_keywords)
 }
 
 #' Detect MIC sign column
@@ -130,8 +138,7 @@ detectSIRColumn <- function(data) {
 #' @returns The name of the column containing the MIC sign, or \code{NULL} if not found.
 #' @seealso \code{\link{detectColumnByName}
 detectMICSignColumn <- function(data) {
-  keywords <- c("mic sign", "sign")
-  detectColumnByName(data, keywords)
+  detectColumnByName(data, g_mic_sign_keywords)
 }
 
 #' Detect MIC value column
@@ -140,6 +147,5 @@ detectMICSignColumn <- function(data) {
 #' @returns The name of the column containing the MIC value, or \code{NULL} if not found.
 #' @seealso \code{\link{detectColumnByName}
 detectMICValueColumn <- function(data) {
-  keywords <- c("mic value", "value", "mic", "concentration")
-  detectColumnByName(data, keywords)
+  detectColumnByName(data, g_mic_value_keywords)
 }
