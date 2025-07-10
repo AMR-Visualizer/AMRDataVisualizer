@@ -46,7 +46,7 @@ explorePageServer <- function(id, data) {
             ),
             column(8,
                    wellPanel(
-                     DT::dataTableOutput(ns("table")),
+                     dataTableOutput(ns("table")),
                      class = "dataPreviewWell"
                    ),
                    div(
@@ -181,7 +181,7 @@ explorePageServer <- function(id, data) {
         mutate(Total = sum(S,R,I)) %>% 
         relocate(S, I, R, .before = Total)
       
-      output$table <- DT::renderDataTable({
+      output$table <- renderDataTable({
         datatable(tableData, class = "table",
                   options = list(
                     columnDefs = list(list(className = 'dt-center', targets = 5)),

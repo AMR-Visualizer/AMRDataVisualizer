@@ -9,7 +9,7 @@ changeLogUI <- function(id) {
       actionButton(ns('reset'), 'Reset', class = "changeLogButton white"),
       actionButton(ns('save'), 'Save', class = "changeLogButton")
     ),
-    DT::dataTableOutput(ns("table"))
+    dataTableOutput(ns("table"))
   )
 }
 
@@ -73,7 +73,7 @@ changeLogServer <- function(id, changeLogData, cleanedData, availableData, type 
     
     #' `server = FALSE` ensures that any changes made to the table via JS are persisted and not
     #' reset by the server side when doing things like filtering or sorting.
-    output$table <- DT::renderDataTable({
+    output$table <- renderDataTable({
       req(!is.null(formattedData()))
 
       data <- formattedData()

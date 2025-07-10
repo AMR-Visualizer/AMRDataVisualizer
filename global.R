@@ -83,39 +83,3 @@ awareList <- read.csv("./Data/2023AwareClassifications.csv")
 
 # Increase maximum data size ----------------------------------------------
 options(shiny.maxRequestSize = 1000 * 1024^2)
-
-# Global Variables --------------------------------------------------------
-
-#' Possible metadata columns that may appear in data.
-#' Want to ignore these when trying the find antimicrobial columns.
-#' !! These need to be in lower case !!
-g_metadataCols <- c(
-  "organism",
-  "year",
-  "beta_lac",
-  "host_species",
-  "sex",
-  "breed",
-  "age",
-  "specimen",
-  "source_group",
-  "source",
-  "organism_long",
-  "host_species_long",
-  "comment",
-  "species",
-  "row_id"
-)
-
-# Test mapping values
-g_sir_keywords <- c("sir", "value", "interpretation", "resistance", "status", "result", "interp")
-g_mic_keywords <- c("mic")
-g_mic_sign_keywords <- c("mic sign", "sign")
-g_mic_value_keywords <- c("mic value", "value", "mic", "concentration", "val")
-
-g_test_mapping <- list(
-  "mic_sign" = g_mic_sign_keywords,
-  "mic_value" = g_mic_value_keywords,
-  "mic" = g_mic_keywords,
-  "interp" = g_sir_keywords
-)
