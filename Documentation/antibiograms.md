@@ -1,4 +1,4 @@
-<!-- File: antibiogram.md -->
+<!-- File: antibiograms.md -->
 # 📊 Antibiogram Tab
 
 ## Table of Contents
@@ -15,25 +15,13 @@
 
 ## 🧭 Overview<a name="overview"></a>
 
-The **Antibiogram** tab delivers a concise, clinically relevant view of
-antimicrobial resistance (AMR) patterns. An antibiogram is a cumulative
-report that summarizes the **percentage of bacterial isolates
-susceptible (S)** to each antimicrobial over a specified period and
-location. Clinicians, microbiologists, pharmacists, and stewardship
-teams use antibiograms to
-
-- guide empiric therapy,
-- track resistance trends,
-- and shape antimicrobial-use policies.
+The **Antibiogram** tab delivers a concise, clinically relevant view of antimicrobial resistance (AMR) patterns. An antibiogram is a cumulative report that summarizes the **percentage of bacterial isolates susceptible (S)** to each antimicrobial.
 
 ---
 
 ## 📖 How to Interpret the Figure<a name="how-to-interpret-the-figure"></a>
 
-Each cell shows the **percentage of isolates interpreted as
-Susceptible (S)** for a given organism–drug pair. That percentage is
-calculated over **all interpretation categories** (S, I, R, N/I, SDD),
-so its inverse is **not** the same as the percent Resistant (R).
+Each cell shows the **percentage of isolates interpreted as Susceptible (S)** for a given organism–drug pair. That percentage is calculated over **all interpretation categories** (S, I, R, N/I, SDD), so its inverse is **not** the same as the percent Resistant (R).
 
 | Key Element              | What to Look For                                                                                                      |
 |--------------------------|------------------------------------------------------------------------------------------------------------------------|
@@ -48,24 +36,23 @@ so its inverse is **not** the same as the percent Resistant (R).
 
 - **Limited Scope** &mdash; Aggregated historical data; does **not** replace patient-specific testing.  
 - **Evolving Resistance** &mdash; Effective drugs today may lose efficacy over time.  
-- **Clinical Judgment Required** &mdash; Combine antibiogram insights with patient factors and current guidelines.
+- **Clinical Judgment Required** &mdash; AST data are often biased towards more resistant infections, and the degre of this bias depends on several factors.
 
 ---
 
 ## 🧰 Data Filters<a name="data-filters"></a>
 
-Customize the antibiogram using the **Filters** panel (click the *pencil*
-icon ✏️ in the top right corner of the panel to add/remove fields).
+Customize the antibiogram using the **Filters** panel (click the *pencil* icon ✏️ in the top right corner of the panel to add/remove fields).
 
 | Default Filter          | Purpose                                                      |
 |-------------------------|--------------------------------------------------------------|
-| **Microorganism**       | Limit plot to one or more organisms.                         |
-| **Sample Source / Site**| Restrict to selected body sites.                             |
+| **Microorganism**       | Limit plot to one or more organisms. If none is selected, **all** will be included.                         |
+| **Sample Source / Site**| Restrict to selected body sites. If none is selected, **all** will be included.                             |
 | **Species (Host)**      | Select one or more host species.                             |
 | **Timeframe**           | Specify a date range (manual or quick-select).               |
 | **Suppress Antimicrobials** | Exclude selected drugs (e.g., Reserve agents) to emphasize preferred first-line options. |
 
-Additional optional filters:
+Several additional filters are available to refine the data shown. While many are self-explanatory, the following filters warrant further clarification:
 
 | Filter                     | Use Case                                                                                                                    |
 |----------------------------|-----------------------------------------------------------------------------------------------------------------------------|
@@ -73,7 +60,7 @@ Additional optional filters:
 | **Resistant to:**  | Display isolates resistant to a chosen drug, useful for cross-resistance analysis.                                          |
 | **WHO AWaRe Class**        | Limit drugs to *Access*, *Watch*, or *Reserve* categories per [WHO AWaRe](https://www.who.int/publications/i/item/2021-aware-classification). |
 
-> *Note:* Applying more filters reduces sample size and may affect stability of estimated susceptiblity.
+> *Note:* Applying filters will reduce the sample size and may affect stability of estimated susceptiblity.
 
 ---
 
@@ -109,12 +96,11 @@ In *Visual Mode*, circle **color** denotes antimicrobial class, and
 
 ## 📤 Output<a name="output"></a>
 
-- **Save Report** &mdash; download the current plot as PNG or PDF.  
+- **Save Report** &mdash; download the current plot as an HTML file. The report includes the displayed plot, and all active filters used to generate it. Rendering may take a moment. 
 - **Save Data** &mdash; export the summary table with exact S percentages and sample sizes.
 
 ---
 
 ## 💬 Feedback<a name="feedback"></a>
 
-We continually improve this display. Please report issues or suggestions
-via [GitHub Issues](https://github.com/ksobkowich/AMRDataVisualizer/issues).
+We are continually making improvements to this app and this display. Please report issues or suggestions via [GitHub Issues](https://github.com/ksobkowich/AMRDataVisualizer/issues).
