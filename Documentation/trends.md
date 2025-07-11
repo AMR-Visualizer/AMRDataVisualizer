@@ -54,7 +54,7 @@ These plots are useful for:
 
 ## 🧰 Data Filters<a name="data-filters"></a>
 
-Customize the antibiogram using the **Filters** panel (click the *pencil* icon ✏️ in the top right corner of the panel to add/remove fields).
+Customize the time series plot using the **Filters** panel (click the *pencil* icon ✏️ in the top right corner of the panel to add/remove fields).
 
 | Default Filter          | Purpose                                                      |
 |-------------------------|--------------------------------------------------------------|

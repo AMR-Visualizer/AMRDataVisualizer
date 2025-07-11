@@ -61,7 +61,7 @@ Keep in mind that these maps provide a **high-level overview**. Results should b
 
 ## 🧰 Data Filters<a name="data-filters"></a>
 
-Customize the antibiogram using the **Filters** panel (click the *pencil* icon ✏️ in the top right corner of the panel to add/remove fields).
+Customize the map using the **Filters** panel (click the *pencil* icon ✏️ in the top right corner of the panel to add/remove fields).
 
 | Default Filter          | Purpose                                                      |
 |-------------------------|--------------------------------------------------------------|

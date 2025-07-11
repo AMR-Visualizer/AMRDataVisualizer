@@ -61,24 +61,27 @@ server <- function(input, output, session) {
             style = "vertical-align: middle;"
           )
         ),
+
         switch(
           input$tabs,
-          importTab   = includeMarkdown("./Documentation/data-import.md"),
-          ovTab       = includeMarkdown("./Documentation/overview-plots.md"),
-          micTab.     = includeMarkdown("./Documentation/mic-tables.md"),
-          abTab       = includeMarkdown("./Documentation/antibiograms.md"),
-          mapTab      = includeMarkdown("./Documentation/maps.md"),
-          trendsTab   = includeMarkdown("./Documentation/trends.md"),
-          pathogenTab = includeMarkdown("./Documentation/microguide.md"),
-          mdrTab      = includeMarkdown("./Documentation/mdr-matrices.md"),
-          exploreTab  = includeMarkdown("./Documentation/data-explore.md"),
-          "Documentation Coming Soon."
+          importTab   = includeMarkdown("Documentation/data-import.md"),
+          ovTab       = includeMarkdown("Documentation/overview-plots.md"),
+          micTab      = includeMarkdown("Documentation/mic-tables.md"),
+          abTab       = includeMarkdown("Documentation/antibiograms.md"),
+          mapTab      = includeMarkdown("Documentation/maps.md"),
+          trendsTab   = includeMarkdown("Documentation/trends.md"),
+          pathogenTab = includeMarkdown("Documentation/microguide.md"),
+          mdrTab      = includeMarkdown("Documentation/mdr-matrices.md"),
+          exploreTab  = includeMarkdown("Documentation/data-explore.md"),
+          "Documentation Coming Soon."  # Fallback message
         ),
         
-        easyClose = TRUE
+        easyClose = TRUE,
+        size = "l"
       )
     )
   })
+  
   
   
   # Overview Page -----------------------------------------------------------
