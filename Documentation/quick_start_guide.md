@@ -1,7 +1,7 @@
 <!-- File: quick_start_guide.md -->
 
 # 🧭 AMR Visualizer · Quick Start User Guide
-*A comprehensive walkthrough for importing data, configuring columns, and using every analysis tab.*
+*A comprehensive walkthrough for importing data, configuring columns, and using analysis tabs.*
 
 ---
 
@@ -34,27 +34,28 @@
 ---
 
 ## 1  Purpose & Key Features
-The **AMR Visualizer** transforms raw antimicrobial‑susceptibility data
-into intuitive plots—antibiograms, MIC tables, resistance maps, time‑series
-trends, multidrug resistance (MDR) matrices, and more—without requiring
-advanced R skills.
+The **AMR Visualizer** transforms raw antimicrobial susceptibility (AST) data into a suite of interactive, ready-to-use visualizations - **antibiograms**, **MIC distribution tables**, **resistance maps**, **time-series trends**, **multidrug resistance (MDR) matrices**, and more. Designed with accessibility in mind, it eliminates the need for advanced programming or analytical expertise.
+
+By automatically recognizing data formats, standardizing organism and drug names, and applying breakpoint interpretations where needed, the tool allows users to focus on exploring resistance patterns, generating summaries, and communicating results with mininal preprocessing required.
 
 **Highlights**
 
-- Automatic detection of **long** and **wide** data layouts  
-- Optional **MIC breakpoint interpretation** (CLSI/EUCAST)  
+- Automatic detection of data layouts  
+- Analyze pre-interpretted **SIR** data, or interpret **Raw MIC values** on-the-fly using user-selected breakpoints (CLSI/EUCAST)  
+- Provides a suite of common plots for AMR analysis
 - One‑click generation of publication‑ready figures  
 - Downloadable cleaned data and JSON parameter files for reproducibility  
-- Pre‑loaded demo dataset (2020 NARMS – canine) for quick exploration
+- Pre‑loaded demo datasets using open-source surveillance data
 
 ---
 
-## 2  System Requirements
-| Component | Version / Notes |
-|-----------|-----------------|
-| R         | ≥ 4.2           |
-| Packages  | `shiny`, `tidyverse`, `plotly`, `AMR`, `bsplus`, `jsonlite`, `DT`, etc. (installed automatically via the app) |
-| Browser   | Modern HTML5‑compatible (Chrome, Firefox, Edge, Safari) |
+## 2 System Requirements
+
+| Component      | Details |
+|----------------|---------|
+| **R**          | Version ≥ 4.2 |
+| **R Packages** | All dependencies are managed via [`renv`](https://rstudio.github.io/renv/), ensuring version compatibility. Packages will be restored automatically using `renv::restore()`. |
+| **Deployment Options** | Users can run the app directly from source code using R, or deploy using the prebuilt Docker image (recommended for reproducibility). |
 
 ---
 
@@ -77,16 +78,31 @@ advanced R skills.
 | Bacteria name  | `Microorganism` | Cleaned via `AMR::as.mo()` |
 | Test result    | `Value`         | `S`/`I`/`R` **or** MIC value |
 
-Additional columns (`Species`, `Source`) become **mandatory** if MIC
-values are supplied, because breakpoints are host‑ and site‑specific.
-Optional columns (Date, Region, etc.) are imported as‑is and enhance
-plot filters.
+- **Mandatory when using MIC values**:  
+  If your dataset includes MIC values, the following additional columns become **required**:
+  
+  | Data Element     | Assigned Column | Reason |
+  |------------------|------------------|--------|
+  | **Host species** | `Species`        | Breakpoints vary by host (e.g., canine vs. feline) |
+  | **Sample source**| `Source`         | Breakpoints differ by anatomical site (e.g., UTI vs. non-UTI) |
+
+- **Optional (but recommended)**:  
+  Several optional columns will be automatically cleaned and used to unlock additional functionality in the app:
+
+  | Column        | Purpose |
+  |---------------|---------|
+  | `Date`        | Enables time-series analysis in the **Trends** tab. Accepts either a single `Date` column or separate `Year` and `Month` columns. |
+  | `Region` / `Subregion` | Enables choropleth visualizations in the **Maps** tab. These will be matched to internal shapefiles where possible. |
+  | `Region` | Enables multi-drug resistance correlation matrices |
+
+- **Custom columns**:  
+  Any other column in your dataset (e.g., `Ward`, `Clinic`, `SubmissionType`) can be imported as-is and made available for filtering throughout the app. These filters allow for enhanced subgroup analysis across multiple visualizations, such as customized antibiograms or stratified MIC tables.
 
 ---
 
 ## 4  Import Workflow
 1. **Open** the **Import** tab  
-2. **Browse** for a `.csv`/`.parquet` file *or* choose the **NARMS demo**  
+2. **Browse** for a `.csv`/`.parquet` file *or* choose a **demo dataset** from the dropdown menu
 3. Click **Submit** to preview raw vs. extracted data  
 4. **Adjust Columns** if the auto‑mapping is incorrect  
 5. *(Optional)* enable **MIC Mode** and pick a breakpoint guideline  
@@ -103,19 +119,29 @@ plot filters.
 Use the dropdown menus to assign each required variable. Select
 **Not Present** if a variable does not exist in your dataset.
 
-### 5.2  MIC‑specific Settings
-If you provide MIC values:
-1. Specify **Sign** (`<`, `≥`, etc.) and **Value** columns (can be merged).  
-2. Choose a guideline (**CLSI** or **EUCAST**).  
-3. Confirm host and source fields are mapped—these determine breakpoint
-   selection.
+### 5.2 Wide Data
+If your data are imported in a wide-format (single row for each sample with multiple test columns), your test columns will be **automatically** detected and pivotted into long format.
+
+### 5.3 MIC‑specific Settings
+If you provide MIC values, additional configuration is required:
+
+1. **Specify Sign and Value Columns**  
+   Define which columns contain the MIC result components:
+   - **Sign** — Symbols such as `<`, `≥`, `=`, etc.
+   - **Value** — The numeric MIC values (e.g., `0.5`, `4`, `64`).
+   > 💡 *If your MIC sign and value exist together in a single column (e.g., `">=4"`), assign that column to **either** the **Sign** or **Value** input, and set the other to `Not Present`. The app will parse the components automatically during processing.*
+
+2. **Choose a Breakpoint Guideline**  
+   Select either **CLSI** or **EUCAST** from the dropdown. This determines which breakpoints will be applied during interpretation.
+
+3. **Confirm Host and Source Assignments**  
+   MIC breakpoints are often host- and site-specific. Ensure the **Species** (host) and **Source** (sample site) fields are correctly mapped.
 
 ---
 
 ## 6  Processing & Validation
 Upon clicking **Process Data** the app:
 
-- Converts wide → long (if needed)  
 - Standardizes dates, organisms, drugs, regions  
 - Interprets MICs per selected breakpoints  
 - Generates a success screen with **Download Cleaned Data** option
@@ -124,8 +150,7 @@ Upon clicking **Process Data** the app:
 
 ## 7  Navigating Analysis Tabs
 
-Each tab offers domain‑specific plots. Full documentation is linked
-below:
+Each tab offers domain‑specific plots. Full documentation is linked below:
 
 | Tab          | Description                                     |
 |--------------|-------------------------------------------------|
@@ -141,17 +166,15 @@ below:
 ---
 
 ## 8  Exporting Results
-- **Plots** – use the camera icon (`toImage`) to save high‑resolution PNGs  
+- **Plots** – Use the **Save** button below each plot to export an `.html` file. The saved file includes the plot itself as well as all filters applied, supporting transparency and reproducibility
 - **Summary tables** – exported via **Download Table** (`.csv`)  
-- **Input parameters** – saved via **Download Inputs** (`.json`) for reproducibility
+- **Input Parameters** – In the **Explore** tab, you can save the criteria used to generate your summary tables. These are exported as a `.json` file via the **Download Inputs** button, enabling reproducibility and easy sharing with collaborators who may want to generate equivalent summaries with their own data
 
 ---
 
 ## 9  Reproducibility with Parameter Files
-Upload a previously saved `.json` file to **replay** the exact filters and
-column mappings on a new dataset.  
-> ⚠️ The target dataset must contain the same column names or the
-> mapping will fail.
+Upload a previously saved `.json` file to **replay** the exact filters and column mappings on a new dataset.  
+> ⚠️ The target dataset must contain the same column names or the mapping will fail.
 
 ---
 
@@ -159,15 +182,14 @@ column mappings on a new dataset.
 | Symptom                         | Likely Cause & Fix                               |
 |---------------------------------|--------------------------------------------------|
 | Plot shows no data              | Filters too restrictive or missing columns       |
-| MIC tab not visible             | No MIC column detected or MIC Mode off           |
-| “Unknown column” error          | Column names changed after parameter upload      |
-| Slow processing                 | Very large dataset; switch to `.parquet` format  |
+| MIC Table tab not visible       | No MIC column detected or MIC Mode off           |
+| Slow processing                 | Very large dataset; Many MIC interpretations  |
+| Map not appearing               | Region information was not provided or could not be matched with a map file |
 
 ---
 
 ## 11  Feedback & Contributions
-Open an issue or pull request on  
-<https://github.com/ksobkowich/AMRDataVisualizer/>
+Open an issue or pull request on <https://github.com/ksobkowich/AMRDataVisualizer/>
 
 We welcome bug reports, feature requests, and documentation edits!
 
