@@ -36,7 +36,7 @@
 ### 1  Purpose & Key Features
 The **AMR Visualizer** transforms raw antimicrobial susceptibility (AST) data into a suite of interactive, ready-to-use visualizations - **antibiograms**, **MIC distribution tables**, **resistance maps**, **time-series trends**, **multidrug resistance (MDR) matrices**, and more. Designed with accessibility in mind, it eliminates the need for advanced programming or analytical expertise.
 
-By automatically recognizing data formats, standardizing organism and drug names, and applying breakpoint interpretations where needed, the tool allows users to focus on exploring resistance patterns, generating summaries, and communicating results with mininal preprocessing required.
+By automatically recognizing data formats, standardizing organism and drug names, and applying breakpoint interpretations where needed, the tool allows users to focus on exploring resistance patterns, generating summaries, and communicating results with minimal preprocessing required.
 
 **Highlights**
 

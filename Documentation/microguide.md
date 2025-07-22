@@ -1,5 +1,5 @@
 <!-- File: trends.md -->
-# 📊 Trends Tab
+# 📊 Microguide Tab
 
 ## Table of Contents
 1. [Overview](#overview)
