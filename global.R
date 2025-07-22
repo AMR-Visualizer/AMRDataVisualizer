@@ -5,36 +5,49 @@
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
-# Install and Load Required Packages
+# Helper function to install and load a package (CRAN or GitHub)
 # ------------------------------------------------------------------------------
-
-required_packages <- c(
-  "AMR", "arrow", "chromote", "colorspace", "data.table", "doParallel", "DT",
-  "foreach", "fresh", "ggpattern", "gt", "HatchedPolygons", "jsonlite", "leaflet",
-  "mapview", "nanoparquet", "plotly", "quarto", "readxl", "renv", "scales", "sf",
-  "shiny", "shinyalert", "shinyBS", "shinycssloaders", "shinydashboard",
-  "shinydashboardPlus", "shinyjs", "shinyWidgets", "spacyr", "stringdist",
-  "tigris", "tidyverse", "tools", "typedjs", "vroom", "webshot2", "writexl", "zoo"
-)
-
-# Install any missing packages
-installed_packages <- rownames(installed.packages())
-missing_packages <- setdiff(required_packages, installed_packages)
-
-if (length(missing_packages) > 0) {
-  message("Installing missing packages: ", paste(missing_packages, collapse = ", "))
-  install.packages(missing_packages)
+install_and_load <- function(pkg, github = NULL) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    message("Installing '", pkg, "'...")
+    tryCatch({
+      if (is.null(github)) {
+        install.packages(pkg)
+      } else {
+        if (!requireNamespace("devtools", quietly = TRUE)) install.packages("devtools")
+        devtools::install_github(github)
+      }
+    }, error = function(e) {
+      warning("Failed to install ", pkg, ": ", e$message)
+    })
+  }
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
 }
 
-# Load all packages
-invisible(lapply(required_packages, library, character.only = TRUE))
+# CRAN Packages
+cran_packages <- c(
+  "AMR", "arrow", "chromote", "colorspace", "data.table", "doParallel", "DT",
+  "foreach", "fresh", "ggpattern", "gt", "jsonlite", "leaflet", "mapview",
+  "nanoparquet", "plotly", "quarto", "readxl", "renv", "scales", "sf", "shiny",
+  "shinyalert", "shinyBS", "shinycssloaders", "shinydashboard",
+  "shinydashboardPlus", "shinyjs", "shinyWidgets", "spacyr", "stringdist",
+  "tigris", "tidyverse", "tools", "vroom", "webshot2", "writexl", "zoo"
+)
+
+# GitHub Packages
+github_packages <- list(
+  HatchedPolygons = "statnmap/HatchedPolygons",
+  typedjs = "JohnCoene/typedjs"
+)
 
 # ------------------------------------------------------------------------------
-# Install packages not available on CRAN               
+# Install and Load All Packages
 # ------------------------------------------------------------------------------
-# install.packages("devtools")
-# devtools::install_github("statnmap/HatchedPolygons")
-# devtools::install_github("JohnCoene/typedjs")
+# Load CRAN packages
+invisible(lapply(cran_packages, install_and_load))
+
+# Load GitHub packages
+invisible(mapply(install_and_load, names(github_packages), github_packages))
 
 # ------------------------------------------------------------------------------
 # RENV set-up and maintenance                 
