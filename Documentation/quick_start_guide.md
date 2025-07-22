@@ -1,11 +1,11 @@
 <!-- File: quick_start_guide.md -->
 
-# 🧭 AMR Visualizer · Quick Start User Guide
+## Quick Start User Guide
 *A comprehensive walkthrough for importing data, configuring columns, and using analysis tabs.*
 
 ---
 
-## 📑 Table of Contents
+### Table of Contents
 1. [Purpose & Key Features](#1-purpose--key-features)  
 2. [System Requirements](#2-system-requirements)  
 3. [Data Preparation](#3-data-preparation)  
@@ -33,7 +33,7 @@
 
 ---
 
-## 1  Purpose & Key Features
+### 1  Purpose & Key Features
 The **AMR Visualizer** transforms raw antimicrobial susceptibility (AST) data into a suite of interactive, ready-to-use visualizations - **antibiograms**, **MIC distribution tables**, **resistance maps**, **time-series trends**, **multidrug resistance (MDR) matrices**, and more. Designed with accessibility in mind, it eliminates the need for advanced programming or analytical expertise.
 
 By automatically recognizing data formats, standardizing organism and drug names, and applying breakpoint interpretations where needed, the tool allows users to focus on exploring resistance patterns, generating summaries, and communicating results with mininal preprocessing required.
@@ -49,7 +49,7 @@ By automatically recognizing data formats, standardizing organism and drug names
 
 ---
 
-## 2 System Requirements
+### 2 System Requirements
 
 | Component      | Details |
 |----------------|---------|
@@ -59,19 +59,19 @@ By automatically recognizing data formats, standardizing organism and drug names
 
 ---
 
-## 3  Data Preparation
+### 3  Data Preparation
 
-### 3.1  Supported File Types
+#### 3.1  Supported File Types
 - **`.csv`** – UTF‑8, comma‑separated  
 - **`.parquet`** – column‑oriented, ideal for large datasets  
 
-### 3.2  Long vs. Wide Layouts
+#### 3.2  Long vs. Wide Layouts
 | Layout | Description | Notes |
 |--------|-------------|-------|
 | **Long** | One row = one drug–isolate result | Native support |
 | **Wide** | One row = one isolate; each drug in its own column | Auto‑detected and reshaped |
 
-### 3.3  Minimum Required Columns
+#### 3.3  Minimum Required Columns
 | Data Element   | Column Example  | Notes |
 |----------------|-----------------|-------|
 | Drug name      | `Antimicrobial` | Cleaned via `AMR::as.ab()` |
@@ -100,7 +100,7 @@ By automatically recognizing data formats, standardizing organism and drug names
 
 ---
 
-## 4  Import Workflow
+### 4  Import Workflow
 1. **Open** the **Import** tab  
 2. **Browse** for a `.csv`/`.parquet` file *or* choose a **demo dataset** from the dropdown menu
 3. Click **Submit** to preview raw vs. extracted data  
@@ -113,16 +113,16 @@ By automatically recognizing data formats, standardizing organism and drug names
 
 ---
 
-## 5  Column Configuration
+### 5  Column Configuration
 
-### 5.1  Mapping Columns
+#### 5.1  Mapping Columns
 Use the dropdown menus to assign each required variable. Select
 **Not Present** if a variable does not exist in your dataset.
 
-### 5.2 Wide Data
+#### 5.2 Wide Data
 If your data are imported in a wide-format (single row for each sample with multiple test columns), your test columns will be **automatically** detected and pivotted into long format.
 
-### 5.3 MIC‑specific Settings
+#### 5.3 MIC‑specific Settings
 If you provide MIC values, additional configuration is required:
 
 1. **Specify Sign and Value Columns**  
@@ -139,7 +139,7 @@ If you provide MIC values, additional configuration is required:
 
 ---
 
-## 6  Processing & Validation
+### 6  Processing & Validation
 Upon clicking **Process Data** the app:
 
 - Standardizes dates, organisms, drugs, regions  
@@ -148,7 +148,7 @@ Upon clicking **Process Data** the app:
 
 ---
 
-## 7  Navigating Analysis Tabs
+### 7  Navigating Analysis Tabs
 
 Each tab offers domain‑specific plots. Full documentation is linked below:
 
@@ -165,20 +165,20 @@ Each tab offers domain‑specific plots. Full documentation is linked below:
 
 ---
 
-## 8  Exporting Results
+### 8  Exporting Results
 - **Plots** – Use the **Save** button below each plot to export an `.html` file. The saved file includes the plot itself as well as all filters applied, supporting transparency and reproducibility
 - **Summary tables** – exported via **Download Table** (`.csv`)  
 - **Input Parameters** – In the **Explore** tab, you can save the criteria used to generate your summary tables. These are exported as a `.json` file via the **Download Inputs** button, enabling reproducibility and easy sharing with collaborators who may want to generate equivalent summaries with their own data
 
 ---
 
-## 9  Reproducibility with Parameter Files
+### 9  Reproducibility with Parameter Files
 Upload a previously saved `.json` file to **replay** the exact filters and column mappings on a new dataset.  
 > ⚠️ The target dataset must contain the same column names or the mapping will fail.
 
 ---
 
-## 10  Troubleshooting
+### 10  Troubleshooting
 | Symptom                         | Likely Cause & Fix                               |
 |---------------------------------|--------------------------------------------------|
 | Plot shows no data              | Filters too restrictive or missing columns       |
@@ -188,7 +188,7 @@ Upload a previously saved `.json` file to **replay** the exact filters and colum
 
 ---
 
-## 11  Feedback & Contributions
+### 11  Feedback & Contributions
 Open an issue or pull request on <https://github.com/ksobkowich/AMRDataVisualizer/>
 
 We welcome bug reports, feature requests, and documentation edits!

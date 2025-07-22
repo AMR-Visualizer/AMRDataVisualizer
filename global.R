@@ -1,60 +1,52 @@
-# Load Libraries ----------------------------------------------------------
-library(AMR)
-library(arrow)
-library(data.table)
-library(DT)
-library(fresh)
-library(ggpattern)
-library(plotly)
-library(scales)
-library(shiny)
-library(shinyalert)
-library(shinydashboard)
-library(shinydashboardPlus)
-library(shinyjs)
-library(shinyWidgets)
-library(tools)
-library(tidyverse)
-library(vroom)
-library(typedjs)
-library(readxl)
-library(foreach)
-library(doParallel)
-library(spacyr)
-library(shinyBS)
-library(jsonlite)
-library(leaflet)
-library(sf)
-library(tigris)
-library(stringdist)
-library(colorspace)
-library(HatchedPolygons)
-library(plotly)
-library(zoo)
-library(renv)
-library(mapview)
-library(nanoparquet)
-library(shinycssloaders)
-library(quarto)
-library(webshot2)
-library(chromote)
-library(writexl)
-library(gt)
+# ------------------------------------------------------------------------------
+# Global initialization script
+# Author: Kurtis Sobkowich
+# Description: Initializes global environment (i.e., libraries, functions, etc.)
+# ------------------------------------------------------------------------------
 
+# ------------------------------------------------------------------------------
+# Install and Load Required Packages
+# ------------------------------------------------------------------------------
 
+required_packages <- c(
+  "AMR", "arrow", "chromote", "colorspace", "data.table", "doParallel", "DT",
+  "foreach", "fresh", "ggpattern", "gt", "HatchedPolygons", "jsonlite", "leaflet",
+  "mapview", "nanoparquet", "plotly", "quarto", "readxl", "renv", "scales", "sf",
+  "shiny", "shinyalert", "shinyBS", "shinycssloaders", "shinydashboard",
+  "shinydashboardPlus", "shinyjs", "shinyWidgets", "spacyr", "stringdist",
+  "tigris", "tidyverse", "tools", "typedjs", "vroom", "webshot2", "writexl", "zoo"
+)
+
+# Install any missing packages
+installed_packages <- rownames(installed.packages())
+missing_packages <- setdiff(required_packages, installed_packages)
+
+if (length(missing_packages) > 0) {
+  message("Installing missing packages: ", paste(missing_packages, collapse = ", "))
+  install.packages(missing_packages)
+}
+
+# Load all packages
+invisible(lapply(required_packages, library, character.only = TRUE))
+
+# ------------------------------------------------------------------------------
+# Install packages not available on CRAN               
+# ------------------------------------------------------------------------------
 # install.packages("devtools")
 # devtools::install_github("statnmap/HatchedPolygons")
 # devtools::install_github("JohnCoene/typedjs")
 
+# ------------------------------------------------------------------------------
+# RENV set-up and maintenance                 
+# ------------------------------------------------------------------------------
 # renv::init()
-
 # Run this line and select option 2 for dockerizing.
 # renv::snapshot()
-
 # renv::deactivate()
 
-# Source Files ------------------------------------------------------------
-#Modules
+# ------------------------------------------------------------------------------
+# Source external modules            
+# ------------------------------------------------------------------------------
 source("Modules/homePage.R")
 source("Modules/ovPage.R")
 source("Modules/micPage.R")
@@ -68,8 +60,9 @@ source("Modules/importDataModule.R")
 source("Modules/filterPanelModule.R")
 source("Modules/changeLogModule.R")
 
-
-#Functions
+# ------------------------------------------------------------------------------
+# Source external functions                 
+# ------------------------------------------------------------------------------
 source("Functions/dataCleaningFunction.R")
 source("Functions/columnDetectFunctions.R")
 source("Functions/regionMatching.R")
@@ -78,14 +71,14 @@ source("Functions/formatAntibiogram.R")
 source("Functions/dataUtilityFunctions.R")
 source("Functions/micTableFunction.R")
 
-#Data
+# ------------------------------------------------------------------------------
+# Source external data
+# ------------------------------------------------------------------------------
 awareList <- read.csv("./Data/2023AwareClassifications.csv")
 
-# Increase maximum data size ----------------------------------------------
-options(shiny.maxRequestSize = 1000 * 1024^2)
-
-# Global Variables --------------------------------------------------------
-
+# ------------------------------------------------------------------------------
+# Define initial variables                 
+# ------------------------------------------------------------------------------
 #' Possible metadata columns that may appear in data.
 #' Want to ignore these when trying the find antimicrobial columns.
 #' !! These need to be in lower case !!
@@ -119,3 +112,8 @@ g_test_mapping <- list(
   "mic" = g_mic_keywords,
   "interp" = g_sir_keywords
 )
+
+# ------------------------------------------------------------------------------
+# Increase maximum allowable file upload                 
+# ------------------------------------------------------------------------------
+options(shiny.maxRequestSize = 1000 * 1024^2)

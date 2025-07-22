@@ -1,71 +1,95 @@
+# ------------------------------------------------------------------------------
+# Main UI script
+# Author: Kurtis Sobkowich
+# Description: Main UI layout for the AMR Visualizer.
+# ------------------------------------------------------------------------------
+
 dashboardPage(
   
-  # Header ------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Header                 
+# ------------------------------------------------------------------------------
+  dashboardHeader(
+    title = "",  # No visible title in the top navbar
+    tags$li(
+      class = "dropdown",
+      actionButton("info", icon("circle-info"), class = "info")  # Info/help button
+    )
+  ),
   
-  dashboardHeader(title = "", tags$li(class = "dropdown", actionButton("info", icon("circle-info"), class = "info"))),
-  
-  # Sidebar -----------------------------------------------------------------
-  
+# ------------------------------------------------------------------------------
+# Sidebar
+# ------------------------------------------------------------------------------
   dashboardSidebar(
-    img(src = "logo.png", height = "100px", style = "margin-left: 50px"),
+    # Logo
+    img(
+      src = "logo.png",
+      height = "100px",
+      style = "margin-left: 50px"
+    ),
     hr(style = "border-color:#a7b6d4; margin:20px"),
+    
+    # Navigation Menu
     sidebarMenu(
       id = "tabs",
       menuItem("Home", tabName = "homeTab", icon = icon("house", class = "nav-icon")),
       menuItem("Import", tabName = "importTab", icon = icon("file-import", class = "nav-icon")),
       style = "margin-top:25px"
     ),
+    
+    # Dynamically generated menu (e.g., based on presence of data)
     uiOutput("menu")
   ),
-
-  # Body --------------------------------------------------------------------
   
+  # ---------------------------------------------------------------------------
+  # Main body
+  # ---------------------------------------------------------------------------
   dashboardBody(
+    
+    # Load custom styling and scripts
     includeCSS("styles.css"),
     includeScript("script.js"),
+    
+    # Set global font using `bslib` and `thematic`
     use_googlefont("Carme"),
     use_theme(create_theme(
       theme = "default",
-      bs_vars_font(
-        family_sans_serif = "Carme"
-      )
+      bs_vars_font(family_sans_serif = "Carme")
     )),
+    
+    # Enable JavaScript extensions
     useShinyjs(),
-    extendShinyjs(text = "
-      shinyjs.hideHeader = function() { $('.navbar').hide(); };
-      shinyjs.showHeader = function() { $('.navbar').show(); };
-    ", functions = c("hideHeader", "showHeader")),
-    tags$style(HTML("
-      .navbar {
-        display: none;
-      }
-    ")),
     
+    # Define custom JS functions to hide/show the header
+    extendShinyjs(
+      text = "
+        shinyjs.hideHeader = function() { $('.navbar').hide(); };
+        shinyjs.showHeader = function() { $('.navbar').show(); };
+      ",
+      functions = c("hideHeader", "showHeader")
+    ),
+    
+    # Initial header visibility (hidden by default)
+    tags$style(HTML(".navbar { display: none; }")),
+    
+    # -------------------------------------------------------------------------
+    # Tab menu items
+    # -------------------------------------------------------------------------
     tabItems(
-      
-      tabItem("homeTab", homePageUI("home")),
-      
-      tabItem("importTab", importDataUI("dataImport")),
-      
-      tabItem("ovTab", ovPageUI("overviewModule")),
-      
-      tabItem("micTab", micPageUI("micModule")),
-      
-      tabItem("abTab", uiOutput("antibiogramUI")),
-    
-      tabItem("mapTab", uiOutput("mapUI")),
-      
-      tabItem("trendsTab", uiOutput("tsUI")),
-      
-      tabItem("pathogenTab", uiOutput("pathogenUI")),
-      
-      tabItem("mdrTab", uiOutput("mdrUI")),
-      
-      tabItem("exploreTab", uiOutput("exploreUI"))
-      
+      tabItem(tabName = "homeTab",     homePageUI("home")),
+      tabItem(tabName = "importTab",   importDataUI("dataImport")),
+      tabItem(tabName = "ovTab",       ovPageUI("overviewModule")),
+      tabItem(tabName = "micTab",      micPageUI("micModule")),
+      tabItem(tabName = "abTab",       uiOutput("antibiogramUI")),
+      tabItem(tabName = "mapTab",      uiOutput("mapUI")),
+      tabItem(tabName = "trendsTab",   uiOutput("tsUI")),
+      tabItem(tabName = "pathogenTab", uiOutput("pathogenUI")),
+      tabItem(tabName = "mdrTab",      uiOutput("mdrUI")),
+      tabItem(tabName = "exploreTab",  uiOutput("exploreUI"))
     )
   )
-
-# Close UI ----------------------------------------------------------------
-
+  
+  # ---------------------------------------------------------------------------
+  # End of main UI
+  # ---------------------------------------------------------------------------
 )

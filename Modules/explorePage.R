@@ -1,6 +1,3 @@
-# library(shinyBS)
-# library(jsonlite)
-
 explorePageUI <- function(id, data) {
   ns <- NS(id)
   tagList(
@@ -13,8 +10,21 @@ explorePageServer <- function(id, data) {
     ns <- session$ns
     
     dataGenerated <- reactiveVal(FALSE)
-    inputs <- reactiveValues(MO = NULL, AB = NULL, Site = NULL, Species = NULL, Subregion = NULL, startDate = min(data$Date, na.rm = T), endDate = max(data$Date, na.rm = T),
-                             groupMO = F, groupAB = F, groupSite = F, groupSpecies = F, groupSubregion = F, groupMonths = F)
+    inputs <- reactiveValues(MO = NULL, 
+                             AB = NULL, 
+                             Site = NULL, 
+                             Species = NULL, 
+                             Subregion = NULL,
+                             Region = NULL,
+                             startDate = min(data$Date, na.rm = T),
+                             endDate = max(data$Date, na.rm = T),
+                             groupMO = F, 
+                             groupAB = F, 
+                             groupSite = F, 
+                             groupSpecies = F, 
+                             groupSubregion = F,
+                             groupRegion = F,
+                             groupMonths = F)
     
     observeEvent(input$generate, {
       inputs$MO <- input$selectedMO
@@ -22,6 +32,7 @@ explorePageServer <- function(id, data) {
       inputs$Site <- input$selectedSite
       inputs$Species <- input$selectedSpecies
       inputs$Subregion <- input$selectedSubregion
+      inputs$Region <- input$selectedRegion
       inputs$startDate <- input$selectedDates[1]
       inputs$endDate <- input$selectedDates[2]
       inputs$groupMO <- input$groupMO
@@ -29,6 +40,7 @@ explorePageServer <- function(id, data) {
       inputs$groupSite <- input$groupSite
       inputs$groupSpecies <- input$groupSpecies
       inputs$groupSubregion <- input$groupSubregion
+      inputs$groupRegion <- input$groupRegion
       inputs$groupMonths <- input$groupMonths
     })
     
@@ -101,6 +113,13 @@ explorePageServer <- function(id, data) {
                                                     multiple = T),
                                      awesomeCheckbox(ns("groupSubregion"), "Aggregate subregions?", value = inputs$groupSubregion)
                      ),
+                     bsCollapsePanel("Region",
+                                     selectizeInput(ns("selectedRegion"), label = NULL,
+                                                    choices = c(sort(unique(data$Region), na.last = TRUE)),
+                                                    selected = inputs$Region,
+                                                    multiple = T),
+                                     awesomeCheckbox(ns("groupRegion"), "Aggregate Regions?", value = inputs$groupRegion)
+                     ),
                      bsCollapsePanel("Timeframe",
                                      dateRangeInput(ns("selectedDates"), label = NULL,
                                                     min = min(data$Date), max = max(data$Date), 
@@ -129,14 +148,15 @@ explorePageServer <- function(id, data) {
         updateSelectizeInput(session, "selectedSite", selected = params$Inputs$Source$Selected)
         updateSelectizeInput(session, "selectedSpecies", selected = params$Inputs$Species$Selected)
         updateSelectizeInput(session, "selectedSubregion", selected = params$Inputs$Subregion$Selected)
+        updateSelectizeInput(session, "selectedRegion", selected = params$Inputs$Region$Selected)
         updateDateRangeInput(session, "selectedDates", start = params$Inputs$Dates$Selected[1], end = params$Inputs$Dates$Selected[2])
         updateCheckboxInput(session, "groupMO", value = params$Inputs$Microorganism$Aggregated)
         updateCheckboxInput(session, "groupAB", value = params$Inputs$Antimicrobial$Aggregated)
         updateCheckboxInput(session, "groupSite", value = params$Inputs$Source$Aggregated)
         updateCheckboxInput(session, "groupSpecies", value = params$Inputs$Species$Aggregated)
         updateCheckboxInput(session, "groupSubregion", value = params$Inputs$Subregion$Aggregated)
+        updateCheckboxInput(session, "groupRegion", value = params$Inputs$Region$Aggregated)
         updateCheckboxInput(session, "groupMonths", value = params$Inputs$Dates$Aggregated)
-  
     })
     
     tableData <- reactiveVal(data.frame())
@@ -144,54 +164,81 @@ explorePageServer <- function(id, data) {
     observeEvent(input$generate, {
       dataGenerated(TRUE)
       
-      tableData <- data
+      df <- data
       
-      if (!is.null(input$selectedMO)) {
-        tableData <- tableData %>% filter(Microorganism %in% input$selectedMO)
-      }
-      if (!is.null(input$selectedAB)) {
-        tableData <- tableData %>% filter(Antimicrobial %in% input$selectedAB)
-      }
-      if (!is.null(input$selectedSite)) {
-        tableData <- tableData %>% filter(Source %in% input$selectedSite)
-      }
-      if (!is.null(input$selectedSpecies)) {
-        tableData <- tableData %>% filter(Species %in% input$selectedSpecies)
-      }
-      if (!is.null(input$selectedSubregion)) {
-        tableData <- tableData %>% filter(Subregion %in% input$selectedSubregion)
-      }
-      if (!is.null(input$selectedDates)) {
-        tableData <- tableData %>% filter(Date >= input$selectedDates[1] & Date <= input$selectedDates[2])
+      filters <- list(
+        Microorganism = input$selectedMO,
+        Antimicrobial = input$selectedAB,
+        Source = input$selectedSite,
+        Species = input$selectedSpecies,
+        Subregion = input$selectedSubregion,
+        Region = input$selectedRegion
+      )
+      
+      for (col in names(filters)) {
+        if (!is.null(filters[[col]]) && col %in% names(df)) {
+          df <- df %>% filter(.data[[col]] %in% filters[[col]])
+        }
       }
       
-      tableData <- tableData %>% 
-        select(
-          if (!input$groupMonths) "Date",
-          if (!input$groupMO) "Microorganism",
-          if (!input$groupAB) "Antimicrobial",
-          if (!input$groupSite) "Source",
-          if (!input$groupSpecies) "Species",
-          if (!input$groupSubregion) c("Subregion", "Region"),
-          "Class", "Interpretation"
-        ) %>% 
-        group_by(across()) %>%
-        summarize(int_count = n()) %>%
-        pivot_wider(names_from = Interpretation, values_from = int_count, values_fill = 0) %>% 
-        mutate(Total = sum(S,R,I)) %>% 
-        relocate(S, I, R, .before = Total)
+      # Date filtering
+      if (!is.null(input$selectedDates) && "Date" %in% names(df)) {
+        df <- df %>%
+          filter(Date >= input$selectedDates[1], Date <= input$selectedDates[2])
+      }
+      
+      # Defensive selection logic
+      cols_to_select <- c(
+        if (!input$groupMonths     && "Date"          %in% names(df)) "Date",
+        if (!input$groupMO         && "Microorganism" %in% names(df)) "Microorganism",
+        if (!input$groupAB         && "Antimicrobial" %in% names(df)) "Antimicrobial",
+        if (!input$groupSite       && "Source"        %in% names(df)) "Source",
+        if (!input$groupSpecies    && "Species"       %in% names(df)) "Species",
+        if (!input$groupSubregion  && "Subregion"     %in% names(df)) "Subregion",
+        if (!input$groupRegion     && "Region"        %in% names(df)) "Region",
+        if ("Class"                %in% names(df)) "Class",
+        if ("Interpretation"       %in% names(df)) "Interpretation"
+      )
+      
+      df <- df %>%
+        select(any_of(cols_to_select))
+      
+      grouping_vars <- names(df)
+      
+      df <- df %>%
+        group_by(across(all_of(grouping_vars))) %>%
+        summarize(int_count = n(), .groups = "drop") %>%
+        pivot_wider(
+          names_from = Interpretation,
+          values_from = int_count,
+          values_fill = 0
+        )
+      
+      for (col in c("S", "I", "R")) {
+        if (!col %in% names(df)) df[[col]] <- 0
+      }
+      
+      df <- df %>%
+        mutate(Total = S + I + R) %>%
+        relocate(any_of(c("S", "I", "R")), .before = Total)
       
       output$table <- DT::renderDataTable({
-        datatable(tableData, class = "table",
-                  options = list(
-                    columnDefs = list(list(className = 'dt-center', targets = 5)),
-                    pageLength = 20,
-                    lengthMenu = c(10, 20, 50, 100)
-                  ))
+        if (nrow(df) > 0) {
+          datatable(df, class = "table",
+                    options = list(
+                      columnDefs = list(list(className = 'dt-center', targets = 5)),
+                      pageLength = 20,
+                      lengthMenu = c(10, 20, 50, 100)
+                    ))
+        } else {
+          datatable(data.frame(Message = "No data available with selected filters."))
+        }
       })
       
-      tableData(tableData)
+      tableData(df)
     })
+    
+    
     
     output$downloadParams <- downloadHandler(
       filename = function() {
@@ -223,6 +270,10 @@ explorePageServer <- function(id, data) {
             Subregion = list(
               Selected = input$selectedSubregion,
               Aggregated = input$groupSubregion
+            ),
+            Region = list(
+              Selected = input$selectedRegion,
+              Aggregated = input$groupRegion
             ),
             Dates = list(
               Selected = input$selectedDates,

@@ -1,6 +1,16 @@
+# ------------------------------------------------------------------------------
+# Main server script
+# Author: Kurtis Sobkowich
+# Description: Defines the server-side logic for the AMR Visualizer app
+#              Coordinates multiple external modules to handle user input,
+#              reactive processing, and dynamic outputs.
+# ------------------------------------------------------------------------------
 
 server <- function(input, output, session) {
   
+  # ------------------------------------------------------------------------------
+  # Selectively hide header bar if tab = "Home"                 
+  # ------------------------------------------------------------------------------
   observe({
     req(input$tabs)
     if (input$tabs == "homeTab") {
@@ -9,23 +19,32 @@ server <- function(input, output, session) {
       js$showHeader()
     }
   })
-  
-  # Get Clean Data ----------------------------------------------------------------
-  
+
+# ------------------------------------------------------------------------------
+# Gather cleaned data from `importDataModule.R`            
+# ------------------------------------------------------------------------------  
   results <- importDataServer("dataImport")
   clean <- results$data
   guideline <- results$guideline
   
-  # Determine if full sidebar should be shown -------------------------------
+# ------------------------------------------------------------------------------
+# Selectively show sidebar menu if data are present                 
+# ------------------------------------------------------------------------------
   showMenu <- reactiveVal(FALSE)
+  
+  # Check for cleaned data returned from `importDataModule.R`
   dataPresent <- reactive({
     !is.null(clean()) && nrow(clean()) > 0
   })
   observe({
     showMenu(dataPresent())
   })
+  
+  # If cleaned data exist, render full sidebar menu
   output$menu <- renderUI({
     if (dataPresent()) {
+      
+      # Define menu items
       menu_items <- list(
         menuItem("Overview", tabName = "ovTab", icon = icon("chart-simple", class = "nav-icon")),
         menuItem("Antibiogram", tabName = "abTab", icon = icon("braille", class = "nav-icon")),
@@ -36,20 +55,27 @@ server <- function(input, output, session) {
         menuItem("Explore", tabName = "exploreTab", icon = icon("table-list", class = "nav-icon"))
       )
     
+      # Show "MIC Tables" tab if MIC data were imported
       if ("MIC" %in% names(clean())) {
         mic_item <- menuItem("MIC Tables", tabName = "micTab", icon = icon("vial", class = "nav-icon"))
         menu_items <- c(list(mic_item), menu_items)
       }
       
       sidebarMenu(id = "tabs", menu_items)
+      
+      # If cleaned data do not exist, show message to user
     } else {
       tagList(
         sidebarMenu(id = "tabs"),
         h6(em("Please import or select a data source to access additional tabs."), style = "color: #a7b6d4; margin:25px; text-align: center;")
       )
     }
+    
   })
   
+# ------------------------------------------------------------------------------
+# Switch "i" (information) modal content based on current tab                 
+# ------------------------------------------------------------------------------
   observeEvent(input$info, {
     showModal(
       modalDialog(
@@ -82,15 +108,19 @@ server <- function(input, output, session) {
     )
   })
   
+# ------------------------------------------------------------------------------
+# Initialize server functions for each tab module       
+# ------------------------------------------------------------------------------
+  # Home tab
+   homePageServer("home")
   
-  
-  # Overview Page -----------------------------------------------------------
+  # Overview tab
   observe({
     req(clean())
     ovPageServer("overviewModule", clean())
   })
   
-  # MIC Page --------------------------------------------------------
+  # MIC Tables tab
   output$micUI <- renderUI({
     req(clean())
     micPageUI("micModule", clean())
@@ -101,7 +131,7 @@ server <- function(input, output, session) {
     micPageServer("micModule", data = clean(), guideline = guideline())
   })
   
-  # Antibiogram Page --------------------------------------------------------
+  # Antibiogram tab
   output$antibiogramUI <- renderUI({
     req(clean())
     abPageUI("antibiogramModule", clean())
@@ -111,8 +141,8 @@ server <- function(input, output, session) {
     req(clean())
     abPageServer("antibiogramModule", clean())
   })
-  
-  # Map Page ----------------------------------------------------------------
+
+  # Map tab
   output$mapUI <- renderUI({
     req(clean())
     mapPageUI("mapModule", clean())
@@ -124,7 +154,7 @@ server <- function(input, output, session) {
   })
   
   
-  # Time Series Page --------------------------------------------------------
+  # Trends tab
   output$tsUI <- renderUI({
     req(clean())
     tsPageUI("tsModule", clean())
@@ -135,8 +165,7 @@ server <- function(input, output, session) {
     tsPageServer("tsModule", clean())
   })
   
-  
-  # Pathogen Page -----------------------------------------------------------
+  # Microguide tab
   output$pathogenUI <- renderUI({
     req(clean())
     pathogenPageUI("pathogenModule", clean())
@@ -147,7 +176,7 @@ server <- function(input, output, session) {
     pathogenPageServer("pathogenModule", clean())
   })
   
-  # MDR Page --------------------------------------------------------
+  #MDR tab
   output$mdrUI <- renderUI({
     req(clean())
     mdrPageUI("mdrModule", clean())
@@ -158,9 +187,7 @@ server <- function(input, output, session) {
     mdrPageServer("mdrModule", clean())
   })
   
-  
-  # Explore Page ------------------------------------------------------------
-  
+  # Explore tab
   output$exploreUI <- renderUI({
     req(clean())
     explorePageUI("exModule", clean())
@@ -172,5 +199,7 @@ server <- function(input, output, session) {
   })
   
   
-  # Close server ------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# End of main Server                 
+# ------------------------------------------------------------------------------
 }
