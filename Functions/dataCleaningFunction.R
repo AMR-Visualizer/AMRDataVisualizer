@@ -126,7 +126,11 @@ dataCleaner <- function(rawData,
     } else {
       cleanedChunk <- cleanedChunk %>%
         mutate(
-          MIC_raw = str_c(trimws(Sign), trimws(Value), sep = "", na.rm = TRUE),
+          MIC_raw = case_when(
+            !is.na(Sign) & !is.na(Value) ~ str_c(trimws(Sign), trimws(Value)),
+            is.na(Sign) & !is.na(Value) ~ trimws(Value),
+            TRUE ~ NA_character_
+          ),
           MIC = as.mic(MIC_raw)
         )
     }
