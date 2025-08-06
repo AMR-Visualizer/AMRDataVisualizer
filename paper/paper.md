@@ -1,8 +1,4 @@
----
-title: "AMR Visualizer: A Shiny app for the rapid analysis of diagnostic antimicrobial susceptibility test data"
-output: html_document
-bibliography: references.bib
----
+# AMR Visualizer: A Shiny App for the Rapid Analysis of Diagnostic Antimicrobial Susceptibility Test Data
 
 **Kurtis E. Sobkowich**<sup>1</sup>, **Claudia Gisela Cobo Angel**<sup>\*,2,3</sup>, **Joshua Glass**<sup>\*,2</sup>, **Abdolreza Mosaddegh**<sup>\*,2,4</sup>, **Zvonimir Poljak**<sup>1</sup>, **Donald Szlosek**<sup>5</sup>, **J. Scott Weese**<sup>6,7</sup>, **Casey L. Cazer**<sup>2,8</sup>  
 
