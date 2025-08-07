@@ -110,7 +110,15 @@ g_metadataCols <- c(
   "host_species_long",
   "comment",
   "species",
-  "row_id"
+  "row_id",
+  "date",
+  "day",
+  "order",
+  "country",
+  "month",
+  "state",
+  "id",
+  "county"
 )
 
 # Test mapping values
