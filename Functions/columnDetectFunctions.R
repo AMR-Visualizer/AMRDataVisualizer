@@ -4,6 +4,7 @@
 #'
 #' @param data A data frame.
 #' @param keywords A character vector of keywords to search for in the column names.
+#' @param all_matches Whether to return all matching column names or just the first. Defaults to \code{FALSE}.
 #' @returns The name of the first column that matches any of the keywords, or \code{NULL} if not found.
 detectColumnByName <- function(data, keywords, all_matches = FALSE) {
   matches <- NULL
@@ -115,12 +116,13 @@ detectMoColumn <- function(data) {
 
 #' Detect drug column
 #'
-#' @param data A data frame.
+#' @param data        A data frame.
+#' @param all_matches Whether to return all matching column names or just the first. Defaults to \code{FALSE}.
 #' @returns The name of the column containing the drug, or \code{NULL} if not found.
 #' @seealso \code{\link{detectColumnByName}
-detectDrugColumn <- function(data) {
+detectDrugColumn <- function(data, all_matches = FALSE) {
   keywords <- c("drug", "antibiotic", "antimicrobial")
-  detectColumnByName(data, keywords)
+  detectColumnByName(data, keywords, all_matches = all_matches)
 }
 
 #' Detect SIR column

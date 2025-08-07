@@ -138,6 +138,7 @@ dataCleaner <- function(rawData,
     if (!"Interpretation" %in% names(cleanedChunk)) {
       unique_rows <- cleanedChunk %>%
         distinct(MIC, Species, UTI, Microorganism, Antimicrobial) %>%
+        rowwise() %>%
         mutate(Interpretation = as.sir(MIC,
                                        host = Species,
                                        breakpoint_type = "animal",
@@ -165,7 +166,11 @@ dataCleaner <- function(rawData,
   }
   
     cleanData <- clean_chunk(chunk = rawData, additionalCols = additionalCols)
-    bp_log <- sir_interpretation_history() %>%
+
+    bp_log <- sir_interpretation_history()
+    #' If this is the first time running the app, this will be empty and throw an error.
+    if (!is.null(bp_log)) {
+      bp_log <- bp_log %>%
       select(
         "Antimicrobial" = ab_given,
         "Microorganism" = mo_given,
@@ -184,6 +189,7 @@ dataCleaner <- function(rawData,
         Interpretation = replace_na(Interpretation, "Could not interpret")
       ) %>%
       distinct()
+    }
     
   
   return(list(
