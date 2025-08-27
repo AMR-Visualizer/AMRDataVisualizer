@@ -22,6 +22,20 @@ h6{
   color: #34435a;
 }
 
+.white-btn,
+.blue-btn {
+  background-color: #44CDC4;
+  color: white;
+  border-radius: 20px;
+  border: 2px solid #44CDC4;
+  margin: 5px;
+}
+
+.white-btn {
+  background-color: white;
+  color: #44CDC4;
+}
+
 .shiny-input-container {
     color: #555555;
     font-weight: 400;
@@ -280,7 +294,7 @@ h6{
 
 .container .button {
     text-align: right;
-    margin-right auto;
+    margin-right: auto;
 }
 
 .quickDateButton {
@@ -740,4 +754,31 @@ h6{
 #import-modal-footer.antimicrobial-close-disabled .btn {
   pointer-events: none;
   opacity: 0.5;
+}
+
+
+/** Custom Breakpoints Container */
+.custom-breakpoints-container {
+  border-top: 1px solid #44CDC4;
+  padding-top: 5px;
+}
+
+.custom-breakpoints-container > label {
+  font-weight: bold;
+}
+
+.custom-breakpoints-container > div {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+  justify-content: end;
+}
+
+.custom-breakpoints-container:first-child > div > div {
+  padding: 0;
+}
+
+.custom-breakpoints-container > div:last-child .btn {
+  width: fit-content;
 }

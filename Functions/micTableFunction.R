@@ -1,4 +1,15 @@
-create_mic_frequency_tables <- function(data, group_by_var, ab, mo, type, species, guideline) {
+create_mic_frequency_tables <- function(
+  data,
+  group_by_var,
+  ab,
+  mo,
+  type,
+  species,
+  guideline,
+  s_bp = NULL,
+  r_bp = NULL,
+  reference_data = AMR::clinical_breakpoints
+) {
   
   if (group_by_var == "Year") {
     data <- data %>% mutate(Year = as.character(lubridate::year(Date)))
@@ -25,7 +36,18 @@ create_mic_frequency_tables <- function(data, group_by_var, ab, mo, type, specie
   sir_interpretation_history(clean = T)
   
   x <- as.mic(2)
-  sir_result <- as.sir(x, mo = mo, ab = ab, guideline = guideline, host = species, uti = uti, SDD = T)
+
+  sir_result <- as.sir(
+    x,
+    mo = mo,
+    ab = ab,
+    guideline = guideline,
+    reference_data = reference_data,
+    host = species,
+    uti = uti,
+    SDD = T
+  )
+
   hold <- sir_interpretation_history(clean = T)
   
   hold <- hold %>% 
@@ -95,13 +117,7 @@ create_mic_frequency_tables <- function(data, group_by_var, ab, mo, type, specie
     group_by(Antimicrobial) %>%
     ungroup()
   
-  bp_label <- if(!is.na(bp_s) && !is.na(bp_r)){
-    paste0("Breakpoints applied: S ≤ ", bp_s,
-           if (!is.na(bp_r)) paste0(", R ≥ ", bp_r) else "",
-           " (", guideline, ")")
-  } else {
-    paste0("No breakpoints available.")
-  }
+  bp_label <- getBpLabel(s_bp, r_bp, guideline)
   
   MIC_gt <- MIC_table_long %>%
     select(!!sym(group_by_var), everything(), -Antimicrobial) %>%

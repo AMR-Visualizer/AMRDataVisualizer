@@ -7,42 +7,47 @@
 # ------------------------------------------------------------------------------
 
 server <- function(input, output, session) {
-  
-  # ------------------------------------------------------------------------------
-  # Selectively hide header bar if tab = "Home"                 
-  # ------------------------------------------------------------------------------
-  observe({
-    req(input$tabs)
-    if (input$tabs == "homeTab") {
-      js$hideHeader()
-    } else {
-      js$showHeader()
-    }
-  })
 
-# ------------------------------------------------------------------------------
-# Gather cleaned data from `importDataModule.R`            
-# ------------------------------------------------------------------------------  
-  results <- importDataServer("dataImport")
-  clean <- results$data
-  guideline <- results$guideline
-  
-# ------------------------------------------------------------------------------
-# Selectively show sidebar menu if data are present                 
-# ------------------------------------------------------------------------------
-  showMenu <- reactiveVal(FALSE)
-  
+  # ------------------------------------------------------------------------------
+  # Sub-modules
+  # ------------------------------------------------------------------------------
+
+  homePageServer("home")
+  importResults <- importDataServer("dataImport") # Gather cleaned data from `importDataModule.R`
+  dataWithCustomBreakpoints <- micPageServer(
+    "micModule",
+    reactiveData = clean,
+    processedGuideline = processedGuideline
+  )
+
+  # ------------------------------------------------------------------------------
+  # Module variables
+  # ------------------------------------------------------------------------------
+
+  clean <- importResults$data
+  processedGuideline <- importResults$guideline
+
+
+  # ------------------------------------------------------------------------------
+  # Reactives
+  # ------------------------------------------------------------------------------
+
   # Check for cleaned data returned from `importDataModule.R`
-  dataPresent <- reactive({
+  isDataPresent <- reactive({
+    if (is.null(clean())) {
+      return(FALSE)
+    }
     !is.null(clean()) && nrow(clean()) > 0
   })
-  observe({
-    showMenu(dataPresent())
-  })
-  
-  # If cleaned data exist, render full sidebar menu
+
+  # ------------------------------------------------------------------------------
+  # Render UI
+  # ------------------------------------------------------------------------------
+
+  # If cleaned data exist, render full sidebar menu.
+  # Selectively show sidebar menu if data is present.
   output$menu <- renderUI({
-    if (dataPresent()) {
+    if (isDataPresent()) {
       
       # Define menu items
       menu_items <- list(
@@ -70,8 +75,25 @@ server <- function(input, output, session) {
         h6(em("Please import or select a data source to access additional tabs."), style = "color: #a7b6d4; margin:25px; text-align: center;")
       )
     }
-    
   })
+
+
+  # ------------------------------------------------------------------------------
+  # Observes
+  # ------------------------------------------------------------------------------
+  
+  # ------------------------------------------------------------------------------
+  # Selectively hide header bar if tab = "Home"                 
+  # ------------------------------------------------------------------------------
+  observe({
+    req(input$tabs)
+    if (input$tabs == "homeTab") {
+      js$hideHeader()
+    } else {
+      js$showHeader()
+    }
+  })
+
   
 # ------------------------------------------------------------------------------
 # Switch "i" (information) modal content based on current tab                 
@@ -111,24 +133,11 @@ server <- function(input, output, session) {
 # ------------------------------------------------------------------------------
 # Initialize server functions for each tab module       
 # ------------------------------------------------------------------------------
-  # Home tab
-   homePageServer("home")
   
   # Overview tab
   observe({
     req(clean())
     ovPageServer("overviewModule", clean())
-  })
-  
-  # MIC Tables tab
-  output$micUI <- renderUI({
-    req(clean())
-    micPageUI("micModule", clean())
-  })
-  
-  observe({
-    req(clean())
-    micPageServer("micModule", data = clean(), guideline = guideline())
   })
   
   # Antibiogram tab

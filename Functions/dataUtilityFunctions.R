@@ -65,16 +65,16 @@ library(purrr)
 #'           - "MIC" if the data contains signs and values (e.g., "<4", ">8", "=16").
 #'           - "MIC_Value" if the data only contains values (e.g., "4", "8", "16").
 .isMicTest <- function(data) {
-  isMic <- suppressWarnings(AMR::as.mic(data))
+  isMic <- unique(suppressWarnings(AMR::as.mic(data)))
   if (any(grepl(">|=|<", data))) {
     # Either a sign+value column or just a sign column
-    if (all(is.na(unique(isMic)))) {
+    if (all(is.na(isMic))) {
       return("MIC_Sign")
     }
     return("MIC")
   }
   # Only value, no signs - or a non MIC test.
-  if (!all(is.na(unique(isMic)))) {
+  if (!all(is.na(isMic))) {
     return("MIC_Value")
   }
   return("unknown")

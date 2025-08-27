@@ -83,6 +83,7 @@ source("Functions/parseWideColumns.R")
 source("Functions/formatAntibiogram.R")
 source("Functions/dataUtilityFunctions.R")
 source("Functions/micTableFunction.R")
+source("Functions/uiUtilities.R")
 
 # ------------------------------------------------------------------------------
 # Source external data
