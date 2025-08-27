@@ -20,6 +20,7 @@ server <- function(input, output, session) {
     processedGuideline = processedGuideline
   )
   abPageServer("antibiogramModule", reactiveData = dataWithCustomBreakpoints, customBreakpoints = customBreakpoints)
+  mapPageServer("mapModule", reactiveData = dataWithCustomBreakpoints)
 
   # ------------------------------------------------------------------------------
   # Module variables
@@ -144,18 +145,6 @@ server <- function(input, output, session) {
   observe({
     req(clean())
     ovPageServer("overviewModule", clean())
-  })
-  
-
-  # Map tab
-  output$mapUI <- renderUI({
-    req(clean())
-    mapPageUI("mapModule", clean())
-  })
-  
-  observe({
-    req(clean())
-    mapPageServer("mapModule", clean())
   })
   
   

@@ -36,10 +36,11 @@ preprocessPlotData <- function(data) {
   mapData <- data %>% 
     select(Region, Subregion, Interpretation) %>% 
     group_by(Region, Subregion) %>% 
+    # Need to remove NAs otherwise sum returns NA
     summarise(
-      S = sum(Interpretation == "S"),
-      I = sum(Interpretation == "I"),
-      R = sum(Interpretation == "R"),
+      S = sum(Interpretation == "S", na.rm = TRUE),
+      I = sum(Interpretation == "I", na.rm = TRUE),
+      R = sum(Interpretation == "R", na.rm = TRUE),
       .groups = "drop"
     ) %>% 
     mutate(Count = S + I + R,
