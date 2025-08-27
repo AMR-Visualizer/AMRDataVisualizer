@@ -14,18 +14,24 @@ server <- function(input, output, session) {
 
   homePageServer("home")
   importResults <- importDataServer("dataImport") # Gather cleaned data from `importDataModule.R`
-  dataWithCustomBreakpoints <- micPageServer(
+  micData <- micPageServer(
     "micModule",
     reactiveData = clean,
     processedGuideline = processedGuideline
   )
+  abPageServer("antibiogramModule", reactiveData = dataWithCustomBreakpoints, customBreakpoints = customBreakpoints)
 
   # ------------------------------------------------------------------------------
   # Module variables
   # ------------------------------------------------------------------------------
 
+  # Variables from import tab
   clean <- importResults$data
   processedGuideline <- importResults$guideline
+
+  # Variables from MIC tab
+  dataWithCustomBreakpoints <- micData$dataWithCustomBreakpoints
+  customBreakpoints <- micData$customBreakpoints
 
 
   # ------------------------------------------------------------------------------
@@ -140,16 +146,6 @@ server <- function(input, output, session) {
     ovPageServer("overviewModule", clean())
   })
   
-  # Antibiogram tab
-  output$antibiogramUI <- renderUI({
-    req(clean())
-    abPageUI("antibiogramModule", clean())
-  })
-  
-  observe({
-    req(clean())
-    abPageServer("antibiogramModule", clean())
-  })
 
   # Map tab
   output$mapUI <- renderUI({

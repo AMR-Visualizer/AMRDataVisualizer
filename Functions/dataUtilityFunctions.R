@@ -1,12 +1,8 @@
 #' Utility functions for data manipulation.
 #'
 #' Functions:
-#' - `.getMICDataColumns`:  Extracts the MIC sign and value from the MIC column in a data frame.
-#' - `.isSirTest`:          Checks if a column contains SIR test data.
-#' - `.isMicTest`:          Checks if a column contains MIC test data.
-#' - `.getTestTypeFromColumn`:  Determines the test type from a column name based on its content.
-#' - `.getColumnInfo`:      Extracts column information from a data frame, including
-#' - `getLongData`:         Transforms a data frame into long format.
+#' - `getLongData`:   Transforms a data frame into long format.
+#' - `findUtiMatch`:  Checks if a source matches UTI criteria.
 
 library(dplyr)
 library(stringr)
@@ -389,4 +385,12 @@ getLongData <- function(data) {
     longData <- .getMICDataColumns(longData)
   }
   longData
+}
+
+#' Find UTI matches in the sources.
+#'
+#' @param sources The sources to check for UTI matches.
+#' @returns       A logical vector indicating whether each source matches UTI criteria.
+findUtiMatch <- function(sources) {
+  str_detect(tolower(sources), "urin|ureth|freecatch|cysto")
 }

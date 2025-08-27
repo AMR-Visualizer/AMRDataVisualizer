@@ -115,7 +115,7 @@ dataCleaner <- function(rawData,
         Microorganism = mo_name,
         Antimicrobial = ab_name,
         Class = ab_class,
-        UTI = str_detect(tolower(Source), "urin|ureth|freecatch|cysto")
+        UTI = findUtiMatch(Source)
       )
     
     if ("Interpretation" %in% names(chunk)) {

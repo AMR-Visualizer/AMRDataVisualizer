@@ -84,6 +84,7 @@ source("Functions/formatAntibiogram.R")
 source("Functions/dataUtilityFunctions.R")
 source("Functions/micTableFunction.R")
 source("Functions/uiUtilities.R")
+source("Functions/generalUtilities.R")
 
 # ------------------------------------------------------------------------------
 # Source external data

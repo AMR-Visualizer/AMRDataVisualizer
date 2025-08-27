@@ -1,4 +1,4 @@
-abPageUI <- function(id, data) {
+abPageUI <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(
@@ -30,17 +30,34 @@ abPageUI <- function(id, data) {
   )
 }
 
-abPageServer <- function(id, data) {
+#' Antibiogram page server.
+#' 
+#' @param id                Module id.
+#' @param reactiveData      Reactive cleaned df (including any custom breakpoints).
+#' @param customBreakpoints Reactive df containing any custom breakpoints.
+#' @return                  None.
+abPageServer <- function(id, reactiveData, customBreakpoints) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    
+
+    # ------------------------------------------------------------------------------
+    # Sub-modules
+    # ------------------------------------------------------------------------------
+
     filters <- filterPanelServer(
       "filters", 
-      data, 
+      reactiveData, 
       default_filters = c("Microorganism", "Suppress Antimicrobials", "Species", "Source", "Date"), 
       auto_populate = list()
     )
-    
+
+    # ------------------------------------------------------------------------------
+    # Module variables
+    # ------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
+    # Reactives
+    # ------------------------------------------------------------------------------
+
     plotData <- reactive({ filters$filteredData() })
     activeFilters <- reactive({ filters$activeFilters() })
     
@@ -56,238 +73,13 @@ abPageServer <- function(id, data) {
     plot2 <- reactiveVal()
     table1 <- reactiveVal()
     table2 <- reactiveVal()
-    
-    observeEvent(input$applyControl, {
-      showColors(input$abColors)
-      abType(input$abType)
-      aggByGenus(input$aggGenus)
-      lowCounts(input$handleLowCount)
-      yVar(input$yVar)
-      sortBy(input$sortBy)
-      numAb(input$numAb)
-      splitGram(input$splitGram)
-    })
-    
-    
-    # Render Legend -----------------------------------------------------------
-    output$legend <- renderUI({
-      
-      if(abType() == "Simplified"){
-        
-        # Visual Legend -----------------------------------------------------------
-        wellPanel(
-          h4("Legend", class = "legend-title"),
-          h5("Size", class = "legend-section"),
-          div(
-            class = "legend-section",
-            div(
-              class = "legend-item",
-              tags$i(class = "fas fa-circle legend-circle", style = "font-size: 10px; margin-left: 10px;"),
-              span("Low susceptibility (<70%)", class = "legend-label", style = "margin-left: 20px;")
-            ),
-            div(
-              class = "legend-item",
-              tags$i(class = "fas fa-circle legend-circle", style = "font-size: 20px; margin-left: 5px;"),
-              span("Moderate susceptibility (70 - 90%)", class = "legend-label", style = "margin-left: 15px;")
-            ),
-            div(
-              class = "legend-item",
-              tags$i(class = "fas fa-circle legend-circle", style = "font-size: 30px; margin-right: 10px;"),
-              span("High susceptibility (>90%)", class = "legend-label", style = "margin-left: 0px;")
-            )
-          ),
-          h5("Opacity", class = "legend-section"),
-          div(
-            class = "opacity-container",
-            div(
-              class = "opacity-item",
-              tags$i(class = "fas fa-circle legend-circle", style = "opacity: 0.1;"),
-              span("<30 Samples", class = "legend-label")
-            ),
-            div(class = "vertical-divider"),
-            div(
-              class = "opacity-item",
-              tags$i(class = "fas fa-circle legend-circle"),
-              span("30+ Samples", class = "legend-label")
-            )
-          ),
-          h6("Bubbles are colored by antimicrobial class."),
-          h6("Hover over a bubble for more details."),
-          class = "legendWell"
-        )
-        
-        # Classic Legend ----------------------------------------------------------
-      } else {
-        
-        wellPanel(        
-          h4("Legend", class = "legend-title"),
-          h5("Color", class = "legend-section"),
-          div(
-            class = "legend-section",
-            div(
-              class = "legend-item",
-              tags$i(icon("square"), style = "font-size: 20px; margin-left: 5px; color: grey;"),
-              span("Too few observations", class = "legend-label", style = "margin-left: 15px;")
-            ),
-            div(
-              class = "legend-item",
-              tags$i(class = "fas fa-solid fa-square", style = "font-size: 20px; margin-left: 5px; color: #D73027;"),
-              span("Low susceptibility (<70%)", class = "legend-label", style = "margin-left: 15px;")
-            ),
-            div(
-              class = "legend-item",
-              tags$i(class = "fas fa-solid fa-square", style = "font-size: 20px; margin-left: 5px; color: #FEE08B;"),
-              span("Moderate susceptibility (70 - 90%)", class = "legend-label", style = "margin-left: 15px;")
-            ),
-            div(
-              class = "legend-item",
-              tags$i(class = "fas fa-solid fa-square", style = "font-size: 20px; margin-left: 5px; color: #44CDC4;"),
-              span("High susceptibility (>90%)", class = "legend-label", style = "margin-left: 15px;")
-            )
-          ),
-          h6("Vertical divisions represent antimicrobial class."),
-          h6("Horizontal divisions represent microorganism gram stain."),
-          h6("Hover over a cell for more details."),
-          class = "legendWell")
-      }
-      
-    })
-    
-    
-    # Render Controls ---------------------------------------------------------
-    output$controls <- renderUI({
-      tagList(
-        bsCollapse(
-          id = "collapsePanel",
-          open = NULL,
-          multiple = T,
-          bsCollapsePanel(
-            HTML("Controls <span class='glyphicon glyphicon-chevron-down' data-toggle='collapse-icon' 
-            style='float: right; color: #aaa;'></span>"),         
-            selectizeInput(ns("yVar"), "Y-axis variable", selected = "Microorganism", choices = c("Microorganism", "Source")),
-            
-            conditionalPanel(
-              condition = sprintf("input['%s'] == 'Microorganism' && input['%s'] == 'Classic'",ns("yVar"), ns("abType")),
-              selectizeInput(ns("sortBy"), "Sort by", selected = "Frequency", choices = c("Alphabetical", "Frequency", "Gram Stain")),
-            ),
-            
-            conditionalPanel(
-              condition = sprintf("input['%s'] == 'Source'", ns("yVar")), 
-              selectizeInput(ns("sortBy"), "Sort by", selected = "Frequency", choices = c("Alphabetical", "Frequency")),
-            ),
-            
-            radioGroupButtons(ns("abType"), label = "Antibiogram style:", selected = "Classic", choices = c("Classic", "Simplified")),
-            radioGroupButtons(ns("handleLowCount"), label = "Handle low-count (<30) results", selected = "Include", choices = c("Include", "Exclude")),
-            numericInput(ns("numAb"), "Maximum Rows", value = 15, step = 1, min = 1, max = 30),
-            
-            conditionalPanel(
-              condition = sprintf("input['%s'] == 'Classic'", ns("abType")), 
-              materialSwitch(ns("abColors"), label = "Show colors", value = TRUE)
-            ),
-            
-            conditionalPanel(
-              condition = sprintf("input['%s'] == 'Microorganism'", ns("yVar")), 
-              materialSwitch(ns("aggGenus"), label = "Aggregate by Genus", value = F)
-            ),
-            
-            conditionalPanel(
-              condition = sprintf("input['%s'] == 'Microorganism' && input['%s'] == 'Classic'",ns("yVar"), ns("abType")),
-              materialSwitch(ns("splitGram"), label = "Split by Gram Stain", value = F)
-            ),
-            
-            actionButton(ns("applyControl"), "Apply", class = "submitButton")
-          )
-        )
-      )
-    })
-    
-    
-    # Render Content -------------------------------------------------------------
-    output$content <- renderUI({
-      data <- req(plotData())
-      
-      if (nrow(data) > 0) {
-        
-        # Show Plot ---------------------------------------------------------------
-        tagList(
-          wellPanel(
-            style = "overflow-x: scroll; overflow-y: scroll; max-height: 80vh; min-width: 500px;",
-            div(
-              class = "ab-table-wrapper",
-              if (abType() == "Classic") {
-                if (splitGram() == TRUE && yVar() == "Microorganism") {
-                  tagList(
-                    h4("Gram Negative"),
-                    fluidRow(
-                      column(align = "center", width = 12, 
-                             withSpinner(DTOutput(ns("classicAB")), type = 4, color = "#44CDC4")
-                      )
-                    ),
-                    hr(),
-                    h4("Gram Positive"),
-                    fluidRow(
-                      column(align = "center", width = 12, 
-                             withSpinner(DTOutput(ns("classicAB2")), type = 4, color = "#44CDC4")
-                      )
-                    )
-                  )
-                } else {
-                  fluidRow(
-                    column(align = "center", width = 12, 
-                           withSpinner(DTOutput(ns("classicAB")), type = 4, color = "#44CDC4")
-                    )
-                  )
-                }
-              } else {
-                withSpinner(plotlyOutput(ns("plot"), height = "750px"), type = 4, color = "#44CDC4")
-              }
-            ),
-            class = "contentWell"
-          ),
-          div(
-            downloadButton(ns("save_image"), "Save Report", class = "plotSaveButton"),
-            downloadButton(ns("save_table"), "Save Data", class = "plotSaveButton")
-          )
-        )
-        
-        # Show Error Handling -----------------------------------------------------
-      } else {
-        wellPanel(
-          style = "display: flex; align-items: center; justify-content: center; max-height: 80vh;",
-          div(
-            style = "min-width: 1150px; min-height: 750px; display: flex; align-items: center; justify-content: center;",
-            uiOutput(ns("errorHandling"))
-          ),
-          class = "contentWell"
-        )
-      }
-    })
-    
-    
-    # Define Error Handling ---------------------------------------------------
-    
-    output$errorHandling <- renderUI({
-      div(style = "display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column; text-align: center;",
-          icon("disease", style = "font-size:100px; color: #44CDC4"),
-          h4("Oops... looks like there isn't enough data for this plot."),
-          h6("Try reducing the number of filters applied or adjust your data in the 'Import' tab.")
-      )
-    })    
-    
-    # Define Plot -------------------------------------------------------------
-    plot <- reactive({
-      
-      shorten_bacteria_names <- function(names) {
-        str_replace(
-          names,
-          pattern = "\\b(\\w)\\w*\\s(\\w+)",
-          replacement = "\\1. \\2"
-        )
-      }
-      
+
+
+    # First filter the data to include in the plot
+    filteredData <- reactive({
       yVar <- yVar()
       
-      result_table <- plotData() %>%
+      plotData() %>%
         filter(Interpretation %in% c("S", "R", "I")) %>%
         mutate(
           Interpretation = ifelse(Interpretation == "S", 1, 0),
@@ -309,19 +101,29 @@ abPageServer <- function(id, data) {
           prop = round(mean(Interpretation == 1), 3),
           .groups = 'drop'
         ) %>%
-        mutate(size = cut(prop, breaks = c(0, 0.7, 0.9, 1), labels = c("s", "m", "l")))
-      
-      result_table <- result_table %>% 
+        mutate(size = cut(prop, breaks = c(0, 0.7, 0.9, 1), labels = c("s", "m", "l"))) %>% 
         { 
           if (yVar == "Microorganism") {
-            mutate(result_table, short_form = shorten_bacteria_names(.[[yVar]]))
+            mutate(., short_form = shorten_bacteria_names(.[[yVar]]))
           } else {
-            mutate(result_table, short_form = ifelse(str_length(.[[yVar]]) > 15, 
+            mutate(., short_form = ifelse(str_length(.[[yVar]]) > 15, 
                                                      str_c(str_sub(.[[yVar]], 1, 15), "..."), 
                                                      .[[yVar]]))
           }
         }%>% 
         arrange(Class, Antimicrobial)
+    })
+
+    # Define Plot -------------------------------------------------------------
+    plot <- reactive({
+      yVar <- yVar()
+      staticData <- reactiveData()
+      
+      result_table <- filteredData()
+
+      if (nrow(result_table) == 0) {
+        return(NULL)
+      }
       
       uniqueDrugs <- result_table %>%
         distinct(Antimicrobial, Class, .keep_all = TRUE) %>%
@@ -358,7 +160,7 @@ abPageServer <- function(id, data) {
         ) +
           geom_point(shape = 21, stroke = 0.5, aes(alpha = alpha)) +
           scale_alpha_identity()+
-          scale_x_discrete(label = ifelse(str_length(unique(data$Antimicrobial)) > 15, str_c(str_sub(unique(data$Antimicrobial), 1, 15), "..."), unique(data$Antimicrobial))) + 
+          scale_x_discrete(label = ifelse(str_length(unique(staticData$Antimicrobial)) > 15, str_c(str_sub(unique(staticData$Antimicrobial), 1, 15), "..."), unique(staticData$Antimicrobial))) + 
           scale_size_manual(values = c("s" = 2, "m" = 5, "l" = 7)) +
           labs(
             title = "",
@@ -534,6 +336,232 @@ abPageServer <- function(id, data) {
         
       } 
     })
+
+    # Is there data to plot?
+    hasData <- reactive({
+      if (is.null(filteredData())) {
+        return(FALSE)
+      }
+      nrow(filteredData()) > 0
+    })
+
+    # ------------------------------------------------------------------------------
+    # Render UI
+    # ------------------------------------------------------------------------------
+
+    # Render Legend -----------------------------------------------------------
+    output$legend <- renderUI({
+      
+      if(abType() == "Simplified"){
+        
+        # Visual Legend -----------------------------------------------------------
+        wellPanel(
+          h4("Legend", class = "legend-title"),
+          h5("Size", class = "legend-section"),
+          div(
+            class = "legend-section",
+            div(
+              class = "legend-item",
+              tags$i(class = "fas fa-circle legend-circle", style = "font-size: 10px; margin-left: 10px;"),
+              span("Low susceptibility (<70%)", class = "legend-label", style = "margin-left: 20px;")
+            ),
+            div(
+              class = "legend-item",
+              tags$i(class = "fas fa-circle legend-circle", style = "font-size: 20px; margin-left: 5px;"),
+              span("Moderate susceptibility (70 - 90%)", class = "legend-label", style = "margin-left: 15px;")
+            ),
+            div(
+              class = "legend-item",
+              tags$i(class = "fas fa-circle legend-circle", style = "font-size: 30px; margin-right: 10px;"),
+              span("High susceptibility (>90%)", class = "legend-label", style = "margin-left: 0px;")
+            )
+          ),
+          h5("Opacity", class = "legend-section"),
+          div(
+            class = "opacity-container",
+            div(
+              class = "opacity-item",
+              tags$i(class = "fas fa-circle legend-circle", style = "opacity: 0.1;"),
+              span("<30 Samples", class = "legend-label")
+            ),
+            div(class = "vertical-divider"),
+            div(
+              class = "opacity-item",
+              tags$i(class = "fas fa-circle legend-circle"),
+              span("30+ Samples", class = "legend-label")
+            )
+          ),
+          h6("Bubbles are colored by antimicrobial class."),
+          h6("Hover over a bubble for more details."),
+          class = "legendWell"
+        )
+        
+        # Classic Legend ----------------------------------------------------------
+      } else {
+        
+        wellPanel(        
+          h4("Legend", class = "legend-title"),
+          h5("Color", class = "legend-section"),
+          div(
+            class = "legend-section",
+            div(
+              class = "legend-item",
+              tags$i(icon("square"), style = "font-size: 20px; margin-left: 5px; color: grey;"),
+              span("Too few observations", class = "legend-label", style = "margin-left: 15px;")
+            ),
+            div(
+              class = "legend-item",
+              tags$i(class = "fas fa-solid fa-square", style = "font-size: 20px; margin-left: 5px; color: #D73027;"),
+              span("Low susceptibility (<70%)", class = "legend-label", style = "margin-left: 15px;")
+            ),
+            div(
+              class = "legend-item",
+              tags$i(class = "fas fa-solid fa-square", style = "font-size: 20px; margin-left: 5px; color: #FEE08B;"),
+              span("Moderate susceptibility (70 - 90%)", class = "legend-label", style = "margin-left: 15px;")
+            ),
+            div(
+              class = "legend-item",
+              tags$i(class = "fas fa-solid fa-square", style = "font-size: 20px; margin-left: 5px; color: #44CDC4;"),
+              span("High susceptibility (>90%)", class = "legend-label", style = "margin-left: 15px;")
+            )
+          ),
+          h6("Vertical divisions represent antimicrobial class."),
+          h6("Horizontal divisions represent microorganism gram stain."),
+          h6("Hover over a cell for more details."),
+          class = "legendWell")
+      }
+      
+    })
+    
+    
+    # Render Controls ---------------------------------------------------------
+    output$controls <- renderUI({
+      tagList(
+        bsCollapse(
+          id = "collapsePanel",
+          open = NULL,
+          multiple = T,
+          bsCollapsePanel(
+            HTML("Controls <span class='glyphicon glyphicon-chevron-down' data-toggle='collapse-icon' 
+            style='float: right; color: #aaa;'></span>"),         
+            selectizeInput(ns("yVar"), "Y-axis variable", selected = "Microorganism", choices = c("Microorganism", "Source")),
+            
+            conditionalPanel(
+              condition = sprintf("input['%s'] == 'Microorganism' && input['%s'] == 'Classic'",ns("yVar"), ns("abType")),
+              selectizeInput(ns("sortBy"), "Sort by", selected = "Frequency", choices = c("Alphabetical", "Frequency", "Gram Stain")),
+            ),
+            
+            conditionalPanel(
+              condition = sprintf("input['%s'] == 'Source'", ns("yVar")), 
+              selectizeInput(ns("sortBy"), "Sort by", selected = "Frequency", choices = c("Alphabetical", "Frequency")),
+            ),
+            
+            radioGroupButtons(ns("abType"), label = "Antibiogram style:", selected = "Classic", choices = c("Classic", "Simplified")),
+            radioGroupButtons(ns("handleLowCount"), label = "Handle low-count (<30) results", selected = "Include", choices = c("Include", "Exclude")),
+            numericInput(ns("numAb"), "Maximum Rows", value = 15, step = 1, min = 1, max = 30),
+            
+            conditionalPanel(
+              condition = sprintf("input['%s'] == 'Classic'", ns("abType")), 
+              materialSwitch(ns("abColors"), label = "Show colors", value = TRUE)
+            ),
+            
+            conditionalPanel(
+              condition = sprintf("input['%s'] == 'Microorganism'", ns("yVar")), 
+              materialSwitch(ns("aggGenus"), label = "Aggregate by Genus", value = F)
+            ),
+            
+            conditionalPanel(
+              condition = sprintf("input['%s'] == 'Microorganism' && input['%s'] == 'Classic'",ns("yVar"), ns("abType")),
+              materialSwitch(ns("splitGram"), label = "Split by Gram Stain", value = F)
+            ),
+            
+            actionButton(ns("applyControl"), "Apply", class = "submitButton")
+          )
+        )
+      )
+    })
+    
+    
+    # Render Content -------------------------------------------------------------
+    output$content <- renderUI({
+      tagList(
+        uiOutput(ns("has_data")),
+        uiOutput(ns("has_no_data"))
+      )
+    })
+
+    # If there is data, show the plot
+    output$has_data <- renderUI({
+      req(hasData())
+
+      tagList(
+          wellPanel(
+            style = "overflow-x: scroll; overflow-y: scroll; max-height: 80vh; min-width: 500px;",
+            div(
+              class = "ab-table-wrapper",
+              if (abType() == "Classic") {
+                if (splitGram() == TRUE && yVar() == "Microorganism") {
+                  tagList(
+                    h4("Gram Negative"),
+                    fluidRow(
+                      column(align = "center", width = 12, 
+                             withSpinner(DTOutput(ns("classicAB")), type = 4, color = "#44CDC4")
+                      )
+                    ),
+                    hr(),
+                    h4("Gram Positive"),
+                    fluidRow(
+                      column(align = "center", width = 12, 
+                             withSpinner(DTOutput(ns("classicAB2")), type = 4, color = "#44CDC4")
+                      )
+                    )
+                  )
+                } else {
+                  fluidRow(
+                    column(align = "center", width = 12, 
+                           withSpinner(DTOutput(ns("classicAB")), type = 4, color = "#44CDC4")
+                    )
+                  )
+                }
+              } else {
+                withSpinner(plotlyOutput(ns("plot"), height = "750px"), type = 4, color = "#44CDC4")
+              }
+            ),
+            class = "contentWell"
+          ),
+          div(
+            uiOutput(ns("bp_download")),
+            downloadButton(ns("save_image"), "Save Report", class = "plotSaveButton"),
+            downloadButton(ns("save_table"), "Save Data", class = "plotSaveButton")
+          )
+        )
+    })
+
+    # Show the custom breakpoint download only if custom breakpoints are present
+    output$bp_download <- renderUI({
+      req(customBreakpoints())
+      req(nrow(customBreakpoints()) > 0)
+      downloadButton(ns("save_breakpoints"), "Save Custom Breakpoints", class = "plotSaveButton")
+    })
+
+    # If there is no data, show message to user
+    output$has_no_data <- renderUI({
+      req(!hasData())
+
+      wellPanel(
+        style = "display: flex; align-items: center; justify-content: center; max-height: 80vh;",
+        div(
+          style = "min-width: 1150px; min-height: 750px; display: flex; align-items: center; justify-content: center;",
+          div(
+            style = "display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column; text-align: center;",
+            icon("disease", style = "font-size:100px; color: #44CDC4"),
+            h4("Oops... looks like there isn't enough data for this plot."),
+            h6("Try reducing the number of filters applied or adjust your data in the 'Import' tab.")
+          )
+        ),
+        class = "contentWell"
+      )
+    })  
     
     output$plot <- renderPlotly({
       plot()
@@ -548,7 +576,50 @@ abPageServer <- function(id, data) {
     })
     
 
-# Save Report -------------------------------------------------------------
+    # ------------------------------------------------------------------------------
+    # Utility functions
+    # ------------------------------------------------------------------------------
+
+    shorten_bacteria_names <- function(names) {
+      str_replace(
+        names,
+        pattern = "\\b(\\w)\\w*\\s(\\w+)",
+        replacement = "\\1. \\2"
+      )
+    }
+
+    # ------------------------------------------------------------------------------
+    # Observes
+    # ------------------------------------------------------------------------------
+    
+    observeEvent(input$applyControl, {
+      showColors(input$abColors)
+      abType(input$abType)
+      aggByGenus(input$aggGenus)
+      lowCounts(input$handleLowCount)
+      yVar(input$yVar)
+      sortBy(input$sortBy)
+      numAb(input$numAb)
+      splitGram(input$splitGram)
+    })
+    
+    
+    # ------------------------------------------------------------------------------
+    # Download Handlers
+    # ------------------------------------------------------------------------------
+
+
+    # Save all custom breakpoints used in the app
+    output$save_breakpoints <- downloadHandler(
+      filename = function() {
+        paste("Custom_Breakpoints.csv")
+      },
+      content = function(file) {
+          write.csv(customBreakpoints(), file, row.names = FALSE)
+      }
+    )
+    
+    # Save Report -------------------------------------------------------------
     output$save_image <- downloadHandler(
       
       filename = "Antibiogram.html",

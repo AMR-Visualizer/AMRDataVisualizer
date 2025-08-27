@@ -45,7 +45,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
     # ------------------------------------------------------------------------------
 
     # A custom guideline name to use in the clinical breakpoints df.
-    customBreakpointName <- paste("CUSTOM BREAKPOINTS", year(Sys.Date()))
+    customBreakpointName <- getCustomGuidelineName()
 
     # The expected format of an empty clinical breakpoints df.
     emptyCustomBp <- AMR::clinical_breakpoints[0, ] %>%
@@ -264,7 +264,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
           bind_rows(matchingData)
       }
 
-      data <- data %>%
+      data %>%
         arrange(InternalID)
     })
 
@@ -374,6 +374,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
 
     # Only show the custom breakpoints message if there is a single microorganism selected
     output$breaksMessage <- renderUI({
+      req(!showErrorPanel())
       getBreakpointsMessage(
         selectedBreakpoints(),
         isCustom = selectedBreakpoints()$guideline == customBreakpointName
@@ -486,7 +487,6 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
       selectedBp <- selectedBreakpoints()
 
       if (customBreakpointName %in% selectedBp$guideline) {
-        print("Custom breakpoints are set")
         enableInputs("deleteCustomBreakpoints")
         disableInputs(c("addCustomBreakpoints", "customSBreakpoint", "customRBreakpoint"))
         req(FALSE)
@@ -496,8 +496,6 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
 
       # Only reaches here if no custom breakpoints are set (Add has not been clicked yet)
       enableInputs(c("customSBreakpoint", "customRBreakpoint"))
-      print("enable numeric inputs")
-      print(canCreateCustomBreakpoints())
       if (canCreateCustomBreakpoints()) {
         enableInputs("addCustomBreakpoints")
       } else {
@@ -539,7 +537,10 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
       bindEvent(input$deleteCustomBreakpoints)
 
 
-    # Return the cleaned data with custom breakpoints applied.
-    return(dataWithCustomBreakpoints)
+    # Return the cleaned data with custom breakpoints applied and all custom breakpoints.
+    return(list(
+      dataWithCustomBreakpoints = dataWithCustomBreakpoints,
+      customBreakpoints = allCustomBreakpoints
+    ))
   })
 }
