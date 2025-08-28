@@ -84,8 +84,8 @@ dashboardPage(
       tabItem(tabName = "mapTab",      mapPageUI("mapModule")),
       tabItem(tabName = "trendsTab",   uiOutput("tsUI")),
       tabItem(tabName = "pathogenTab", uiOutput("pathogenUI")),
-      tabItem(tabName = "mdrTab",      uiOutput("mdrUI")),
-      tabItem(tabName = "exploreTab",  uiOutput("exploreUI"))
+      tabItem(tabName = "mdrTab",      mdrPageUI("mdrModule")),
+      tabItem(tabName = "exploreTab",  explorePageUI("exModule"))
     )
   )
   
