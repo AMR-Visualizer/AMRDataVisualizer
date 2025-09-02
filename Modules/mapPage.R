@@ -1,4 +1,4 @@
-mapPageUI <- function(id, data) {
+mapPageUI <- function(id) {
   ns <- NS(id)
   
   tagList(
@@ -70,23 +70,19 @@ mapPageUI <- function(id, data) {
   )
 }
 
-mapPageServer <- function(id, data) {
+mapPageServer <- function(id, reactiveData) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     filters <- filterPanelServer(
       "filters", 
-      data, 
+      reactiveData, 
       default_filters = c("Antimicrobial", "Microorganism", "Species", "Source", "Date"), 
       auto_populate = list(Antimicrobial = TRUE, Microorganism = TRUE)
     )
     
     plotData <- reactive({ filters$filteredData() })
     activeFilters <- reactive({ filters$activeFilters() })
-
-    initialData <- reactive({
-      data
-    })
 
     output$content <- renderUI({
       req(plotData())
@@ -140,16 +136,19 @@ mapPageServer <- function(id, data) {
       )
     })
 
-    baseMap <- preprocessMapData(data)
+    baseMap <- reactive({
+      req(reactiveData())
+      preprocessMapData(reactiveData())
+    })
 
     map_reactive <- reactive({
-      req(baseMap)
+      req(baseMap())
       req(plotData())
 
       mapData <- preprocessPlotData(plotData())
-      mapData <- matchSubregions(baseMap, mapData)
+      mapData <- matchSubregions(baseMap(), mapData)
 
-      map <- baseMap %>%
+      map <- baseMap() %>%
         left_join(mapData, by = c("Region", "Subregion")) %>%
         mutate(Subregion = str_to_sentence(Subregion))
 

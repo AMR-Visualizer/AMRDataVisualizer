@@ -83,6 +83,8 @@ source("Functions/parseWideColumns.R")
 source("Functions/formatAntibiogram.R")
 source("Functions/dataUtilityFunctions.R")
 source("Functions/micTableFunction.R")
+source("Functions/uiUtilities.R")
+source("Functions/generalUtilities.R")
 
 # ------------------------------------------------------------------------------
 # Source external data
@@ -110,7 +112,15 @@ g_metadataCols <- c(
   "host_species_long",
   "comment",
   "species",
-  "row_id"
+  "row_id",
+  "date",
+  "day",
+  "order",
+  "country",
+  "month",
+  "state",
+  "id",
+  "county"
 )
 
 # Test mapping values
