@@ -6,13 +6,13 @@ library(testthat)
 source("Tests/testVariables.R")
 
 
-singleTestResult <- getLongData(read_csv(file.path(testDataDir, singleTestName)))
-singleNamedTestWideData <- read_csv(file.path(testDataDir, singleNamedTestName))
-singleNamedTestResult <- getLongData(singleNamedTestWideData)
-twoTestResult <- getLongData(read_csv(file.path(testDataDir, wideFormatFile)) %>% head(50))
-threeTestResult <- getLongData(read_csv(file.path(testDataDir, threeTestsName)))
-spiltMicWideData <- read_csv(file.path(testDataDir, splitMicName))
-split_mic_result <- getLongData(spiltMicWideData)
+singleTestResult <- getLongData(read_csv(file.path(testDataDir, singleTestName)), TRUE)
+singleNamedTestWideData <- read_csv(file.path(testDataDir, singleNamedTestName), TRUE)
+singleNamedTestResult <- getLongData(singleNamedTestWideData, TRUE)
+twoTestResult <- getLongData(read_csv(file.path(testDataDir, wideFormatFile)) %>% head(50), TRUE)
+threeTestResult <- getLongData(read_csv(file.path(testDataDir, threeTestsName)), TRUE)
+spiltMicWideData <- read_csv(file.path(testDataDir, splitMicName), TRUE)
+split_mic_result <- getLongData(spiltMicWideData, TRUE)
 
 
 #' Does the data have the expected number of rows.
@@ -92,7 +92,7 @@ test_that("Spilt MIC column test data is correctly transformed", {
   # Test with some other column names
   colnames(spiltMicWideData) <- gsub("_SIGN", "_MIC_SIGN", colnames(spiltMicWideData))
   colnames(spiltMicWideData) <- gsub("_VALUE", "_MIC_VAL", colnames(spiltMicWideData))
-  splitMicResult2 <- getLongData(spiltMicWideData)
+  splitMicResult2 <- getLongData(spiltMicWideData, TRUE)
   expectedNrowTest(splitMicResult2)
   expectedColnamesTest(splitMicResult2, c("MIC_Sign", "MIC_Value"))
   oneDrugPerRowTest(splitMicResult2)
@@ -117,7 +117,7 @@ test_that("Removing blank columns from data", {
     ) %>%
     rename(" " = blank1, "  " = blank2, "      " = blank3)
 
-  longData <- getLongData(data)
+  longData <- getLongData(data, TRUE)
 
   expectedNrowTest(longData)
   expectedColnamesTest(longData)

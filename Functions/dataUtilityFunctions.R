@@ -303,16 +303,17 @@ library(purrr)
 #' - Use that information to iterate through the unique test types found.
 #' - For each test type pivot the appropriate columns to long format and add to the long data.
 #'
-#' @param data  The data frame to be transformed.
+#' @param data          The data frame to be transformed.
+#' @param isWideFormat  Logical indicating whether the data is in wide format (selected by user).
 #' @returns A long form data frame.
 #' @seealso {@link{.getColumnInfo}} for getting the column information.
 #' @seealso {@link{.getMICDataColumns}} for extracting MIC sign and value columns.
-getLongData <- function(data) {
+getLongData <- function(data, isWideFormat) {
   if (is.null(data) || nrow(data) == 0) {
     warning("Input data is NULL or empty. Not running getLongData.")
     return(data)
   }
-  if (.isLongData(data)) {
+  if (!isWideFormat) {
     message("Data is already in long format. Returning original data.")
     return(data)
   }

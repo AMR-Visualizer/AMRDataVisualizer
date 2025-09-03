@@ -18,7 +18,7 @@ importDataServer <- function(id) {
     ns <- session$ns
     
     # Initiate reactive variables ---------------------------------------------
-    upload <- reactiveValues(content = NULL, file = NULL)
+    upload <- reactiveValues(content = NULL, file = NULL, isWideFormat = FALSE)
     formattedData <- reactiveVal(NULL)
     cleanedData <- reactiveVal(NULL)
     verifiedData <- reactiveVal(NULL)
@@ -61,17 +61,48 @@ importDataServer <- function(id) {
     observeEvent(input$fileUploader, {
       upload$file <- input$fileUploader
     })
+
+    # When a user uploads a file, ask if it is long or wide format
+    observeEvent(upload$file, {
+      req(upload$file)
+      upload$isWideFormat <- FALSE # Reset to FALSE when a new file is uploaded
+      showModal(modalDialog(
+        title = "What format is your data in?",
+        h3("What is Wide-Format Data?"),  
+        h5("Wide-format data has a single row for each sample submitted for testing, with each antimicrobial tested represented as a separate column on the same row."),  
+        h3("What is Long-Format Data?"),  
+        h5("Long-format data organizes each antimicrobial test result as a separate row, meaning a single sample may appear multiple times in the dataset—once for each antimicrobial tested."), 
+        hr(),
+        radioGroupButtons(
+          inputId = ns("dataFormat"),
+          label = "Which format of data are you using?",
+          choices = c("Long", "Wide"),
+          selected = character(0),
+          justified = TRUE
+        ),
+        easyClose = FALSE,
+        footer = NULL
+      ))
+    })
+
+    # When the user selects the data format, store it and remove the modal
+    observeEvent(input$dataFormat, {
+      req(input$dataFormat)
+      upload$isWideFormat <- input$dataFormat == "Wide"
+      removeModal()
+    })
     
     # Read-in selected data (either upload or dropdown) -----------------------
     ##Checks if "verified" (doesn't need to be cleaned) -----------------------
     observeEvent(input$submit, {
       if (!is.null(upload$file)) {
+        isWideFormat <- input$dataFormat == "Wide"
         ext <- file_ext(upload$file$name)
         upload$content <- switch(ext,
                                  "csv" = {
                                    data <- vroom(upload$file$datapath, delim = ",")
                                    verifiedData(FALSE)  # Always set CSV as not verified
-                                   getLongData(data)
+                                   getLongData(data, isWideFormat)
                                  },
                                  "parquet" = {
                                    parquet_file <- read_parquet(upload$file$datapath)
@@ -85,7 +116,7 @@ importDataServer <- function(id) {
                                      verifiedData(FALSE)
                                    }
                                    # TODO: Test with this file type
-                                   getLongData(parquet_file)  # Use only the data for the 'content'
+                                   getLongData(parquet_file, isWideFormat)  # Use only the data for the 'content'
                                  },
                                  NULL)
       } else if (input$dataSelect != "Select a dataset") {
