@@ -136,22 +136,29 @@ dataCleaner <- function(rawData,
     }
     
     if (!"Interpretation" %in% names(cleanedChunk)) {
-      unique_rows <- cleanedChunk %>%
-        distinct(MIC, Species, UTI, Microorganism, Antimicrobial) %>%
-        rowwise() %>%
-        mutate(Interpretation = as.sir(MIC,
-                                       host = Species,
-                                       breakpoint_type = "animal",
-                                       UTI = UTI,
-                                       mo = Microorganism,
-                                       ab = Antimicrobial,
-                                       guideline = breakpoint,
-                                       substitute_missing_r_breakpoint = FALSE,
-                                       capped_mic_handling = "standard",
-                                       clean = TRUE))
+      
+      key_cols <- c("MIC", "Species", "UTI", "Microorganism", "Antimicrobial")
+      
+      sir_map <- cleanedChunk %>%
+        select(all_of(key_cols)) %>%
+        distinct() %>%
+        mutate(
+          Interpretation = as.sir(
+            x  = MIC,
+            host = Species,
+            breakpoint_type = "animal",
+            UTI = UTI,
+            mo  = Microorganism,
+            ab  = Antimicrobial,
+            guideline = breakpoint,
+            substitute_missing_r_breakpoint = FALSE,
+            capped_mic_handling = "standard",
+            clean = TRUE
+          ) |> as.character()
+        )
       
       cleanedChunk <- cleanedChunk %>%
-        left_join(unique_rows, by = c("MIC", "Species", "UTI", "Microorganism", "Antimicrobial"))
+        left_join(sir_map, by = key_cols)
     }
     
     cleanedChunk <- cleanedChunk %>%
