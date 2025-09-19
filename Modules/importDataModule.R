@@ -22,6 +22,7 @@ importDataServer <- function(id) {
     formattedData <- reactiveVal(NULL)
     cleanedData <- reactiveVal(NULL)
     verifiedData <- reactiveVal(NULL)
+    wideData <- reactiveVal(FALSE)
     reactiveData <- reactiveVal(NULL)
     selections <- reactiveValues(
       idCol = NULL,
@@ -62,47 +63,16 @@ importDataServer <- function(id) {
       upload$file <- input$fileUploader
     })
 
-    # When a user uploads a file, ask if it is long or wide format
-    observeEvent(upload$file, {
-      req(upload$file)
-      upload$isWideFormat <- FALSE # Reset to FALSE when a new file is uploaded
-      showModal(modalDialog(
-        title = "What format is your data in?",
-        h3("What is Wide-Format Data?"),  
-        h5("Wide-format data has a single row for each sample submitted for testing, with each antimicrobial tested represented as a separate column on the same row."),  
-        h3("What is Long-Format Data?"),  
-        h5("Long-format data organizes each antimicrobial test result as a separate row, meaning a single sample may appear multiple times in the dataset—once for each antimicrobial tested."), 
-        hr(),
-        radioGroupButtons(
-          inputId = ns("dataFormat"),
-          label = "Which format of data are you using?",
-          choices = c("Long", "Wide"),
-          selected = character(0),
-          justified = TRUE
-        ),
-        easyClose = FALSE,
-        footer = NULL
-      ))
-    })
-
-    # When the user selects the data format, store it and remove the modal
-    observeEvent(input$dataFormat, {
-      req(input$dataFormat)
-      upload$isWideFormat <- input$dataFormat == "Wide"
-      removeModal()
-    })
-    
     # Read-in selected data (either upload or dropdown) -----------------------
     ##Checks if "verified" (doesn't need to be cleaned) -----------------------
     observeEvent(input$submit, {
       if (!is.null(upload$file)) {
-        isWideFormat <- input$dataFormat == "Wide"
         ext <- file_ext(upload$file$name)
         upload$content <- switch(ext,
                                  "csv" = {
                                    data <- vroom(upload$file$datapath, delim = ",")
                                    verifiedData(FALSE)  # Always set CSV as not verified
-                                   getLongData(data, isWideFormat)
+                                   data
                                  },
                                  "parquet" = {
                                    parquet_file <- read_parquet(upload$file$datapath)
@@ -115,8 +85,7 @@ importDataServer <- function(id) {
                                    } else {
                                      verifiedData(FALSE)
                                    }
-                                   # TODO: Test with this file type
-                                   getLongData(parquet_file, isWideFormat)  # Use only the data for the 'content'
+                                  data
                                  },
                                  NULL)
       } else if (input$dataSelect != "Select a dataset") {
@@ -397,18 +366,69 @@ importDataServer <- function(id) {
     
     output$valueInputs <- renderUI({
       if (selections$valueType == "SIR") {
-        
-        tagList(
-          selectizeInput(ns("drugCol"), "Antimicrobial", choices = c("Not Present", names(reactiveData())), selected = selections$drugCol),
-          selectizeInput(ns("sirCol"), "Interpretations", choices = c("Not Present", names(reactiveData())), selected = selections$sirCol)
-        )
-        
+        if (wideData() == TRUE) {
+          tagList(
+            selectizeInput(
+              ns("drugCol"),
+              "Antimicrobial",
+              choices = c("Not Present", names(reactiveData())),
+              selected = selections$drugCol
+            ),
+            selectizeInput(
+              ns("sirCol"),
+              "Interpretations",
+              choices = c("Not Present", names(reactiveData())),
+              selected = selections$sirCol
+            ),
+            actionButton(
+              ns("adjustWideCols"),
+              "Adjust Test Result Columns",
+              class = "clearButton",
+              style = "margin-top: 25px;"
+            )
+          )
+        } else {
+          tagList(
+            selectizeInput(
+              ns("drugCol"),
+              "Antimicrobial",
+              choices = c("Not Present", names(reactiveData())),
+              selected = selections$drugCol
+            ),
+            selectizeInput(
+              ns("sirCol"),
+              "Interpretations",
+              choices = c("Not Present", names(reactiveData())),
+              selected = selections$sirCol
+            )
+          )
+        }
       } else {
         tagList(
-          selectizeInput(ns("drugCol"), "Antimicrobial", choices = c("Not Present", names(reactiveData())), selected = selections$drugCol),
-          selectizeInput(ns("micSignCol"), "MIC Sign", choices = c("Not Present", names(reactiveData())), selected = selections$micSignCol),
-          selectizeInput(ns("micValCol"), "MIC Value", choices = c("Not Present", names(reactiveData())), selected = selections$micValCol),
-          selectizeInput(ns("selectedBreakpoint"), "Breakpoint", choices = unique(AMR::clinical_breakpoints$guideline), selected = selections$selectedBreakpoint)
+          selectizeInput(
+            ns("drugCol"),
+            "Antimicrobial",
+            choices = c("Not Present", names(reactiveData())),
+            selected = selections$drugCol
+          ),
+          selectizeInput(
+            ns("micSignCol"),
+            "MIC Sign",
+            choices = c("Not Present", names(reactiveData())),
+            selected = selections$micSignCol
+          ),
+          selectizeInput(
+            ns("micValCol"),
+            "MIC Value",
+            choices = c("Not Present", names(reactiveData())),
+            selected = selections$micValCol
+          ),
+          selectizeInput(
+            ns("selectedBreakpoint"),
+            "Breakpoint",
+            choices = unique(AMR::clinical_breakpoints$guideline),
+            selected = selections$selectedBreakpoint
+          )
         )
       }
     })
@@ -597,8 +617,201 @@ importDataServer <- function(id) {
       selections$micSignCol <- detectMICSignColumn(upload$content) %||% "Not Present"
       selections$micValCol <- detectMICValueColumn(upload$content) %||% "Not Present"
     })
-    
-    
+
+    # If wide-data is detected ------------------------------------------------
+    wideFormatModal <- function(ns) {
+      modalDialog(
+        title = "Attention",
+        h4(
+          "The uploaded file contains many columns, which suggests your data may be in wide format."
+        ),
+
+        h3("What is Wide-Format Data?"),
+        h5(
+          "Wide-format data has a single row for each sample submitted for testing, with each antimicrobial tested represented as a separate column on the same row."
+        ),
+
+        h3("What is Long-Format Data?"),
+        h5(
+          "Long-format data organizes each antimicrobial test result as a separate row, meaning a single sample may appear multiple times in the dataset—once for each antimicrobial tested."
+        ),
+
+        hr(),
+
+        radioGroupButtons(
+          inputId = ns("dataFormat"),
+          label = "Which format of data are you using?",
+          choices = c("Long", "Wide"),
+          selected = character(0),
+          justified = TRUE
+        ),
+
+        uiOutput(ns("abColsUI")),
+        easyClose = FALSE,
+        footer = NULL
+      )
+    }
+
+    # Trigger Wide Data Modal when Data > 16 columns or Manually --------------
+    observeEvent(upload$content, {
+      req(upload$content)
+
+      if (ncol(upload$content) > 16) {
+        showModal(wideFormatModal(ns))
+      }
+    })
+
+    observeEvent(input$adjustWideCols, {
+      showModal(wideFormatModal(ns))
+    })
+
+    # Store data format as "Wide" or "Long" -----------------------------------
+    observe({
+      req(input$dataFormat)
+      if (input$dataFormat == "Wide") {
+        wideData(TRUE)
+      } else {
+        wideData(FALSE)
+      }
+    })
+
+    # Wide-data modal logic ---------------------------------------------------
+    output$abColsUI <- renderUI({
+      if (is.null(input$dataFormat)) {
+        return(NULL)
+
+        # If long-data selected ---------------------------------------------------
+      } else if (input$dataFormat == "Long") {
+        tagList(
+          h5("Thank you. You may close this dialog."),
+          hr(),
+          div(
+            actionButton(ns("closeAbCols"), "Close", class = "clearButton"),
+            style = "text-align: right;"
+          )
+        )
+
+        # If wide-data selected ---------------------------------------------------
+      } else {
+        tagList(
+          div(
+            style = "width: 100%;",
+            uiOutput(ns("abColWarning")),
+            textInput(
+              inputId = ns("abCols"),
+              label = "Select columns containing your test results (e.g. 1,3,5,6-12)",
+              value = NULL
+            )
+          ),
+
+          br(),
+          p(
+            "Confirm that only your susceptibility test result columns are highlighted below. Adjust the column range above if needed."
+          ),
+          div(
+            DTOutput(ns("rawDataPreview2")),
+            style = "overflow-x: auto;"
+          ),
+          hr(),
+          div(
+            actionButton(
+              ns("submitAbCols"),
+              "Confirm columns",
+              class = "submitButton"
+            ),
+            style = "text-align: right;"
+          )
+        )
+      }
+    })
+
+    # View first line of data to assist with wide data column selection -------
+    output$rawDataPreview2 <- renderDT({
+      abColsVal <- input$abCols
+      col_indices <- numeric(0)
+
+      if (!is.null(abColsVal) && nchar(trimws(abColsVal)) > 0) {
+        col_indices <- parseColSpec(abColsVal)
+      }
+
+      valid_cols <- seq_len(ncol(upload$content))
+      col_indices <- intersect(col_indices, valid_cols)
+
+      data_preview <- head(upload$content, 1)
+      data_with_colnames <- rbind(colnames(upload$content), data_preview)
+      colnames(data_with_colnames) <- seq_len(ncol(data_with_colnames))
+
+      dt <- datatable(
+        data_with_colnames,
+        options = list(
+          pageLength = 5,
+          dom = 't',
+          ordering = FALSE,
+          searching = FALSE,
+          paging = FALSE,
+          info = FALSE
+        )
+      )
+
+      if (length(col_indices) > 0) {
+        dt <- dt %>%
+          formatStyle(
+            columns = col_indices,
+            backgroundColor = "#44CDC4",
+            fontWeight = "bold"
+          )
+      }
+
+      dt
+    })
+
+    # Long-data modal "Close" button logic ------------------------------------
+    observeEvent(input$closeAbCols, {
+      removeModal()
+    })
+
+    # Logic for "Submit wide data columns" button -----------------------------
+    observeEvent(input$submitAbCols, {
+      if (!is.null(input$abCols) && nchar(trimws(input$abCols)) > 0) {
+        showModal(modalDialog(
+          title = "Processing...",
+          "Please wait while we prepare your data.",
+          footer = NULL,
+          easyClose = FALSE
+        ))
+
+        req(reactiveData(), upload$content)
+
+        data <- reactiveData()
+        abColsVal <- input$abCols
+        col_indices <- parseColSpec(abColsVal)
+
+        valid_cols <- seq_len(ncol(upload$content))
+        col_indices <- intersect(col_indices, valid_cols)
+
+        if (length(col_indices) > 0) {
+          long_df <- getLongData(reactiveData(), col_indices)
+
+          selections$drugCol <- "Antimicrobial"
+          selections$sirCol <- ifelse("Interpretation" %in% colnames(long_df), "Interpretation", "Not Present")
+          selections$micSignCol <- ifelse("MIC_Sign" %in% colnames(long_df), "MIC_Sign", "Not Present")
+          selections$micValCol <- ifelse("MIC Value" %in% colnames(long_df), "MIC Value", "Not Present")
+
+          reactiveData(long_df)
+        } else {
+          output$abColWarning <- renderUI({
+            h6("No valid columns were selected. Please revise your input.")
+          })
+        }
+
+        removeModal()
+      } else {
+        output$abColWarning <- renderUI({
+          h6("Select at least 1 column to proceed.", style = "color: red;")
+        })
+      }
+    })
+
     # Define Formatted Data ---------------------------------------------------
     observe({
       req(reactiveData())

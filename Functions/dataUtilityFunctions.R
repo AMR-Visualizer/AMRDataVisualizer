@@ -90,13 +90,28 @@ library(purrr)
 #' @seealso {@link{.isSirTest}} and {@link{.isMicTest}} for checking the test type.
 .getTestTypeFromColumn <- function(abbreviation, data) {
   abbreviation <- tolower(abbreviation)
-  isSir <- .isSirTest(data)
-  if (isSir != "unknown") {
-    return(isSir)
-  }
-  isMic <- .isMicTest(data)
-  if (isMic != "unknown") {
-    return(isMic)
+
+  # Try as.sir() without mo (for literal S/I/R, works), else try as.mic()
+  sir_attempt <- tryCatch(
+    {
+      result <- AMR::as.sir(data)
+      TRUE
+    },
+    error = function(e) FALSE
+  )
+
+  if (sir_attempt) {
+    return("SIR")
+  } else {
+    # Try as.mic
+    mic_attempt <- tryCatch(
+      {
+        result <- AMR::as.mic(data)
+        TRUE
+      },
+      error = function(e) FALSE
+    )
+    if (mic_attempt) return("MIC")
   }
   warning(
     "!! unknown test type for abbreviation:",
@@ -122,7 +137,7 @@ library(purrr)
 #' @returns A data frame with the the columns described above.
 #' @seealso `AMR::ab_name` for matching antibiotic names.
 #' @seealso {@link{.getTestTypeFromColumn}} for determining the test type.
-.getColumnInfo <- function(data) {
+.getColumnInfo <- function(data, testColumns) {
   #' Separate the column names by '_' (if present). This will split the column names into
   #' the 'first' and 'second' columns.
   #' If there is no '_' in the column name, the 'second' column will be NA.
@@ -130,7 +145,7 @@ library(purrr)
     index = seq_len(ncol(data)),
     original_col_name = colnames(data),
     column_name = colnames(data),
-    is_ab = !tolower(colnames(data)) %in% g_metadataCols,
+    is_ab = seq_along(colnames(data)) %in% testColumns,
     stringsAsFactors = FALSE
   ) %>%
     tidyr::separate_wider_delim(
@@ -139,10 +154,6 @@ library(purrr)
       names = c("first", "second"),
       too_few = "align_start",
       too_many = "merge"
-    ) %>%
-    mutate(
-      is_ab = !tolower(first) %in% g_metadataCols & is_ab,
-      is_ab = !tolower(second) %in% g_metadataCols & is_ab
     )
 
   # If a metadata column set `ab_name` to the original column name.
@@ -179,7 +190,6 @@ library(purrr)
   )
   # Rename the column with the most ab matches to "ab_name"
   columnInfo <- columnInfo %>%
-    mutate(is_ab = is_ab & !is.na(matched_ab_name)) %>%
     rename(ab_name = !!sym(abColName), test_name = !!sym(testColName))
 
   # Remove metadata columns for the pivot to long format.
@@ -308,7 +318,7 @@ library(purrr)
 #' @returns A long form data frame.
 #' @seealso {@link{.getColumnInfo}} for getting the column information.
 #' @seealso {@link{.getMICDataColumns}} for extracting MIC sign and value columns.
-getLongData <- function(data, isWideFormat) {
+getLongData <- function(data, testColumns, isWideFormat = TRUE) {
   if (is.null(data) || nrow(data) == 0) {
     warning("Input data is NULL or empty. Not running getLongData.")
     return(data)
@@ -320,8 +330,7 @@ getLongData <- function(data, isWideFormat) {
   data$row_id <- seq_len(nrow(data))
 
   # Get the column information.
-  columnInfo <- .getColumnInfo(data) %>%
-    filter(!is_ab | tolower(test_name) %in% c(names(g_test_mapping), "unknown"))
+  columnInfo <- .getColumnInfo(data, testColumns)
 
   # Unique tests found in the datas column names.
   tests <- unique(columnInfo$test_name)
@@ -331,7 +340,7 @@ getLongData <- function(data, isWideFormat) {
   finalColumns <- columnInfo %>%
     filter(!is_ab) %>%
     pull(ab_name)
-  finalColumns <- c(finalColumns, "ab_name", "drug_name", tests)
+  finalColumns <- c(finalColumns, "ab_name", "Antimicrobial", tests)
 
   testType <- unique(columnInfo %>% filter(is_ab) %>% pull(test_name)) # e.g., "sir"
   # Columns that are metadata columns.
@@ -361,19 +370,20 @@ getLongData <- function(data, isWideFormat) {
         values_to = test
       ) %>%
       left_join(
-        columnInfo %>% select(original_col_name, ab_name, drug_name = matched_ab_name),
+        columnInfo %>%
+          select(original_col_name, ab_name, Antimicrobial = matched_ab_name),
         by = "original_col_name"
       ) %>%
-      select(row_id, ab_name, drug_name, !!sym(test))
+      select(row_id, ab_name, Antimicrobial, !!sym(test))
 
     if (test == testType[1]) {
       longData <- left_join(longData, testData, by = "row_id")
     } else {
-      # ab_name and drug_name are already in longData, so we need to join on those too.
+      # ab_name and Antimicrobial are already in longData, so we need to join on those too.
       longData <- left_join(
         longData,
         testData,
-        by = c("row_id", "ab_name", "drug_name")
+        by = c("row_id", "ab_name", "Antimicrobial")
       )
     }
   }
@@ -384,6 +394,10 @@ getLongData <- function(data, isWideFormat) {
   # If the data has a `MIC` column it need to be split into sign and value columns.
   if ("MIC" %in% colnames(longData)) {
     longData <- .getMICDataColumns(longData)
+  }
+  if ("SIR" %in% colnames(longData)) {
+    longData <- longData %>%
+      rename(Interpretation = SIR)
   }
   longData
 }
