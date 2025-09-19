@@ -75,17 +75,31 @@ importDataServer <- function(id) {
                                    data
                                  },
                                  "parquet" = {
-                                   parquet_file <- read_parquet(upload$file$datapath)
-                                   metadata <- parquet_metadata(upload$file$datapath)
-                                   # Check if 'verified' key exists and if its value is TRUE
-                                   verified <- metadata$file_meta_data$key_value_metadata[[1]]$value[metadata$file_meta_data$key_value_metadata[[1]]$key == "verified"]
-                                   # Store if data is verified
-                                   if (length(verified) > 0 && verified == "TRUE") {
-                                     verifiedData(TRUE)
-                                   } else {
-                                     verifiedData(FALSE)
+                                   # Read the parquet
+                                   data <- nanoparquet::read_parquet(upload$file$datapath)
+                                   
+                                   verified <- FALSE
+                                   meta <- tryCatch(
+                                     nanoparquet::read_parquet_metadata(upload$file$datapath),
+                                     error = function(e) NULL
+                                   )
+                                   
+                                   if (!is.null(meta)) {
+                                     kv <- meta$file_meta_data$key_value_metadata
+                                     if (!is.null(kv) && length(kv) >= 1) {
+                                       kv1 <- kv[[1]]
+                                       if (!is.null(kv1$key) && !is.null(kv1$value)) {
+                                         hit <- which(kv1$key == "verified")
+                                         if (length(hit)) {
+                                           val <- kv1$value[hit][1]
+                                           verified <- tolower(trimws(val)) %in% c("true", "1", "yes")
+                                         }
+                                       }
+                                     }
                                    }
-                                  data
+                                   verifiedData(verified)
+                                   
+                                   data
                                  },
                                  NULL)
       } else if (input$dataSelect != "Select a dataset") {

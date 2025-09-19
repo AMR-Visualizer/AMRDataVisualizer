@@ -328,39 +328,39 @@ getLongData <- function(data, testColumns, isWideFormat = TRUE) {
     return(data)
   }
   data$row_id <- seq_len(nrow(data))
-
+  
   # Get the column information.
   columnInfo <- .getColumnInfo(data, testColumns)
-
+  
   # Unique tests found in the datas column names.
   tests <- unique(columnInfo$test_name)
   tests <- tests[!is.na(tests) & tests != ""]
-
+  
   # The expected final columns in the long data.
   finalColumns <- columnInfo %>%
     filter(!is_ab) %>%
     pull(ab_name)
   finalColumns <- c(finalColumns, "ab_name", "Antimicrobial", tests)
-
+  
   testType <- unique(columnInfo %>% filter(is_ab) %>% pull(test_name)) # e.g., "sir"
   # Columns that are metadata columns.
   metadataCols <- columnInfo %>% filter(!is_ab) %>% pull(original_col_name)
-
+  
   longData <- data %>%
     select(all_of(metadataCols))
-
+  
   # Iterate through rach test type and add to the long data.
   for (test in testType) {
     # All original columns names for the current test.
     testCols <- columnInfo %>% filter(is_ab, test_name == test) %>% pull(original_col_name)
-
+    
     # If the columns are not all the same class, convert them to character.
     colClasses <- sapply(data[testCols], class)
     if (length(unique(colClasses)) > 1) {
       nonCharClasses <- colClasses[colClasses != "character"]
       data <- data %>% mutate(across(all_of(names(nonCharClasses)), as.character))
     }
-
+    
     # Pivot the test columns to long format.
     testData <- data %>%
       select(all_of(c("row_id", testCols))) %>%
@@ -375,7 +375,7 @@ getLongData <- function(data, testColumns, isWideFormat = TRUE) {
         by = "original_col_name"
       ) %>%
       select(row_id, ab_name, Antimicrobial, !!sym(test))
-
+    
     if (test == testType[1]) {
       longData <- left_join(longData, testData, by = "row_id")
     } else {
@@ -388,9 +388,9 @@ getLongData <- function(data, testColumns, isWideFormat = TRUE) {
     }
   }
   finalColumns <- finalColumns[finalColumns %in% colnames(longData)]
-
+  
   longData <- select(longData, all_of(finalColumns))
-
+  
   # If the data has a `MIC` column it need to be split into sign and value columns.
   if ("MIC" %in% colnames(longData)) {
     longData <- .getMICDataColumns(longData)
