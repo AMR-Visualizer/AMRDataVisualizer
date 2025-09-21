@@ -163,38 +163,41 @@ library(purrr)
     columnInfo$first
   )
 
+  # Remove metadata columns when trying to determine the antibiotic names / tests performed.
+  abOnly <- columnInfo %>%
+    filter(is_ab)
+
   #' Check if the first or second column is more populated with `ab_name` matches.
   #' Rename these columns to `ab_name` and `test_name` and set the matches values
   #' to the `matched_ab_name` column.
   firstAbMatches <- suppressWarnings(AMR::ab_name(
-    columnInfo$first,
+    abOnly$first,
     minimum_matching_score = 0.75
   ))
   secondAbMatches <- suppressWarnings(AMR::ab_name(
-    columnInfo$second,
+    abOnly$second,
     minimum_matching_score = 0.75
   ))
   abColName <- "first"
   testColName <- "second"
-  columnInfo$matched_ab_name <- firstAbMatches
+  abOnly$matched_ab_name <- firstAbMatches
   if (sum(!is.na(firstAbMatches)) < sum(!is.na(secondAbMatches))) {
     abColName <- "second"
     testColName <- "first"
-    columnInfo$matched_ab_name <- secondAbMatches
+    abOnly$matched_ab_name <- secondAbMatches
   }
   # Set all non matches and non ab columns to NA in the `matched_ab_name` column.
-  columnInfo$matched_ab_name <- ifelse(
-    !columnInfo$is_ab | grepl("unknown name", columnInfo$matched_ab_name),
-    NA,
-    columnInfo$matched_ab_name
-  )
+  abOnly <- abOnly |>
+    rowwise() |>
+    mutate(matched_ab_name = ifelse(grepl("unknown name", matched_ab_name), NA, matched_ab_name))
+  
   # Rename the column with the most ab matches to "ab_name"
+  abOnly <- abOnly %>%
+    rename(ab_name = !!sym(abColName), test_name = !!sym(testColName))
+
   columnInfo <- columnInfo %>%
     rename(ab_name = !!sym(abColName), test_name = !!sym(testColName))
 
-  # Remove metadata columns for the pivot to long format.
-  abOnly <- columnInfo %>%
-    filter(is_ab)
 
   # Get all the unique test names to check.
   testAbbreviations <- unique(abOnly$test_name)
@@ -207,12 +210,6 @@ library(purrr)
     testAbbreviations <- "unknown"
   }
 
-  if ("unknown" %in% testAbbreviations) {
-    #' We want to have a unique test for each unknown in case there are different test types.
-    abOnly <- abOnly %>%
-      mutate(test_name = ifelse(test_name == "unknown", paste0("unknown_", index), test_name))
-    testAbbreviations <- unique(abOnly$test_name)
-  }
 
   #' Keep track of the test types that have been found.
   #' This is to avoid duplicates in the test names.
@@ -250,7 +247,7 @@ library(purrr)
   #' Make sure that the metadata columns have not test names.
   columnInfo %>%
     filter(!is_ab) %>%
-    mutate(test_name = NA) %>%
+    mutate(test_name = NA, matched_ab_name = NA) %>%
     rbind(abOnly %>% arrange(is_ab))
 }
 
