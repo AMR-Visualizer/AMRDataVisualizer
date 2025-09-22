@@ -125,7 +125,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
         slice(1)
 
       if (nrow(bp) == 0) {
-        return(NULL)
+        return(AMR::clinical_breakpoints[0,])
       }
       bp
     }) %>%
@@ -507,13 +507,32 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
     #' This df is used throughout the app.
     observe({
       newCustomBp <- defaultGuideline()
-      newCustomBp$Microorganism <- input$moFilter
-      newCustomBp$Antimicrobial <- input$abFilter
-      newCustomBp$Species <- selectedSpecies()
-      newCustomBp$Source <- input$typeFilter
-      newCustomBp$guideline <- customBreakpointName
-      newCustomBp$breakpoint_S <- as.numeric(input$customSBreakpoint)
-      newCustomBp$breakpoint_R <- as.numeric(input$customRBreakpoint)
+
+      if (nrow(newCustomBp) == 0) {
+        #' A default bp is not found in `AMR::clinical_breakpoints` that meet the criteria.
+        #' Create a new row with the necessary values.
+        newCustomBp <- add_row(emptyCustomBp) |>
+          mutate(
+            mo = as.mo(input$moFilter),
+            ab = as.ab(input$abFilter),
+            method = "MIC",
+            type = "animal",
+            host = tolower(selectedSpecies()),
+            uti = input$typeFilter == "Urinary",
+            is_SDD = FALSE
+          )
+      }
+
+      newCustomBp <- newCustomBp |>
+        mutate(
+          Microorganism = input$moFilter,
+          Antimicrobial = input$abFilter,
+          Species = selectedSpecies(),
+          Source = input$typeFilter,
+          guideline = customBreakpointName,
+          breakpoint_S = as.numeric(input$customSBreakpoint),
+          breakpoint_R = as.numeric(input$customRBreakpoint)
+        )
 
       newCustomBps <- allCustomBreakpoints() %>%
         rbind(newCustomBp) %>%

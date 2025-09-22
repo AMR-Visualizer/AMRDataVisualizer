@@ -21,9 +21,9 @@ server <- function(input, output, session) {
   )
   abPageServer("antibiogramModule", reactiveData = dataWithCustomBreakpoints, customBreakpoints = customBreakpoints)
   mapPageServer("mapModule", reactiveData = dataWithCustomBreakpoints)
-  # Trends
+  tsPageServer("tsModule", reactiveData = dataWithCustomBreakpoints)
   # MicroGuide
-  # MDR
+  mdrPageServer("mdrModule", reactiveData = dataWithCustomBreakpoints)
   explorePageServer("exModule", reactiveData = dataWithCustomBreakpoints)
 
   # ------------------------------------------------------------------------------
@@ -153,15 +153,7 @@ server <- function(input, output, session) {
   
   
   # Trends tab
-  output$tsUI <- renderUI({
-    req(clean())
-    tsPageUI("tsModule", clean())
-  })
   
-  observe({
-    req(clean())
-    tsPageServer("tsModule", clean())
-  })
   
   # Microguide tab
   output$pathogenUI <- renderUI({
@@ -174,10 +166,6 @@ server <- function(input, output, session) {
     pathogenPageServer("pathogenModule", clean())
   })
   
-  observe({
-    req(clean())
-    mdrPageServer("mdrModule", clean())
-  })
   
 
   

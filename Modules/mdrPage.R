@@ -1,4 +1,4 @@
-mdrPageUI <- function(id, data) {
+mdrPageUI <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(
@@ -55,26 +55,91 @@ mdrPageUI <- function(id, data) {
   )
 }
 
-mdrPageServer <- function(id, data) {
+mdrPageServer <- function(id, reactiveData) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
+    # ------------------------------------------------------------------------------
+    # Sub-modules
+    # ------------------------------------------------------------------------------
+
     filters <- filterPanelServer(
       "filters", 
-      data, 
+      reactiveData, 
       default_filters = c("Microorganism", "Species", "Source", "Date"), 
       auto_populate = list(Microorganism = TRUE)
     )
+
+    # ------------------------------------------------------------------------------
+    # Module variables
+    # ------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
+    # Reactives
+    # ------------------------------------------------------------------------------
     
     plotData <- reactive({ filters$filteredData() })
     
     initialData <- reactive({
-      data
+      reactiveData()
     })
+
+    # Matrix data used in the plot
+    matrixData <- reactive({
+      mdrData <- plotData() %>%
+        group_by(ID, Microorganism) %>%
+        filter(!is.na(Interpretation)) |> # TODO: Check if this is allowed.
+        summarise(n_classes = n_distinct(Class[Interpretation %in% c("R", "I")])) %>%
+        mutate(mdro = ifelse(n_classes > 2, 1, 0))
+      
+      data <- plotData() %>%
+        left_join(mdrData, by = c("ID", "Microorganism")) %>%
+        mutate(Interpretation = ifelse((!is.na(Interpretation) & Interpretation == "S"), 1, 0),
+               classDrug = paste(Class, as.ab(Antimicrobial), sep = "-"),
+               ID = paste(ID, Date, Source, Microorganism)) %>%
+        arrange(ID, Date) %>%
+        distinct() %>%
+        select(ID, "Drug" = classDrug, Interpretation) %>%
+        group_by(ID, Drug) %>%
+        summarize(Interpretation = max(Interpretation, na.rm = TRUE), .groups = "drop") %>%
+        pivot_wider(id_cols = ID, names_from = Drug, values_from = Interpretation) %>%
+        mutate(across(everything(), ~ replace(., . == "NULL", NA))) %>% 
+        select_if(~ sum(!is.na(.)) >= 30) %>% 
+        select(-ID) %>% 
+        select(sort(names(.)))
+      return(data)
+    })
+
+    # Information needed for the plot based on the matrix data
+    plotConfig <- reactive({
+      req(matrixData())
+      data <- matrixData()
+      
+      result <- cor_and_counts(data)
+      phi <- result$cor
+      counts <- result$count
+      
+      phi[counts < 30] <- NA
+      
+      keep <- !apply(is.na(phi), 1, all)
+      phi <- phi[keep, keep]
+      counts <- counts[keep, keep]
+      labels <- colnames(matrixData)[keep]
+
+      return(list(
+        data = data,
+        phi = phi,
+        labels = labels,
+        counts = counts
+      ))
+    })
+
+    # ------------------------------------------------------------------------------
+    # Render UI
+    # ------------------------------------------------------------------------------
     
     output$content <- renderUI({
       req(plotData())
-      if (!is.null(plotData()) && nrow(plotData()) > 0) {
+      if (!is.null(plotData()) && nrow(plotData()) > 0 && length(plotConfig()$labels) > 0) {
         tagList(
         wellPanel(style = "overflow-x: scroll; overflow-y: scroll; max-height: 80vh;",
                   div(style = "min-height: 750px",
@@ -105,55 +170,12 @@ mdrPageServer <- function(id, data) {
     })
     
     output$plot <- renderPlotly({
-      mdrData <- plotData() %>%
-        group_by(ID, Microorganism) %>%
-        summarise(n_classes = n_distinct(Class[Interpretation %in% c("R", "I")])) %>%
-        mutate(mdro = ifelse(n_classes > 2, 1, 0))
-      
-      matrixData <- plotData() %>%
-        left_join(mdrData, by = c("ID", "Microorganism")) %>%
-        mutate(Interpretation = ifelse(Interpretation == "S", 1, 0),
-               classDrug = paste(Class, as.ab(Antimicrobial), sep = "-"),
-               ID = paste(ID, Date, Source, Microorganism)) %>%
-        arrange(ID, Date) %>%
-        distinct() %>%
-        select(ID, "Drug" = classDrug, Interpretation) %>%
-        group_by(ID, Drug) %>%
-        summarize(Interpretation = max(Interpretation, na.rm = TRUE), .groups = "drop") %>%
-        pivot_wider(id_cols = ID, names_from = Drug, values_from = Interpretation) %>%
-        mutate(across(everything(), ~ replace(., . == "NULL", NA))) %>% 
-        select_if(~ sum(!is.na(.)) >= 30) %>% 
-        select(-ID) %>% 
-        select(sort(names(.))) 
-      
-      cor_and_counts <- function(data) {
-        n <- ncol(data)
-        cor_matrix <- matrix(NA, n, n)
-        count_matrix <- matrix(0, n, n)
-        for (i in 1:n) {
-          for (j in i:n) {
-            non_na_pair <- complete.cases(data[, c(i, j)])
-            if (sum(non_na_pair) >= 30) {
-              cor_matrix[i, j] <- cor(data[non_na_pair, i], data[non_na_pair, j], use = "complete.obs")
-              cor_matrix[j, i] <- cor_matrix[i, j]
-              count_matrix[i, j] <- sum(non_na_pair)
-              count_matrix[j, i] <- count_matrix[i, j]
-            }
-          }
-        }
-        list(cor = cor_matrix, count = count_matrix)
-      }
-      
-      result <- cor_and_counts(matrixData)
-      phi <- result$cor
-      counts <- result$count
-      
-      phi[counts < 30] <- NA
-      
-      keep <- !apply(is.na(phi), 1, all)
-      phi <- phi[keep, keep]
-      counts <- counts[keep, keep]
-      labels <- colnames(matrixData)[keep]
+      config <- plotConfig()
+      labels <- config$labels
+      phi <- config$phi
+      counts <- config$counts
+
+      req(length(labels) > 0)
       
       hovertext <- matrix("", nrow = length(labels), ncol = length(labels))
       for (i in 1:length(labels)) {
@@ -212,6 +234,34 @@ mdrPageServer <- function(id, data) {
       
       plotly_heatmap
     })
+
+    # ------------------------------------------------------------------------------
+    # Utility functions
+    # ------------------------------------------------------------------------------
+
+    cor_and_counts <- function(data) {
+      n <- ncol(data)
+      cor_matrix <- matrix(NA, n, n)
+      count_matrix <- matrix(0, n, n)
+      for (i in 1:n) {
+        for (j in i:n) {
+          non_na_pair <- complete.cases(data[, c(i, j)])
+          if (sum(non_na_pair) >= 30) {
+            # browser()
+            cor_matrix[i, j] <- cor(data[non_na_pair, i], data[non_na_pair, j], use = "complete.obs")
+            cor_matrix[j, i] <- cor_matrix[i, j]
+            count_matrix[i, j] <- sum(non_na_pair)
+            count_matrix[j, i] <- count_matrix[i, j]
+          }
+        }
+      }
+      list(cor = cor_matrix, count = count_matrix)
+    }
+
+    
+    # ------------------------------------------------------------------------------
+    # Observes
+    # ------------------------------------------------------------------------------
     
     observeEvent(input$save_btn, {
       session$sendCustomMessage("savePlot", list(
