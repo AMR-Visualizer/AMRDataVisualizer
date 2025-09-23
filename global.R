@@ -10,28 +10,65 @@
 install_and_load <- function(pkg, github = NULL) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
     message("Installing '", pkg, "'...")
-    tryCatch({
-      if (is.null(github)) {
-        install.packages(pkg)
-      } else {
-        if (!requireNamespace("devtools", quietly = TRUE)) install.packages("devtools")
-        devtools::install_github(github)
+    tryCatch(
+      {
+        if (is.null(github)) {
+          install.packages(pkg)
+        } else {
+          if (!requireNamespace("devtools", quietly = TRUE)) {
+            install.packages("devtools")
+          }
+          devtools::install_github(github)
+        }
+      },
+      error = function(e) {
+        warning("Failed to install ", pkg, ": ", e$message)
       }
-    }, error = function(e) {
-      warning("Failed to install ", pkg, ": ", e$message)
-    })
+    )
   }
   suppressPackageStartupMessages(library(pkg, character.only = TRUE))
 }
 
 # CRAN Packages
 cran_packages <- c(
-  "AMR", "arrow", "chromote", "colorspace", "data.table", "doParallel", "DT",
-  "foreach", "fresh", "ggpattern", "gt", "jsonlite", "leaflet", "mapview",
-  "nanoparquet", "plotly", "quarto", "readxl", "renv", "scales", "sf", "shiny",
-  "shinyalert", "shinyBS", "shinycssloaders", "shinydashboard",
-  "shinydashboardPlus", "shinyjs", "shinyWidgets", "spacyr", "stringdist",
-  "tigris", "tidyverse", "tools", "vroom", "webshot2", "writexl", "zoo"
+  "AMR",
+  "arrow",
+  "chromote",
+  "colorspace",
+  "data.table",
+  "doParallel",
+  "DT",
+  "foreach",
+  "fresh",
+  "ggpattern",
+  "gt",
+  "jsonlite",
+  "leaflet",
+  "mapview",
+  "nanoparquet",
+  "plotly",
+  "quarto",
+  "readxl",
+  "renv",
+  "scales",
+  "sf",
+  "shiny",
+  "shinyalert",
+  "shinyBS",
+  "shinycssloaders",
+  "shinydashboard",
+  "shinydashboardPlus",
+  "shinyjs",
+  "shinyWidgets",
+  "spacyr",
+  "stringdist",
+  "tigris",
+  "tidyverse",
+  "tools",
+  "vroom",
+  "webshot2",
+  "writexl",
+  "zoo"
 )
 
 # GitHub Packages
@@ -50,7 +87,7 @@ invisible(lapply(cran_packages, install_and_load))
 invisible(mapply(install_and_load, names(github_packages), github_packages))
 
 # ------------------------------------------------------------------------------
-# RENV set-up and maintenance                 
+# RENV set-up and maintenance
 # ------------------------------------------------------------------------------
 # renv::init()
 # Run this line and select option 2 for dockerizing.
@@ -58,7 +95,7 @@ invisible(mapply(install_and_load, names(github_packages), github_packages))
 # renv::deactivate()
 
 # ------------------------------------------------------------------------------
-# Source external modules            
+# Source external modules
 # ------------------------------------------------------------------------------
 source("Modules/homePage.R")
 source("Modules/ovPage.R")
@@ -67,14 +104,13 @@ source("Modules/abPage.R")
 source("Modules/mapPage.R")
 source("Modules/tsPage.R")
 source("Modules/mdrPage.R")
-source("Modules/pathogenPage.R")
 source("Modules/explorePage.R")
 source("Modules/importDataModule.R")
 source("Modules/filterPanelModule.R")
 source("Modules/changeLogModule.R")
 
 # ------------------------------------------------------------------------------
-# Source external functions                 
+# Source external functions
 # ------------------------------------------------------------------------------
 source("Functions/dataCleaningFunction.R")
 source("Functions/columnDetectFunctions.R")
@@ -92,7 +128,7 @@ source("Functions/generalUtilities.R")
 awareList <- read.csv("./Data/2023AwareClassifications.csv")
 
 # ------------------------------------------------------------------------------
-# Define initial variables                 
+# Define initial variables
 # ------------------------------------------------------------------------------
 #' Possible metadata columns that may appear in data.
 #' Want to ignore these when trying the find antimicrobial columns.
@@ -137,6 +173,6 @@ g_test_mapping <- list(
 )
 
 # ------------------------------------------------------------------------------
-# Increase maximum allowable file upload                 
+# Increase maximum allowable file upload
 # ------------------------------------------------------------------------------
 options(shiny.maxRequestSize = 1000 * 1024^2)

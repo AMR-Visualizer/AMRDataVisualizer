@@ -1,15 +1,15 @@
 /**
  * Add a listener to the DataTable to watch for changes in the second column.
  * When a change is detected, update the corresponding cell and the data in shiny.
- * 
+ *
  * @param {string} tableId DT table ID.
  * @param {string} tableInputId ID of the shiny input to store the data.
  */
 function watchDTCellChange(tableId, tableInputId) {
   const table = $("#" + tableId + " table").DataTable();
   if (table) {
-    table.on('change', 'input', function() {
-      const cell = table.cell($(this).closest('td'));
+    table.on("change", "input", function () {
+      const cell = table.cell($(this).closest("td"));
       const row = cell.index().row;
       const col = cell.index().column;
       if (col !== 1) {
@@ -30,7 +30,7 @@ function watchDTCellChange(tableId, tableInputId) {
 
 /**
  * Get the current data from the DataTable and send it to shiny.
- * 
+ *
  * @param {string} tableId DT table ID.
  * @param {string} tableInputId ID of the shiny input to store the data.
  */
@@ -38,10 +38,10 @@ function getCurrentDTData(tableId, tableInputId) {
   const table = $("#" + tableId + " table").DataTable();
   if (table) {
     const data = table.rows().data().toArray();
-    const jsonData = data.map(row => ({
+    const jsonData = data.map((row) => ({
       original: row[0],
       renamed: row[1],
-      action: row[2]
+      action: row[2],
     }));
     Shiny.setInputValue(tableInputId, JSON.stringify(jsonData));
   }

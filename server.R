@@ -7,7 +7,6 @@
 # ------------------------------------------------------------------------------
 
 server <- function(input, output, session) {
-
   # ------------------------------------------------------------------------------
   # Sub-modules
   # ------------------------------------------------------------------------------
@@ -19,7 +18,11 @@ server <- function(input, output, session) {
     reactiveData = clean,
     processedGuideline = processedGuideline
   )
-  abPageServer("antibiogramModule", reactiveData = dataWithCustomBreakpoints, customBreakpoints = customBreakpoints)
+  abPageServer(
+    "antibiogramModule",
+    reactiveData = dataWithCustomBreakpoints,
+    customBreakpoints = customBreakpoints
+  )
   mapPageServer("mapModule", reactiveData = dataWithCustomBreakpoints)
   tsPageServer("tsModule", reactiveData = dataWithCustomBreakpoints)
   # MicroGuide
@@ -37,7 +40,6 @@ server <- function(input, output, session) {
   # Variables from MIC tab
   dataWithCustomBreakpoints <- micData$dataWithCustomBreakpoints
   customBreakpoints <- micData$customBreakpoints
-
 
   # ------------------------------------------------------------------------------
   # Reactives
@@ -59,42 +61,46 @@ server <- function(input, output, session) {
   # Selectively show sidebar menu if data is present.
   output$menu <- renderUI({
     if (isDataPresent()) {
-      
       # Define menu items
       menu_items <- list(
         menuItem("Overview", tabName = "ovTab", icon = icon("chart-simple", class = "nav-icon")),
         menuItem("Antibiogram", tabName = "abTab", icon = icon("braille", class = "nav-icon")),
         menuItem("Map", tabName = "mapTab", icon = icon("map-location-dot", class = "nav-icon")),
         menuItem("Trends", tabName = "trendsTab", icon = icon("chart-line", class = "nav-icon")),
-        menuItem("MicroGuide", tabName = "pathogenTab", icon = icon("bacteria", class = "nav-icon")),
         menuItem("MDR", tabName = "mdrTab", icon = icon("pills", class = "nav-icon")),
         menuItem("Explore", tabName = "exploreTab", icon = icon("table-list", class = "nav-icon"))
       )
-    
+
       # Show "MIC Tables" tab if MIC data were imported
       if ("MIC" %in% names(clean())) {
-        mic_item <- menuItem("MIC Tables", tabName = "micTab", icon = icon("vial", class = "nav-icon"))
+        mic_item <- menuItem(
+          "MIC Tables",
+          tabName = "micTab",
+          icon = icon("vial", class = "nav-icon")
+        )
         menu_items <- c(list(mic_item), menu_items)
       }
-      
+
       sidebarMenu(id = "tabs", menu_items)
-      
+
       # If cleaned data do not exist, show message to user
     } else {
       tagList(
         sidebarMenu(id = "tabs"),
-        h6(em("Please import or select a data source to access additional tabs."), style = "color: #a7b6d4; margin:25px; text-align: center;")
+        h6(
+          em("Please import or select a data source to access additional tabs."),
+          style = "color: #a7b6d4; margin:25px; text-align: center;"
+        )
       )
     }
   })
 
-
   # ------------------------------------------------------------------------------
   # Observes
   # ------------------------------------------------------------------------------
-  
+
   # ------------------------------------------------------------------------------
-  # Selectively hide header bar if tab = "Home"                 
+  # Selectively hide header bar if tab = "Home"
   # ------------------------------------------------------------------------------
   observe({
     req(input$tabs)
@@ -105,17 +111,16 @@ server <- function(input, output, session) {
     }
   })
 
-  
-# ------------------------------------------------------------------------------
-# Switch "i" (information) modal content based on current tab                 
-# ------------------------------------------------------------------------------
+  # ------------------------------------------------------------------------------
+  # Switch "i" (information) modal content based on current tab
+  # ------------------------------------------------------------------------------
   observeEvent(input$info, {
     showModal(
       modalDialog(
         title = div(
           style = "text-align: center;",
           tags$img(
-            src = "logoDark.png",
+            src = "img/logoDark.png",
             height = "100px",
             style = "vertical-align: middle;"
           )
@@ -123,54 +128,35 @@ server <- function(input, output, session) {
 
         switch(
           input$tabs,
-          importTab   = includeMarkdown("Documentation/data-import.md"),
-          ovTab       = includeMarkdown("Documentation/overview-plots.md"),
-          micTab      = includeMarkdown("Documentation/mic-tables.md"),
-          abTab       = includeMarkdown("Documentation/antibiograms.md"),
-          mapTab      = includeMarkdown("Documentation/maps.md"),
-          trendsTab   = includeMarkdown("Documentation/trends.md"),
+          importTab = includeMarkdown("Documentation/data-import.md"),
+          ovTab = includeMarkdown("Documentation/overview-plots.md"),
+          micTab = includeMarkdown("Documentation/mic-tables.md"),
+          abTab = includeMarkdown("Documentation/antibiograms.md"),
+          mapTab = includeMarkdown("Documentation/maps.md"),
+          trendsTab = includeMarkdown("Documentation/trends.md"),
           pathogenTab = includeMarkdown("Documentation/microguide.md"),
-          mdrTab      = includeMarkdown("Documentation/mdr-matrices.md"),
-          exploreTab  = includeMarkdown("Documentation/data-explore.md"),
-          "Documentation Coming Soon."  # Fallback message
+          mdrTab = includeMarkdown("Documentation/mdr-matrices.md"),
+          exploreTab = includeMarkdown("Documentation/data-explore.md"),
+          "Documentation Coming Soon." # Fallback message
         ),
-        
+
         easyClose = TRUE,
         size = "l"
       )
     )
   })
-  
-# ------------------------------------------------------------------------------
-# Initialize server functions for each tab module       
-# ------------------------------------------------------------------------------
-  
+
+  # ------------------------------------------------------------------------------
+  # Initialize server functions for each tab module
+  # ------------------------------------------------------------------------------
+
   # Overview tab
   observe({
     req(clean())
     ovPageServer("overviewModule", clean())
   })
-  
-  
-  # Trends tab
-  
-  
-  # Microguide tab
-  output$pathogenUI <- renderUI({
-    req(clean())
-    pathogenPageUI("pathogenModule", clean())
-  })
-  
-  observe({
-    req(clean())
-    pathogenPageServer("pathogenModule", clean())
-  })
-  
-  
 
-  
-  
-# ------------------------------------------------------------------------------
-# End of main Server                 
-# ------------------------------------------------------------------------------
+  # ------------------------------------------------------------------------------
+  # End of main Server
+  # ------------------------------------------------------------------------------
 }
