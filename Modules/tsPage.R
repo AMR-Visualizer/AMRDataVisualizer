@@ -7,7 +7,7 @@
 # To-do -------------------------------------------------------------------
 # - Confidence bands?
 
-tsPageUI <- function(id, data) {
+tsPageUI <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(
@@ -66,13 +66,13 @@ tsPageUI <- function(id, data) {
   )
 }
 
-tsPageServer <- function(id, data) {
+tsPageServer <- function(id, reactiveData) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     filters <- filterPanelServer(
       "filters", 
-      data, 
+      reactiveData, 
       default_filters = c("Antimicrobial", "Microorganism", "Species", "Source", "Date"), 
       auto_populate = list(Antimicrobial = TRUE, Microorganism = TRUE)
     )
@@ -80,7 +80,7 @@ tsPageServer <- function(id, data) {
     plotData <- reactive({ filters$filteredData() })
     
     initialData <- reactive({
-      data
+      reactiveData()
     })
     
     output$content <- renderUI({
@@ -128,7 +128,7 @@ tsPageServer <- function(id, data) {
     output$plot <- renderPlotly({
       tsData <- plotData() %>%
         select(Date, Antimicrobial, Interpretation) %>%
-        mutate(Interpretation = ifelse(Interpretation == "S", 1, 0)) %>%
+        mutate(Interpretation = ifelse((!is.na(Interpretation) & Interpretation == "S"), 1, 0)) %>%
         mutate(Date = as.Date(Date)) %>%
         group_by(Date, Antimicrobial) %>%
         summarize(Susceptible = sum(Interpretation),

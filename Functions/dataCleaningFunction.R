@@ -139,22 +139,33 @@ dataCleaner <- function(rawData,
       
       key_cols <- c("MIC", "Species", "UTI", "Microorganism", "Antimicrobial")
       
+      #' MIC has been chosen.
+      #' Calculate the S/I/R interpretation based on the MIC and other info.
       sir_map <- cleanedChunk %>%
         select(all_of(key_cols)) %>%
         distinct() %>%
         mutate(
-          Interpretation = as.sir(
-            x  = MIC,
-            host = Species,
-            breakpoint_type = "animal",
-            UTI = UTI,
-            mo  = Microorganism,
-            ab  = Antimicrobial,
-            guideline = breakpoint,
-            substitute_missing_r_breakpoint = FALSE,
-            capped_mic_handling = "standard",
-            clean = TRUE
-          ) |> as.character()
+          ab = as.ab(Antimicrobial),
+          mo = as.mo(Microorganism),
+          host = tolower(Species),
+          Interpretation = MIC,
+          MIC = as.character(MIC)
+        ) |>
+        mutate_if(
+          is.mic,
+          as.sir,
+          mo = "mo",
+          ab = "ab",
+          guideline = breakpoint,
+          uti = "UTI",
+          host = "host",
+          breakpoint_type = getOption("AMR_breakpoint_type", "animal"),
+          substitute_missing_r_breakpoint = getOption("AMR_substitute_missing_r_breakpoint", FALSE),
+          capped_mic_handling = getOption("AMR_capped_mic_handling", "standard")
+        ) |>
+        mutate(
+          Interpretation = as.character(Interpretation),
+          MIC = as.mic(MIC)
         )
       
       cleanedChunk <- cleanedChunk %>%

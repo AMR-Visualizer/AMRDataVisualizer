@@ -82,7 +82,7 @@ dashboardPage(
       tabItem(tabName = "micTab",      micPageUI("micModule")),
       tabItem(tabName = "abTab",       abPageUI("antibiogramModule")),
       tabItem(tabName = "mapTab",      mapPageUI("mapModule")),
-      tabItem(tabName = "trendsTab",   uiOutput("tsUI")),
+      tabItem(tabName = "trendsTab",   tsPageUI("tsModule")),
       tabItem(tabName = "pathogenTab", uiOutput("pathogenUI")),
       tabItem(tabName = "mdrTab",      mdrPageUI("mdrModule")),
       tabItem(tabName = "exploreTab",  explorePageUI("exModule"))
