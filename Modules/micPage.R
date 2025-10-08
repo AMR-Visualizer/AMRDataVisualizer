@@ -27,6 +27,27 @@ micPageUI <- function(id, data) {
           class = "contentWell"
         )
       )
+    ),
+    fluidRow(
+      column(
+        12,
+        bsCollapse(
+          id = ns("clinicalBpTableContainer"),
+          open = NULL,
+          bsCollapsePanel(
+            title = actionButton(
+              ns("clinicalBpTableToggle"),
+              label = HTML(
+                "AMR Clinical Breakpoints <span class='glyphicon glyphicon-chevron-down' data-toggle='collapse-icon' 
+          style='float: right; color: #aaa;'></span>"
+              ),
+              class = "collapse-btn"
+            ),
+            value = "bpTable",
+            DT::dataTableOutput(ns("clinicalBpTable"), width = "100%")
+          )
+        )
+      )
     )
   )
 }
@@ -41,6 +62,18 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
     # ------------------------------------------------------------------------------
     # Module variables
     # ------------------------------------------------------------------------------
+
+    abMapping <- data.frame(ab = unique(AMR::clinical_breakpoints$ab)) %>%
+      mutate(ab_name = AMR::ab_name(ab))
+
+    moMapping <- data.frame(mo = unique(AMR::clinical_breakpoints$mo)) %>%
+      mutate(mo_name = AMR::mo_name(mo))
+
+    #' `AMR::clinical_breakpoints` have the `ab` and `mo` columns as abbreviations.
+    #' Add the actual names for easier searching in the table.
+    fullClinicalBreakpoints <- AMR::clinical_breakpoints %>%
+      left_join(abMapping, by = "ab") %>%
+      left_join(moMapping, by = "mo")
 
     # A custom guideline name to use in the clinical breakpoints df.
     customBreakpointName <- getCustomGuidelineName()
@@ -61,6 +94,9 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
     # ------------------------------------------------------------------------------
     # Reactives
     # ------------------------------------------------------------------------------
+
+    #' Keep track of whether the clinical breakpoints table is open or closed.
+    bpTableOpen <- reactiveVal(FALSE)
 
     #' A df to hold all the custom breakpoints created by the user.
     #' This is returned as used in the rest of the app.
@@ -265,6 +301,22 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
         arrange(InternalID)
     })
 
+    #' The clinical breakpoints filtered based on the selected antimicrobial.
+    #' Use a `bandCache` to avoid re-filtering unnecessarily.
+    ab_clinical_breakpoints <- reactive({
+      data <- fullClinicalBreakpoints
+
+      if (!is.null(input$abFilter)) {
+        data <- data %>%
+          filter(ab == as.ab(input$abFilter))
+      }
+      data %>%
+        select(-ab, -mo) %>%
+        rename(ab = ab_name, mo = mo_name) %>%
+        select(all_of(colnames(AMR::clinical_breakpoints))) # Get the original column order
+    }) %>%
+      bindCache(input$abFilter)
+
     # ------------------------------------------------------------------------------
     # Render UI
     # ------------------------------------------------------------------------------
@@ -346,10 +398,24 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
           class = "contentWell"
         ),
         div(
+          style = "display: flex; justify-content: end;",
           downloadButton(ns("save_table"), "Save Data", class = "plotSaveButton")
         )
       )
     })
+
+    # Table showing all clinical breakpoints for the selected antimicrobial in collapse panel
+    output$clinicalBpTable <- DT::renderDataTable({
+      req(bpTableOpen())
+      req(ab_clinical_breakpoints())
+
+      DT::datatable(
+        ab_clinical_breakpoints(),
+        rownames = FALSE,
+        options = list(autoWidth = TRUE)
+      )
+    })
+    outputOptions(output, "clinicalBpTable", suspendWhenHidden = FALSE)
 
     # Inputs for user to select custom breakpoints
     output$customBreakpointsUI <- renderUI({
@@ -549,6 +615,12 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
       allCustomBreakpoints(customBpRemoved)
     }) %>%
       bindEvent(input$deleteCustomBreakpoints)
+
+    # Toggle the clinical breakpoints table visibility
+    observe({
+      bpTableOpen(!bpTableOpen())
+    }) %>%
+      bindEvent(input$clinicalBpTableToggle)
 
     # ------------------------------------------------------------------------------
     # Module return
