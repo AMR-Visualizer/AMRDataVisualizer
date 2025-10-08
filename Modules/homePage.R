@@ -220,7 +220,7 @@ homePageServer <- function(id) {
         h5("To get started, click on 'Import' on the left-hand sidebar."),
         div(
           style = "text-align: center;",
-          img(src = "importScreenshot.png", style = "max-width: 20%; height: auto;")
+          img(src = "img/importScreenshot.png", style = "max-width: 20%; height: auto;")
         )
       ))
     })
