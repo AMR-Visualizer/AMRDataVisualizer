@@ -788,7 +788,7 @@ importDataServer <- function(id) {
             }
           ),
 
-          easyClose = FALSE,
+          easyClose = TRUE,
           footer = div(
             id = "import-modal-footer",
             downloadButton(ns("download_log"), "Download Log File"),
