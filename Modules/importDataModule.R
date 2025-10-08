@@ -355,7 +355,12 @@ importDataServer <- function(id) {
       col_indices <- intersect(col_indices, valid_cols)
 
       data_preview <- head(upload$content, 1)
-      data_with_colnames <- rbind(colnames(upload$content), data_preview)
+      # Convert all columns to character to avoid issues with datatable
+      data_preview_char <- as.data.frame(
+        lapply(data_preview, as.character),
+        stringsAsFactors = FALSE
+      )
+      data_with_colnames <- rbind(colnames(upload$content), data_preview_char)
       colnames(data_with_colnames) <- seq_len(ncol(data_with_colnames))
 
       dt <- datatable(
@@ -1017,7 +1022,7 @@ importDataServer <- function(id) {
         col_indices <- intersect(col_indices, valid_cols)
 
         if (length(col_indices) > 0) {
-          long_df <- getLongData(reactiveData(), col_indices)
+          long_df <- getLongData(data, col_indices)
 
           selections$drugCol <- "Antimicrobial"
           selections$sirCol <- ifelse(

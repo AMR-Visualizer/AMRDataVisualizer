@@ -128,7 +128,7 @@ library(purrr)
   sir_attempt <- tryCatch(
     {
       result <- AMR::as.sir(non_empty_data)
-      TRUE
+      any(!is.na(result)) # If all are NA, no error was thrown but it's not a SIR test.
     },
     error = function(e) FALSE
   )
@@ -140,7 +140,7 @@ library(purrr)
     mic_attempt <- tryCatch(
       {
         result <- AMR::as.mic(non_empty_data)
-        TRUE
+        any(!is.na(result)) # If all are NA, no error was thrown but it's not a MIC test.
       },
       error = function(e) FALSE
     )
