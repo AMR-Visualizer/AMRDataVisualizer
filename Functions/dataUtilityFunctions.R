@@ -437,8 +437,13 @@ getLongData <- function(data, testColumns, isWideFormat = TRUE) {
     longData <- .getMICDataColumns(longData)
   }
   if ("SIR" %in% colnames(longData)) {
+    #' Want to clean the interpretation history so that we only have the relevant
+    #' interpretations from this file + only SIR columns.
+    #' This avoids including interpretations from when checking what test type a column is.
+    hist <- AMR::sir_interpretation_history(clean = TRUE)
     longData <- longData %>%
-      rename(Interpretation = SIR)
+      rename(Interpretation = SIR) %>%
+      mutate(Interpretation = AMR::as.sir(Interpretation))
   }
   return(longData)
 }
