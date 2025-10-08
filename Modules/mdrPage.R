@@ -2,35 +2,26 @@ mdrPageUI <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(
-      
-      
       # Main Content ------------------------------------------------------------
-      
-      column(9,
-             uiOutput(ns("content"))
-      ),
-      
+
+      column(9, uiOutput(ns("content"))),
+
       # Filters -----------------------------------------------------------------
-      
-      column(3,
-             
-             filterPanelUI(ns("filters")),
-             
-             
-             # Legend ------------------------------------------------------------------
-             
-             wellPanel(
-               h4("Legend", class = "legend-title"),
-               h5("Correlation", class = "legend-section"),
-               div(class = "mdrLegend"),
-               div(class = "mdrLegendLabels",
-                   span("-1"),
-                   span("0"),
-                   span("1")
-               ),
-               class = "legendWell"
-             )
-             
+
+      column(
+        3,
+
+        filterPanelUI(ns("filters")),
+
+        # Legend ------------------------------------------------------------------
+
+        wellPanel(
+          h4("Legend", class = "legend-title"),
+          h5("Correlation", class = "legend-section"),
+          div(class = "mdrLegend"),
+          div(class = "mdrLegendLabels", span("-1"), span("0"), span("1")),
+          class = "legendWell"
+        )
       )
     ),
     tags$script(HTML(
@@ -58,15 +49,15 @@ mdrPageUI <- function(id) {
 mdrPageServer <- function(id, reactiveData) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    
+
     # ------------------------------------------------------------------------------
     # Sub-modules
     # ------------------------------------------------------------------------------
 
     filters <- filterPanelServer(
-      "filters", 
-      reactiveData, 
-      default_filters = c("Microorganism", "Species", "Source", "Date"), 
+      "filters",
+      reactiveData,
+      default_filters = c("Microorganism", "Species", "Source", "Date"),
       auto_populate = list(Microorganism = TRUE)
     )
 
@@ -76,9 +67,11 @@ mdrPageServer <- function(id, reactiveData) {
     # ------------------------------------------------------------------------------
     # Reactives
     # ------------------------------------------------------------------------------
-    
-    plotData <- reactive({ filters$filteredData() })
-    
+
+    plotData <- reactive({
+      filters$filteredData()
+    })
+
     initialData <- reactive({
       reactiveData()
     })
@@ -90,21 +83,23 @@ mdrPageServer <- function(id, reactiveData) {
         filter(!is.na(Interpretation)) |> # TODO: Check if this is allowed.
         summarise(n_classes = n_distinct(Class[Interpretation %in% c("R", "I")])) %>%
         mutate(mdro = ifelse(n_classes > 2, 1, 0))
-      
+
       data <- plotData() %>%
         left_join(mdrData, by = c("ID", "Microorganism")) %>%
-        mutate(Interpretation = ifelse((!is.na(Interpretation) & Interpretation == "S"), 1, 0),
-               classDrug = paste(Class, as.ab(Antimicrobial), sep = "-"),
-               ID = paste(ID, Date, Source, Microorganism)) %>%
+        mutate(
+          Interpretation = ifelse((!is.na(Interpretation) & Interpretation == "S"), 1, 0),
+          classDrug = paste(Class, as.ab(Antimicrobial), sep = "-"),
+          ID = paste(ID, Date, Source, Microorganism)
+        ) %>%
         arrange(ID, Date) %>%
         distinct() %>%
         select(ID, "Drug" = classDrug, Interpretation) %>%
         group_by(ID, Drug) %>%
         summarize(Interpretation = max(Interpretation, na.rm = TRUE), .groups = "drop") %>%
         pivot_wider(id_cols = ID, names_from = Drug, values_from = Interpretation) %>%
-        mutate(across(everything(), ~ replace(., . == "NULL", NA))) %>% 
-        select_if(~ sum(!is.na(.)) >= 30) %>% 
-        select(-ID) %>% 
+        mutate(across(everything(), ~ replace(., . == "NULL", NA))) %>%
+        select_if(~ sum(!is.na(.)) >= 30) %>%
+        select(-ID) %>%
         select(sort(names(.)))
       return(data)
     })
@@ -113,13 +108,13 @@ mdrPageServer <- function(id, reactiveData) {
     plotConfig <- reactive({
       req(matrixData())
       data <- matrixData()
-      
+
       result <- cor_and_counts(data)
       phi <- result$cor
       counts <- result$count
-      
+
       phi[counts < 30] <- NA
-      
+
       keep <- !apply(is.na(phi), 1, all)
       phi <- phi[keep, keep]
       counts <- counts[keep, keep]
@@ -136,18 +131,17 @@ mdrPageServer <- function(id, reactiveData) {
     # ------------------------------------------------------------------------------
     # Render UI
     # ------------------------------------------------------------------------------
-    
+
     output$content <- renderUI({
       req(plotData())
       if (!is.null(plotData()) && nrow(plotData()) > 0 && length(plotConfig()$labels) > 0) {
         tagList(
-        wellPanel(style = "overflow-x: scroll; overflow-y: scroll; max-height: 80vh;",
-                  div(style = "min-height: 750px",
-                      plotlyOutput(ns("plot"), height = "75vh")
-                  ),
-                  class = "contentWell"
-        ),
-        actionButton(ns("save_btn"), "Save", class = "plotSaveButton")
+          wellPanel(
+            style = "overflow-x: scroll; overflow-y: scroll; max-height: 80vh;",
+            div(style = "min-height: 750px", plotlyOutput(ns("plot"), height = "75vh")),
+            class = "contentWell"
+          ),
+          actionButton(ns("save_btn"), "Save", class = "plotSaveButton")
         )
       } else {
         wellPanel(
@@ -160,15 +154,16 @@ mdrPageServer <- function(id, reactiveData) {
         )
       }
     })
-    
+
     output$errorHandling <- renderUI({
-      div(style = "display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column; text-align: center;",
-          icon("disease", style = "font-size:100px; color: #44CDC4"),
-          h4("Oops... looks like there isn't enough data for this plot."),
-          h6("Try reducing the number of filters applied or adjust your data in the 'Import' tab.")
+      div(
+        style = "display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column; text-align: center;",
+        icon("disease", style = "font-size:100px; color: #44CDC4"),
+        h4("Oops... looks like there isn't enough data for this plot."),
+        h6("Try reducing the number of filters applied or adjust your data in the 'Import' tab.")
       )
     })
-    
+
     output$plot <- renderPlotly({
       config <- plotConfig()
       labels <- config$labels
@@ -176,24 +171,31 @@ mdrPageServer <- function(id, reactiveData) {
       counts <- config$counts
 
       req(length(labels) > 0)
-      
+
       hovertext <- matrix("", nrow = length(labels), ncol = length(labels))
       for (i in 1:length(labels)) {
         for (j in 1:length(labels)) {
           if (!is.na(phi[i, j])) {
-            hovertext[i, j] <- paste0(labels[i], "<br>",
-                                      labels[j], "<br>",
-                                      "Correlation: ", round(phi[i, j], 2), "<br>",
-                                      "Observations: ", counts[i, j])
+            hovertext[i, j] <- paste0(
+              labels[i],
+              "<br>",
+              labels[j],
+              "<br>",
+              "Correlation: ",
+              round(phi[i, j], 2),
+              "<br>",
+              "Observations: ",
+              counts[i, j]
+            )
           }
         }
       }
-      
+
       plotly_heatmap <- plot_ly(
         z = phi,
         x = labels,
         y = labels,
-        type = "heatmap",  
+        type = "heatmap",
         text = hovertext,
         hoverinfo = "text",
         colorscale = list(
@@ -214,24 +216,25 @@ mdrPageServer <- function(id, reactiveData) {
           xaxis = list(title = "", tickangle = 45),
           yaxis = list(title = ""),
           margin = list(l = 10, r = 10, b = 10, t = 10)
-        ) %>% 
-        config(displaylogo = FALSE,
-               modeBarButtonsToRemove = list(
-                 'sendDataToCloud',
-                 'autoScale2d',
-                 'resetScale2d',
-                 'hoverClosestCartesian',
-                 'hoverCompareCartesian',
-                 'zoom2d', 
-                 'pan2d',
-                 'select2d',
-                 'lasso2d',
-                 'zoomIn2d', 
-                 'zoomOut2d',
-                 'toggleSpikelines'
-               )
+        ) %>%
+        config(
+          displaylogo = FALSE,
+          modeBarButtonsToRemove = list(
+            'sendDataToCloud',
+            'autoScale2d',
+            'resetScale2d',
+            'hoverClosestCartesian',
+            'hoverCompareCartesian',
+            'zoom2d',
+            'pan2d',
+            'select2d',
+            'lasso2d',
+            'zoomIn2d',
+            'zoomOut2d',
+            'toggleSpikelines'
+          )
         )
-      
+
       plotly_heatmap
     })
 
@@ -248,7 +251,11 @@ mdrPageServer <- function(id, reactiveData) {
           non_na_pair <- complete.cases(data[, c(i, j)])
           if (sum(non_na_pair) >= 30) {
             # browser()
-            cor_matrix[i, j] <- cor(data[non_na_pair, i], data[non_na_pair, j], use = "complete.obs")
+            cor_matrix[i, j] <- cor(
+              data[non_na_pair, i],
+              data[non_na_pair, j],
+              use = "complete.obs"
+            )
             cor_matrix[j, i] <- cor_matrix[i, j]
             count_matrix[i, j] <- sum(non_na_pair)
             count_matrix[j, i] <- count_matrix[i, j]
@@ -258,20 +265,25 @@ mdrPageServer <- function(id, reactiveData) {
       list(cor = cor_matrix, count = count_matrix)
     }
 
-    
     # ------------------------------------------------------------------------------
     # Observes
     # ------------------------------------------------------------------------------
-    
+
     observeEvent(input$save_btn, {
-      session$sendCustomMessage("savePlot", list(
-        plotId = ns("plot"),
-        filename = paste0(Sys.Date(), "AMRVisualizerMDR"),
-        width = 1200,
-        height = 800,
-        scale = 3
-      ))
+      session$sendCustomMessage(
+        "savePlot",
+        list(
+          plotId = ns("plot"),
+          filename = paste0(Sys.Date(), "AMRVisualizerMDR"),
+          width = 1200,
+          height = 800,
+          scale = 3
+        )
+      )
     })
-    
+
+    # ------------------------------------------------------------------------------
+    # Module return
+    # ------------------------------------------------------------------------------
   })
 }

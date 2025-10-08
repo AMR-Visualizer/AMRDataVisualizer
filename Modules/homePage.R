@@ -2,7 +2,8 @@ homePageUI <- function(id) {
   ns <- NS(id)
   tagList(
     tags$head(
-      tags$style(HTML("
+      tags$style(HTML(
+        "
         .homeContainer {
           width: calc(100vw - 229px);
           height: 100vh;
@@ -22,7 +23,7 @@ homePageUI <- function(id) {
           flex-direction: column;
           justify-content: center;
           align-items: center;
-          background-image: url('homeHeaderImg.jpg');
+          background-image: url('img/homeHeaderImg.jpg');
           background-size: cover;
           background-repeat: no-repeat;
           background-position: center;
@@ -60,94 +61,97 @@ homePageUI <- function(id) {
           position: relative;
           z-index: 2;
         }
-      "))
+      "
+      ))
     ),
-    
-    div(class = "homeContainer",
-        div(class = "homeHeader",
-            img(src = "logoLight.png", width = "300px"),
-            h3("Liberate your data into actionable insights.", style = "color: white; text-align: center; margin-top: 20px;"),
-            fluidRow(
-              actionButton(ns("howTo"), "How-to guide", class = "clearButton"),
-              actionButton(ns("about"), "About", class = "clearButton")
-            )
+
+    div(
+      class = "homeContainer",
+      div(
+        class = "homeHeader",
+        img(src = "img/logoLight.png", width = "300px"),
+        h3(
+          "Liberate your data into actionable insights.",
+          style = "color: white; text-align: center; margin-top: 20px;"
         ),
-        div(
-          style = "margin-top: 20px; text-align: center;",
-          actionButton(ns("getStarted"), "Get Started", class = "submitButton", style = "font-size: 24px"),
-          hr(style = "width: 500px; border-color: #34435a"),
-          br(),
-          h3("What's inside?"),
-          actionButton(ns("antibiogram"), "Antibiograms", class = "homeButtons", style = "background-image: url('antibiogram.jpg');"),
-          actionButton(ns("map"), "Maps", class = "homeButtons", style = "background-image: url('map.jpg');"),
-          actionButton(ns("trends"), "Trends", class = "homeButtons", style = "background-image: url('trends.jpg');"),
-          actionButton(ns("pathogens"), "MicroGuide", class = "homeButtons", style = "background-image: url('homeHeaderImg.jpg');"),
-          actionButton(ns("mdr"), "MDR", class = "homeButtons", style = "background-image: url('mdr.jpg');"),
-          actionButton(ns("explore"), "Data Summary", class = "homeButtons", style = "background-image: url('summary.jpg');")
+        fluidRow(
+          actionButton(ns("howTo"), "How-to guide", class = "clearButton"),
+          actionButton(ns("about"), "About", class = "clearButton")
         )
+      ),
+      div(
+        style = "margin-top: 20px; text-align: center;",
+        actionButton(
+          ns("getStarted"),
+          "Get Started",
+          class = "submitButton",
+          style = "font-size: 24px"
+        ),
+        hr(style = "width: 500px; border-color: #34435a"),
+        br(),
+        h3("What's inside?"),
+        actionButton(
+          ns("antibiogram"),
+          "Antibiograms",
+          class = "homeButtons",
+          style = "background-image: url('img/antibiogram.jpg');"
+        ),
+        actionButton(
+          ns("map"),
+          "Maps",
+          class = "homeButtons",
+          style = "background-image: url('img/map.jpg');"
+        ),
+        actionButton(
+          ns("trends"),
+          "Trends",
+          class = "homeButtons",
+          style = "background-image: url('img/trends.jpg');"
+        ),
+        actionButton(
+          ns("pathogens"),
+          "MicroGuide",
+          class = "homeButtons",
+          style = "background-image: url('img/homeHeaderImg.jpg');"
+        ),
+        actionButton(
+          ns("mdr"),
+          "MDR",
+          class = "homeButtons",
+          style = "background-image: url('img/mdr.jpg');"
+        ),
+        actionButton(
+          ns("explore"),
+          "Data Summary",
+          class = "homeButtons",
+          style = "background-image: url('img/summary.jpg');"
+        )
+      )
     )
   )
 }
 
 
-
 homePageServer <- function(id) {
   moduleServer(id, function(input, output, session) {
-    
     ns <- session$ns
 
-    observeEvent(input$howTo, {
-      showModal(modalDialog(
-        easyClose = TRUE,
-        size = "l",
-        title = div(
-          style = "text-align: center;",
-          tags$img(
-            src = "logoDark.png",
-            height = "100px",
-            style = "vertical-align: middle;"
-          )
-        ),
-        includeMarkdown("Documentation/quick_start_guide.md")
-      ))
-    })
-    
-    observeEvent(input$about, {
-      showModal(modalDialog(
-        easyClose = T,
-        size = "l",
-        title = div(
-          style = "text-align: center;",
-          tags$img(
-            src = "logoDark.png",
-            height = "100px",
-            style = "vertical-align: middle;"
-          )
-        ),
-        includeMarkdown("Documentation/about.md")
-      ))
-    })
-    
-    observeEvent(input$getStarted, {
-      showModal(modalDialog(
-        easyClose = TRUE,
-        size = "l",
-        title = div(
-          style = "text-align: center;",
-          tags$img(
-            src = "logoDark.png",
-            height = "100px",
-            style = "vertical-align: middle;"
-          )
-        ),
-        h5("To get started, click on 'Import' on the left-hand sidebar."),
-        div(
-          style = "text-align: center;",
-          img(src = "importScreenshot.png", style = "max-width: 20%; height: auto;")
-        )
-      ))
-    })
-    
+    # ------------------------------------------------------------------------------
+    # Sub-modules
+    # ------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
+    # Module variables
+    # ------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
+    # Reactives
+    # ------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
+    # Render UI
+    # ------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
+    # Utility functions
+    # ------------------------------------------------------------------------------
+
     showScreenshotModal <- function(image, text = NULL) {
       showModal(modalDialog(
         easyClose = TRUE,
@@ -155,7 +159,7 @@ homePageServer <- function(id) {
         title = div(
           style = "text-align: center;",
           tags$img(
-            src = "logoDark.png",
+            src = "img/logoDark.png",
             height = "100px",
             style = "vertical-align: middle;"
           )
@@ -164,31 +168,110 @@ homePageServer <- function(id) {
         img(src = image, width = "100%")
       ))
     }
-    
+
+    # ------------------------------------------------------------------------------
+    # Observes
+    # ------------------------------------------------------------------------------
+
+    observeEvent(input$howTo, {
+      showModal(modalDialog(
+        easyClose = TRUE,
+        size = "l",
+        title = div(
+          style = "text-align: center;",
+          tags$img(
+            src = "img/logoDark.png",
+            height = "100px",
+            style = "vertical-align: middle;"
+          )
+        ),
+        includeMarkdown("Documentation/quick_start_guide.md")
+      ))
+    })
+
+    observeEvent(input$about, {
+      showModal(modalDialog(
+        easyClose = T,
+        size = "l",
+        title = div(
+          style = "text-align: center;",
+          tags$img(
+            src = "img/logoDark.png",
+            height = "100px",
+            style = "vertical-align: middle;"
+          )
+        ),
+        includeMarkdown("Documentation/about.md")
+      ))
+    })
+
+    observeEvent(input$getStarted, {
+      showModal(modalDialog(
+        easyClose = TRUE,
+        size = "l",
+        title = div(
+          style = "text-align: center;",
+          tags$img(
+            src = "img/logoDark.png",
+            height = "100px",
+            style = "vertical-align: middle;"
+          )
+        ),
+        h5("To get started, click on 'Import' on the left-hand sidebar."),
+        div(
+          style = "text-align: center;",
+          img(src = "img/importScreenshot.png", style = "max-width: 20%; height: auto;")
+        )
+      ))
+    })
+
     observeEvent(input$antibiogram, {
-      showScreenshotModal("antibiogramScreenshot.png", text = "Generate cumulative antibiograms using customizable filters. Tables display susceptibility percentages for each antimicrobial and organism combination, with support for stratification and export.")
+      showScreenshotModal(
+        "img/antibiogramScreenshot.png",
+        text = "Generate cumulative antibiograms using customizable filters. Tables display susceptibility percentages for each antimicrobial and organism combination, with support for stratification and export."
+      )
     })
-    
+
     observeEvent(input$map, {
-      showScreenshotModal("mapScreenshot.png", text = "Explore the geographic distribution of resistance patterns using choropleth maps. Resistance can be mapped at the regional or subregional level, depending on the data provided.")
+      showScreenshotModal(
+        "img/mapScreenshot.png",
+        text = "Explore the geographic distribution of resistance patterns using choropleth maps. Resistance can be mapped at the regional or subregional level, depending on the data provided."
+      )
     })
-    
+
     observeEvent(input$trends, {
-      showScreenshotModal("tsScreenshot.png", text = "Plot resistance trends over time for one or more antimicrobial agents. Supports smoothing options (rolling mean, LOESS) to aid in interpretation of noisy time series.")
+      showScreenshotModal(
+        "img/tsScreenshot.png",
+        text = "Plot resistance trends over time for one or more antimicrobial agents. Supports smoothing options (rolling mean, LOESS) to aid in interpretation of noisy time series."
+      )
     })
-    
+
     observeEvent(input$pathogens, {
-      showScreenshotModal("microguideScreenshot.png", text = "View clinically relevant summaries for microorganisms in your dataset, including gram stain, oxygen tolerance, treatment considerations, and epidemiology. Information is sourced from Firstline and tailored to veterinary contexts.")
+      showScreenshotModal(
+        "img/microguideScreenshot.png",
+        text = "View clinically relevant summaries for microorganisms in your dataset, including gram stain, oxygen tolerance, treatment considerations, and epidemiology. Information is sourced from Firstline and tailored to veterinary contexts."
+      )
     })
-    
+
     observeEvent(input$mdr, {
-      showScreenshotModal("mdrScreenshot.png", text = "Examine pairwise co-resistance relationships using correlation heatmaps. Helps identify resistance clustering and guide further investigation into shared resistance mechanisms.")
+      showScreenshotModal(
+        "img/mdrScreenshot.png",
+        text = "Examine pairwise co-resistance relationships using correlation heatmaps. Helps identify resistance clustering and guide further investigation into shared resistance mechanisms."
+      )
     })
-    
+
     observeEvent(input$explore, {
-      showScreenshotModal("exploreScreenshot.png", text = "Create customizable summary tables based on user-defined filters and stratifications. Ideal for internal summaries or external reporting when raw data cannot be shared.")
+      showScreenshotModal(
+        "img/exploreScreenshot.png",
+        text = "Create customizable summary tables based on user-defined filters and stratifications. Ideal for internal summaries or external reporting when raw data cannot be shared."
+      )
     })
-    
-    
+
+    # ------------------------------------------------------------------------------
+    # Download Handlers
+    # ------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
+    # Module return
+    # ------------------------------------------------------------------------------
   })
 }

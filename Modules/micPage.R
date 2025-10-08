@@ -1,34 +1,32 @@
 micPageUI <- function(id, data) {
   ns <- NS(id)
-  
+
   tagList(
     fluidRow(
-      
       # Main Content ------------------------------------------------------------
-      
-      column(9,
-             uiOutput(ns("content"))
-      ),
-      
+
+      column(9, uiOutput(ns("content"))),
+
       # Filters -----------------------------------------------------------------
-      
-      column(3,
-             wellPanel(
-               h4("Filters"),
-                 uiOutput(ns("filters")),
-               hr(),
-               selectizeInput(
-                 ns("groupingVar"),
-                 label = "Grouping Variable",
-                 choices = c("Month", "Region", "Source", "Species", "Subregion", "Year"),
-                 selected = "Year",
-                 multiple = F
-               ),
-               br(),
-               uiOutput(ns("customBreakpointsUI")),
-               class = "contentWell"
-               )
-             )
+
+      column(
+        3,
+        wellPanel(
+          h4("Filters"),
+          uiOutput(ns("filters")),
+          hr(),
+          selectizeInput(
+            ns("groupingVar"),
+            label = "Grouping Variable",
+            choices = c("Month", "Region", "Source", "Species", "Subregion", "Year"),
+            selected = "Year",
+            multiple = F
+          ),
+          br(),
+          uiOutput(ns("customBreakpointsUI")),
+          class = "contentWell"
+        )
+      )
     )
   )
 }
@@ -59,8 +57,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
         Microorganism = character(0),
         Antimicrobial = character(0)
       )
-    
-    
+
     # ------------------------------------------------------------------------------
     # Reactives
     # ------------------------------------------------------------------------------
@@ -115,7 +112,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
           uti == (input$typeFilter == "Urinary"),
           host == tolower(selectedSpecies())
         )
-      
+
       if ("MIC" %in% bp$method) {
         bp <- bp %>%
           filter(method == "MIC")
@@ -125,7 +122,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
         slice(1)
 
       if (nrow(bp) == 0) {
-        return(AMR::clinical_breakpoints[0,])
+        return(AMR::clinical_breakpoints[0, ])
       }
       bp
     }) %>%
@@ -203,7 +200,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
       if (is.null(data)) {
         return(NULL)
       }
-      
+
       data$Guideline <- processedGuideline()
 
       # If no custom breakpoints are set, return the data as is
@@ -268,40 +265,39 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
         arrange(InternalID)
     })
 
-
     # ------------------------------------------------------------------------------
     # Render UI
     # ------------------------------------------------------------------------------
-    
+
     output$filters <- renderUI({
       data <- reactiveData()
       req(data)
       tagList(
         selectizeInput(
-          ns("moFilter"), 
-          label = "Microorganism", 
-          choices = sort(unique(data$Microorganism), na.last = NA), 
+          ns("moFilter"),
+          label = "Microorganism",
+          choices = sort(unique(data$Microorganism), na.last = NA),
           selected = names(sort(table(data$Microorganism), decreasing = TRUE))[1],
           multiple = FALSE
         ),
-        
+
         selectizeInput(
-          ns("abFilter"), 
-          label = "Antimicrobial", 
-          choices = sort(unique(data$Antimicrobial), na.last = NA), 
+          ns("abFilter"),
+          label = "Antimicrobial",
+          choices = sort(unique(data$Antimicrobial), na.last = NA),
           selected = names(sort(table(data$Antimicrobial), decreasing = TRUE))[1],
           multiple = FALSE
         ),
-        
+
         selectizeInput(
-          ns("typeFilter"), 
-          label = "Type", 
-          choices = c("Urinary", "Non-urinary"), 
+          ns("typeFilter"),
+          label = "Type",
+          choices = c("Urinary", "Non-urinary"),
           selected = "Urinary",
           multiple = FALSE
         ),
-        
-        if (!is.null(data$Species) && length(unique(na.omit(data$Species))) > 1)
+
+        if (!is.null(data$Species) && length(unique(na.omit(data$Species))) > 1) {
           selectizeInput(
             ns("speciesFilter"),
             label = "Species",
@@ -309,9 +305,10 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
             selected = names(sort(table(data$Species), decreasing = TRUE))[1],
             multiple = FALSE
           )
+        }
       )
     })
-    
+
     # Show either the error panel or the success panel based on whether data is available
     output$content <- renderUI({
       req(data(), input$moFilter, input$abFilter, input$typeFilter, input$groupingVar)
@@ -358,7 +355,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
     output$customBreakpointsUI <- renderUI({
       req(!showErrorPanel())
       req(input$moFilter, input$abFilter, input$typeFilter, input$groupingVar)
-      
+
       existingBp <- allCustomBreakpoints() %>%
         filter(
           Microorganism == input$moFilter,
@@ -380,7 +377,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
         isCustom = selectedBreakpoints()$guideline == customBreakpointName
       )
     })
-    
+
     output$errorHandling <- renderUI({
       div(
         style = "display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column; text-align: center;",
@@ -389,11 +386,10 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
         h6("This combination of filters does not appear in your data.")
       )
     })
-    
-    output$plot <- render_gt({
+
+    output$plot <- gt::render_gt({
       req(table_result())
     })
-    
 
     # ------------------------------------------------------------------------------
     # Utility functions
@@ -442,7 +438,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
     }
 
     #' Enable multiple inputs by their IDs.
-    #' 
+    #'
     #' @param inputIds A vector of input IDs to enable.
     #' @return         None. This function modifies the UI state.
     enableInputs <- function(inputIds) {
@@ -452,7 +448,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
     }
 
     #' Disable multiple inputs by their IDs.
-    #' 
+    #'
     #' @param inputIds A vector of input IDs to disable.
     #' @return         None. This function modifies the UI state.
     disableInputs <- function(inputIds) {
@@ -461,13 +457,12 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
       })
     }
 
-
     # ------------------------------------------------------------------------------
     # Observes
     # ------------------------------------------------------------------------------
 
     #' Controls the enabling/disabling of the custom breakpoint inputs and buttons.
-    #' 
+    #'
     #' If a custom breakpoint is already set (for the specific grouping), then disable
     #' everything expect the delete button.
     #' If no custom breakpoint is set, and the inputs are both filled, disabled the
@@ -482,7 +477,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
       input$deleteCustomBreakpoints
       input$customSBreakpoint
       input$customRBreakpoint
-      
+
       req(selectedBreakpoints())
       selectedBp <- selectedBreakpoints()
 
@@ -551,10 +546,13 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
             uti == (input$typeFilter == "Urinary") &
             host == tolower(selectedSpecies()))
         )
-        allCustomBreakpoints(customBpRemoved)
+      allCustomBreakpoints(customBpRemoved)
     }) %>%
       bindEvent(input$deleteCustomBreakpoints)
 
+    # ------------------------------------------------------------------------------
+    # Module return
+    # ------------------------------------------------------------------------------
 
     # Return the cleaned data with custom breakpoints applied and all custom breakpoints.
     return(list(

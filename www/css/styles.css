@@ -1,96 +1,98 @@
-h1{
+h1 {
   color: #34435a;
 }
 
-h2{
+h2 {
   color: #34435a;
 }
 
-h3{
+h3 {
   color: #34435a;
 }
 
-h4{
+h4 {
   color: #34435a;
 }
 
-h5{
+h5 {
   color: #34435a;
 }
 
-h6{
+h6 {
   color: #34435a;
 }
 
 .white-btn,
 .blue-btn {
-  background-color: #44CDC4;
+  background-color: #44cdc4;
   color: white;
   border-radius: 20px;
-  border: 2px solid #44CDC4;
+  border: 2px solid #44cdc4;
   margin: 5px;
 }
 
 .white-btn {
   background-color: white;
-  color: #44CDC4;
+  color: #44cdc4;
 }
 
 .shiny-input-container {
-    color: #555555;
-    font-weight: 400;
+  color: #555555;
+  font-weight: 400;
 }
 
 .label {
-    display: inline-block;
-    max-width: 100%;
-    margin-bottom: 5px;
-    font-weight: 400;
+  display: inline-block;
+  max-width: 100%;
+  margin-bottom: 5px;
+  font-weight: 400;
 }
 
 .content-wrapper {
-    background-color: #eae9ed;
-    border-radius: 0px 0px 30px 30px;
+  background-color: #eae9ed;
+  border-radius: 0px 0px 30px 30px;
 }
 
 .skin-blue .main-header .logo {
-    background-color: #34435a;
-    height: 0px;
+  background-color: #34435a;
+  height: 0px;
 }
 
 .skin-blue .main-header .navbar {
-    background-color: #fff;
-    height: 60px;
+  background-color: #fff;
+  height: 60px;
 }
 
 .main-sidebar {
-    position: fixed;
+  position: fixed;
 }
 
-.skin-blue .left-side, .skin-blue .main-sidebar, .skin-blue .wrapper {
-    background-color: #34435a;
-    color: #a7b6d4;
+.skin-blue .left-side,
+.skin-blue .main-sidebar,
+.skin-blue .wrapper {
+  background-color: #34435a;
+  color: #a7b6d4;
 }
 
-.skin-blue .main-sidebar .sidebar .sidebar-menu a:hover{
-    color: white;
-    background-color: rgba(255,255,255,0.1);
-    border-radius: 100px 0px 0px 100px;
+.skin-blue .main-sidebar .sidebar .sidebar-menu a:hover {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 100px 0px 0px 100px;
 }
 
-.skin-blue .main-sidebar .sidebar .sidebar-menu a:focus{
-    outline: none !important;
+.skin-blue .main-sidebar .sidebar .sidebar-menu a:focus {
+  outline: none !important;
 }
 
-.skin-blue .sidebar-menu>li.active>a {
-    background-color: #2c384e;
-    border-left-color: #2c384e;
-    border-radius: 100px 0px 0px 100px;
-    color: white;
+.skin-blue .sidebar-menu > li.active > a {
+  background-color: #2c384e;
+  border-left-color: #2c384e;
+  border-radius: 100px 0px 0px 100px;
+  color: white;
 }
 
-.info{
-  color:#44CDC4;
+.info {
+  color: #44cdc4;
   background-color: white;
   border-color: white;
   margin-top: 5px;
@@ -99,11 +101,10 @@ h6{
   border-radius: 100px;
 }
 
-.info:hover{
-  color: #44CDC4;
+.info:hover {
+  color: #44cdc4;
   background-color: white;
   border-color: white;
-
 }
 
 .sidebar-toggle {
@@ -111,18 +112,18 @@ h6{
 }
 
 .bttn-float.bttn-royal {
-    border-color: #44CDC4;
-    background: #44CDC4;
-    color: white;
-    height: 10vh;
-    width: 10vh;
-    border-radius: 100%;
-    font-size: 30px;
+  border-color: #44cdc4;
+  background: #44cdc4;
+  color: white;
+  height: 10vh;
+  width: 10vh;
+  border-radius: 100%;
+  font-size: 30px;
 }
 
-.uploadWell{
+.uploadWell {
   background-color: white;
-  border-color: #44CDC4;
+  border-color: #44cdc4;
   border-style: dashed;
   text-align: center;
   border-radius: 18px;
@@ -131,18 +132,18 @@ h6{
   margin: auto;
 }
 
-.dataPreviewWell{
+.dataPreviewWell {
   background-color: white;
-  border-color: #44CDC4;
+  border-color: #44cdc4;
   border-radius: 10px;
   width: 100%;
   height: auto;
   margin: auto;
   margin-top: 10px;
-  overflow-x:scroll;
+  overflow-x: scroll;
 }
 
-.dataPreview{
+.dataPreview {
   background-color: white;
   text-align: center;
   border-radius: 10px;
@@ -153,7 +154,7 @@ h6{
   margin-top: 10px;
 }
 
-.cleanDataPreview{
+.cleanDataPreview {
   background-color: white;
   text-align: center;
   border-radius: 10px;
@@ -164,9 +165,9 @@ h6{
   margin-top: 10px;
 }
 
-.colAssignWell{
+.colAssignWell {
   background-color: white;
-  border-color: #44CDC4;
+  border-color: #44cdc4;
   border-radius: 10px;
   width: 100%;
   height: auto;
@@ -174,9 +175,9 @@ h6{
   margin-top: 10px;
 }
 
-.contentWell{
+.contentWell {
   background-color: white;
-  border-color: #44CDC4;
+  border-color: #44cdc4;
   border-radius: 10px;
   width: 100%;
   height: auto;
@@ -184,74 +185,77 @@ h6{
   margin-top: 10px;
 }
 
-.uploadIcon{
-  font-size:80px; 
-  color:#44CDC4;
-  display: block; 
-  margin-left: auto; 
-  margin-right: auto; 
-  text-align:center
+.uploadIcon {
+  font-size: 80px;
+  color: #44cdc4;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
 }
 
 .submitButton {
-    background-color: #44CDC4;
-    color: white;
-    border-color: #44CDC4;
-    border-radius: 100px;
+  background-color: #44cdc4;
+  color: white;
+  border-color: #44cdc4;
+  border-radius: 100px;
 }
 
 .clearButton {
-    background-color: white;
-    color: #44CDC4;
-    border-color: #44CDC4;
-    border-radius: 100px;
+  background-color: white;
+  color: #44cdc4;
+  border-color: #44cdc4;
+  border-radius: 100px;
 }
 
 .processButton {
-    background-color: #44CDC4;
-    color: white;
-    border-color: #44CDC4;
-    border-radius: 100px;
-    float: right;
-    margin-top: 10px;
+  background-color: #44cdc4;
+  color: white;
+  border-color: #44cdc4;
+  border-radius: 100px;
+  float: right;
+  margin-top: 10px;
 }
 
 .resetButton {
-    background-color: white;
-    color: #44CDC4;
-    border-color:white;
-    border-radius: 100px;
-    margin-top: -20px;
-    float: right;
+  background-color: white;
+  color: #44cdc4;
+  border-color: white;
+  border-radius: 100px;
+  margin-top: -20px;
+  float: right;
 }
 
 .resetButton:hover {
-    background-color: white;
-    color: grey;
-    border-color:white;
-    border-radius: 100px;
-    margin-top: -20px;
-    float: right;
+  background-color: white;
+  color: grey;
+  border-color: white;
+  border-radius: 100px;
+  margin-top: -20px;
+  float: right;
 }
 
 .resetButton:focus {
-    background-color: white;
-    color: #44CDC4;
-    border-color:white;
-    border-radius: 100px;
-    margin-top: -20px;
-    float: right;
+  background-color: white;
+  color: #44cdc4;
+  border-color: white;
+  border-radius: 100px;
+  margin-top: -20px;
+  float: right;
 }
 
 .btn.btn-file {
-    position: relative;
-    overflow: hidden;
-    border-radius: 100px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 100px;
 }
 
-.progress, .progress .progress-bar, .progress>.progress-bar, .progress>.progress-bar .progress-bar {
-    border-radius: 100px;
-    background-color: #44CDC4;
+.progress,
+.progress .progress-bar,
+.progress > .progress-bar,
+.progress > .progress-bar .progress-bar {
+  border-radius: 100px;
+  background-color: #44cdc4;
 }
 
 .selectize-input {
@@ -259,68 +263,68 @@ h6{
 }
 
 .selectize-control.multi .selectize-input.has-items {
-    padding-left: 7px;
-    padding-right: 7px;
-    overflow: auto;
+  padding-left: 7px;
+  padding-right: 7px;
+  overflow: auto;
 }
 
 .table {
-    min-width: 100%;
-    max-width: 100%;
-    margin-bottom: 0px;
-    font-size: 12px;
-    color: #34435a;
-    white-space: nowrap;
+  min-width: 100%;
+  max-width: 100%;
+  margin-bottom: 0px;
+  font-size: 12px;
+  color: #34435a;
+  white-space: nowrap;
 }
 
 .nav-icon {
-    font-weight: 900;
-    width: 30px;
-    margin-left: 30px;
+  font-weight: 900;
+  width: 30px;
+  margin-left: 30px;
 }
 
 .container {
-    display: flex;
-    align-items: center;
-    font-size: 50px;
-    width: 100%;
+  display: flex;
+  align-items: center;
+  font-size: 50px;
+  width: 100%;
 }
 
 .container .icon {
-    flex-grow: 1;
-    margin-left: 10vw;
-    text-align: center;
+  flex-grow: 1;
+  margin-left: 10vw;
+  text-align: center;
 }
 
 .container .button {
-    text-align: right;
-    margin-right: auto;
+  text-align: right;
+  margin-right: auto;
 }
 
 .quickDateButton {
-    background-color: #f2f2f2;
-    min-width: 35px;
-    margin: 1px;
-    border-radius: 10px;
-    padding: 3px 4x;
-    font-size: 9px;
+  background-color: #f2f2f2;
+  min-width: 35px;
+  margin: 1px;
+  border-radius: 10px;
+  padding: 3px 4x;
+  font-size: 9px;
 }
 
-.quickDateButtonDiv{
+.quickDateButtonDiv {
   margin-bottom: 12px;
 }
 
 /* AB Legend Items */
-.legendWell{
-    max-width: 270px;
-    float: left;
-    background-color: white;
-    border-color: #44CDC4;
-    border-radius: 10px;
-    width: 100%;
-    height: auto;
-    margin: auto;
-    margin-top: 10px;
+.legendWell {
+  max-width: 270px;
+  float: left;
+  background-color: white;
+  border-color: #44cdc4;
+  border-radius: 10px;
+  width: 100%;
+  height: auto;
+  margin: auto;
+  margin-top: 10px;
 }
 
 .legend-title {
@@ -373,53 +377,56 @@ h6{
 }
 
 .legendColorBlock {
-  font-size: 15px; 
+  font-size: 15px;
   margin-left: 5px;
 }
 
-.btn-group>.btn-group:first-child:not(:last-child)>.btn:last-child {
-    border-radius: 100px 0px 0px 100px;
+.btn-group > .btn-group:first-child:not(:last-child) > .btn:last-child {
+  border-radius: 100px 0px 0px 100px;
 }
 
-.btn-group>.btn-group:last-child:not(:first-child)>.btn:first-child {
-    border-radius: 0px 100px 100px 0px;
+.btn-group > .btn-group:last-child:not(:first-child) > .btn:first-child {
+  border-radius: 0px 100px 100px 0px;
 }
 
-.irs--shiny .irs-from, .irs--shiny .irs-to, .irs--shiny .irs-single {
-    color: #333333;
-    text-shadow: none;
-    padding: 1px 3px;
-    background-color: transparent;
-    border-radius: 3px;
-    font-size: 12px;
-    line-height: 1.333;
-    font-family: 'Carme';
-    font-weight: bolder;
+.irs--shiny .irs-from,
+.irs--shiny .irs-to,
+.irs--shiny .irs-single {
+  color: #333333;
+  text-shadow: none;
+  padding: 1px 3px;
+  background-color: transparent;
+  border-radius: 3px;
+  font-size: 12px;
+  line-height: 1.333;
+  font-family: "Carme";
+  font-weight: bolder;
 }
 
 .irs--shiny .irs-bar {
-    top: 25px;
-    height: 8px;
-    border-top: 1px solid #44CDC4;
-    border-bottom: 1px solid #44CDC4;
-    background: #44CDC4;
-    cursor: s-resize;
-    z-index: 2;
+  top: 25px;
+  height: 8px;
+  border-top: 1px solid #44cdc4;
+  border-bottom: 1px solid #44cdc4;
+  background: #44cdc4;
+  cursor: s-resize;
+  z-index: 2;
 }
 
-.irs--shiny .irs-min, .irs--shiny .irs-max {
-    top: 0;
-    padding: 1px 3px;
-    text-shadow: none;
-    background-color: transparent;
-    border-radius: 3px;
-    font-size: 0px;
-    line-height: 1.333;
+.irs--shiny .irs-min,
+.irs--shiny .irs-max {
+  top: 0;
+  padding: 1px 3px;
+  text-shadow: none;
+  background-color: transparent;
+  border-radius: 3px;
+  font-size: 0px;
+  line-height: 1.333;
 }
 
-.exploreFiltersWell{
+.exploreFiltersWell {
   background-color: white;
-  border-color: #44CDC4;
+  border-color: #44cdc4;
   text-align: center;
   border-radius: 10px;
   margin: auto;
@@ -428,22 +435,18 @@ h6{
   margin-top: 10px;
 }
 
-.checkbox-primary input[type="checkbox"]:checked+label::before, .checkbox-primary input[type="radio"]:checked+label::before {
-    background-color: #44CDC4;
-    border-color: #44CDC4;
+.checkbox-primary input[type="checkbox"]:checked + label::before,
+.checkbox-primary input[type="radio"]:checked + label::before {
+  background-color: #44cdc4;
+  border-color: #44cdc4;
 }
 
-.pathogenInfoDiv{
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-.activeFilters{
-  display: inline-block; 
-  padding: 4px 8px; 
-  margin: 1px; 
-  background-color: #FFF0F5; 
-  color: tomato; 
+.activeFilters {
+  display: inline-block;
+  padding: 4px 8px;
+  margin: 1px;
+  background-color: #fff0f5;
+  color: tomato;
   border-radius: 12px;
 }
 
@@ -466,7 +469,7 @@ h6{
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background-image: url('homeHeaderImg.jpg');
+  background-image: url("img/homeHeaderImg.jpg");
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -504,7 +507,7 @@ h6{
   margin: 10px;
   color: transparent;
   border-width: 2px;
-  border-color: #44CDC4;
+  border-color: #44cdc4;
   position: relative;
   overflow: hidden;
   transition: background-color 0.3s, color 0.3s;
@@ -513,7 +516,7 @@ h6{
 }
 
 .homeButtons::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -533,12 +536,19 @@ h6{
 
 .homeButtons:hover {
   background-size: 0px;
-  color: #44CDC4;
+  color: #44cdc4;
 }
-        
+
 .mdrLegend {
   height: 30px;
-  background: linear-gradient(to right, tomato, pink, #F4F4F4, #44CDC4, #34435a);
+  background: linear-gradient(
+    to right,
+    tomato,
+    pink,
+    #f4f4f4,
+    #44cdc4,
+    #34435a
+  );
   border: 1px solid #ccc;
 }
 .mdrLegendLabels {
@@ -548,58 +558,61 @@ h6{
   margin-top: 5px;
 }
 
-.nav-tabs>li.active>a, .nav-tabs>li.active>a:hover, .nav-tabs>li.active>a:focus {
-    color: white;
-    cursor: default;
-    background-color: #44CDC4;
-    border: 0px;
-    border-radius: 45px;
+.nav-tabs > li.active > a,
+.nav-tabs > li.active > a:hover,
+.nav-tabs > li.active > a:focus {
+  color: white;
+  cursor: default;
+  background-color: #44cdc4;
+  border: 0px;
+  border-radius: 45px;
 }
 
-.nav-tabs>li>a {
-    margin-right: 6px;
-    border-radius: 45px;
-    border-color: #44CDC4;
-    color: #44CDC4;
-    font-size: 12px;
+.nav-tabs > li > a {
+  margin-right: 6px;
+  border-radius: 45px;
+  border-color: #44cdc4;
+  color: #44cdc4;
+  font-size: 12px;
 }
 
 .nav-tabs {
-    border-bottom: 0px;
+  border-bottom: 0px;
 }
 
-.pretty .state label:after, .pretty .state label:before {
-    border-radius: 10px;
+.pretty .state label:after,
+.pretty .state label:before {
+  border-radius: 10px;
 }
 
-.pretty.p-default input:checked~.state label:after {
-    background-color: #44CDC4 !important;
+.pretty.p-default input:checked ~ .state label:after {
+  background-color: #44cdc4 !important;
 }
 
 .sweet-alert.alert-size-s {
-    border-radius: 20px;
+  border-radius: 20px;
 }
 
 .alert .confirm {
-  background-color: #44CDC4 !important;
+  background-color: #44cdc4 !important;
   color: white !important;
 }
 
-.plotSaveButton{
+.plotSaveButton {
   float: right;
   border-radius: 25px;
   color: white;
-  background-color: #44CDC4;
+  background-color: #44cdc4;
   border-color: white;
   font-size: 12px;
   margin-top: 10px;
 }
 
-.dataSaveButton{
+.dataSaveButton {
   float: right;
   border-radius: 25px;
   color: white;
-  background-color: #44CDC4;
+  background-color: #44cdc4;
   border-color: white;
   font-size: 14px;
   margin-top: 10px;
@@ -608,32 +621,32 @@ h6{
 .changeLogButton {
   border-radius: 25px;
   color: white;
-  background-color: #44CDC4;
+  background-color: #44cdc4;
   border-color: white;
   font-size: 14px;
   margin-top: 10px;
 }
 
 .changeLogButton.white {
-  border-color: #44CDC4;
+  border-color: #44cdc4;
   background-color: white;
-  color: #44CDC4;
+  color: #44cdc4;
 }
 
 .panel-group .panel {
-    margin-bottom: 0;
-    margin-top: 10px;
-    border-radius: 10px;
-    border: 1px solid #44CDC4;
+  margin-bottom: 0;
+  margin-top: 10px;
+  border-radius: 10px;
+  border: 1px solid #44cdc4;
 }
 
-.panel-default>.panel-heading {
-    color: #34435a;
-    background-color: #FFFFFF;
-    border: 0px;
-    border-radius: 10px;
-    font-size: 18px;
-    text-align: center;
+.panel-default > .panel-heading {
+  color: #34435a;
+  background-color: #ffffff;
+  border: 0px;
+  border-radius: 10px;
+  font-size: 18px;
+  text-align: center;
 }
 
 .ab-table-wrapper {
@@ -662,7 +675,7 @@ h6{
 
 #summary-stats-table-container th {
   font-weight: bold;
-  color: #44CDC4;
+  color: #44cdc4;
   font-size: 18px;
   text-align: left;
   padding: 10px;
@@ -675,7 +688,7 @@ h6{
 
 #summary-stats-table-container td:first-child {
   font-weight: bold;
-  color: #44CDC4;
+  color: #44cdc4;
   font-size: 14px;
 }
 
@@ -683,9 +696,6 @@ h6{
   font-weight: normal;
   color: #333;
 }
-
-
-
 
 /* Change log table */
 
@@ -698,7 +708,7 @@ h6{
 .changelog-table table tbody tr td:nth-child(2) {
   /* Add border inside cell to mimic text input */
   position: relative;
-  padding: .8rem 1rem;
+  padding: 0.8rem 1rem;
   cursor: pointer;
 }
 
@@ -706,10 +716,10 @@ h6{
   /* Style the renamed column to be more visually obviously editable */
   content: "";
   position: absolute;
-  top: .5rem;
-  left: .4rem;
+  top: 0.5rem;
+  left: 0.4rem;
   width: calc(100% - 1rem);
-  height: calc(100% - .8rem);
+  height: calc(100% - 0.8rem);
   border: 1px solid grey;
 }
 
@@ -724,9 +734,8 @@ h6{
   padding: 1rem;
   background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
 }
-
 
 /* Modal footer styles */
 #import-modal-footer {
@@ -756,10 +765,9 @@ h6{
   opacity: 0.5;
 }
 
-
 /** Custom Breakpoints Container */
 .custom-breakpoints-container {
-  border-top: 1px solid #44CDC4;
+  border-top: 1px solid #44cdc4;
   padding-top: 5px;
 }
 

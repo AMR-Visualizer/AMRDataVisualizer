@@ -5,8 +5,10 @@ filterPanelUI <- function(id) {
     open = "Filters",
     multiple = T,
     bsCollapsePanel(
-      title = HTML("Filters <span class='glyphicon glyphicon-chevron-down' data-toggle='collapse-icon' 
-            style='float: right; color: #aaa;'></span>"),
+      title = HTML(
+        "Filters <span class='glyphicon glyphicon-chevron-down' data-toggle='collapse-icon' 
+            style='float: right; color: #aaa;'></span>"
+      ),
       div(
         style = "display: flex; justify-content: center; align-items: center; position: relative;",
         actionButton(
@@ -26,7 +28,7 @@ filterPanelUI <- function(id) {
 }
 
 #' Filter module server.
-#' 
+#'
 #' @param id                Module id.
 #' @param reactiveData      Df of data to filter (can be reactive or static).
 #' @param default_filters   Character vector of column names to apply default filters on module load.
@@ -53,7 +55,6 @@ filterPanelServer <- function(id, data, default_filters, auto_populate = list())
       "WHO AWaRe Class" = "awareFilterElement",
       "Suppress Antimicrobials" = "suppressABFilterElement"
     )
-
 
     # ------------------------------------------------------------------------------
     # Reactives
@@ -187,7 +188,6 @@ filterPanelServer <- function(id, data, default_filters, auto_populate = list())
       )
     })
 
-
     # ------------------------------------------------------------------------------
     # Utility functions
     # ------------------------------------------------------------------------------
@@ -212,8 +212,10 @@ filterPanelServer <- function(id, data, default_filters, auto_populate = list())
       filtered <- targetData
       for (col in filters) {
         if (col == "Date") {
-          filtered <- filtered[filtered$Date >= min(targetData$Date, na.rm = TRUE) &
-                                 filtered$Date <= max(targetData$Date, na.rm = TRUE), ]
+          filtered <- filtered[
+            filtered$Date >= min(targetData$Date, na.rm = TRUE) &
+              filtered$Date <= max(targetData$Date, na.rm = TRUE),
+          ]
         } else if (isTRUE(auto_populate[[col]])) {
           most_common_value <- names(sort(table(targetData[[col]]), decreasing = TRUE))[1]
           filtered <- filtered[filtered[[col]] == most_common_value, ]
@@ -230,19 +232,24 @@ filterPanelServer <- function(id, data, default_filters, auto_populate = list())
     observeEvent(input$editFilters, {
       showModal(modalDialog(
         title = "Select Filters",
-        checkboxGroupInput(ns("selectedFilters"), "Choose Filters", 
-                           choices = sort(c(colnames(reactiveData()), 
-                                            "Suppress Antimicrobials",
-                                            "Resistant to", 
-                                            "WHO AWaRe Class")), 
-                           selected = selected_filters$columns),
+        checkboxGroupInput(
+          ns("selectedFilters"),
+          "Choose Filters",
+          choices = sort(c(
+            colnames(reactiveData()),
+            "Suppress Antimicrobials",
+            "Resistant to",
+            "WHO AWaRe Class"
+          )),
+          selected = selected_filters$columns
+        ),
         footer = tagList(
           modalButton("Cancel"),
           actionButton(ns("applyModalFilters"), "Apply")
         )
       ))
     })
-    
+
     # Apply the selected filters from the modal and close the modal
     observeEvent(input$applyModalFilters, {
       selected_filters$columns <- input$selectedFilters
@@ -254,74 +261,75 @@ filterPanelServer <- function(id, data, default_filters, auto_populate = list())
       req(reactiveData())
       filteredData(applyDefaultFilters(reactiveData(), default_filters, auto_populate))
     })
-    
+
     # Want this to update when "Apply" is clicked or when the data changes (meaning custom breakpoints were applied)
     observeEvent(input$applyFilter, {
       originalData <- reactiveData()
       filtered <- originalData
-      
+
       if (!is.null(input$removeAB) && length(input$removeAB) > 0) {
         filtered <- originalData %>%
           filter(!Antimicrobial %in% input$removeAB)
       }
-      
+
       if (!is.null(input$resistanceFilter) && input$resistanceFilter != "") {
         resistant_rows <- originalData %>%
           filter(Antimicrobial == input$resistanceFilter & Interpretation == "R")
-        
+
         resistant_ids <- resistant_rows %>%
           select(ID, Date, Region, Subregion, Species, Source, Microorganism) %>%
           distinct()
-        
+
         filtered <- originalData %>%
           inner_join(resistant_ids, by = colnames(resistant_ids))
       }
-      
+
       if (!is.null(input$awareFilter) && length(input$awareFilter) > 0) {
         relevantAntimicrobials <- awareList %>%
           filter(awareGroup %in% input$awareFilter) %>%
           pull(Antimicrobial)
-        
+
         filtered <- originalData %>%
           filter(Antimicrobial %in% relevantAntimicrobials)
       }
-      
-      for (col in selected_filters$columns) {
 
+      for (col in selected_filters$columns) {
         if (col == "Date" && !is.null(input$timeFilter)) {
-          filtered <- filtered[filtered$Date >= input$timeFilter[1] & filtered$Date <= input$timeFilter[2], ]
-          
+          filtered <- filtered[
+            filtered$Date >= input$timeFilter[1] & filtered$Date <= input$timeFilter[2],
+          ]
         } else if (!is.null(input[[paste0(col, "Filter")]])) {
-          
           selected_vals <- input[[paste0(col, "Filter")]]
-          
+
           if (length(selected_vals) > 0) {
-            
             filtered <- filtered[filtered[[col]] %in% selected_vals, ]
-            
           }
         }
       }
-      
+
       if (!is.null(input$resistanceFilter) && input$resistanceFilter != "") {
         conflicting_rows <- filtered %>%
           filter(Antimicrobial == input$resistanceFilter & Interpretation == "S")
-        
+
         if (nrow(conflicting_rows) > 0) {
-          
           conflicting_bacteria <- conflicting_rows %>%
             group_by(Microorganism) %>%
             summarise(count = n()) %>%
             arrange(desc(count)) %>%
             pull(Microorganism)
-          
-          bacteria_list <- paste("<ul>", 
-                                 paste("<li>", conflicting_bacteria, "</li>", collapse = ""),
-                                 "</ul>")
-          
+
+          bacteria_list <- paste(
+            "<ul>",
+            paste("<li>", conflicting_bacteria, "</li>", collapse = ""),
+            "</ul>"
+          )
+
           shinyalert(
             title = "Warning: Conflicting Data",
-            text = paste("There appear to be conflicting duplicates in your data for the selected antimicrobial, with indistiguishable isolates marked as susceptible ('S') and others as resistant ('R'). We recommend reviewing your data to identify and resolve these discrepancies manually.<br> The following bacteria have conflicting interpretations:<br>", bacteria_list),
+            text = paste(
+              "There appear to be conflicting duplicates in your data for the selected antimicrobial, with indistiguishable isolates marked as susceptible ('S') and others as resistant ('R'). We recommend reviewing your data to identify and resolve these discrepancies manually.<br> The following bacteria have conflicting interpretations:<br>",
+              bacteria_list
+            ),
             type = "warning",
             html = TRUE,
             closeOnClickOutside = TRUE,
@@ -329,11 +337,10 @@ filterPanelServer <- function(id, data, default_filters, auto_populate = list())
           )
         }
       }
-      
+
       filteredData(filtered)
     })
-    
-    
+
     observeEvent(input$last3Months, {
       d <- reactiveData()
       updateDateRangeInput(
@@ -345,7 +352,7 @@ filterPanelServer <- function(id, data, default_filters, auto_populate = list())
         end = max(d$Date)
       )
     })
-    
+
     observeEvent(input$last6Months, {
       d <- reactiveData()
       updateDateRangeInput(
@@ -357,7 +364,7 @@ filterPanelServer <- function(id, data, default_filters, auto_populate = list())
         end = max(d$Date)
       )
     })
-    
+
     observeEvent(input$pastYear, {
       d <- reactiveData()
       updateDateRangeInput(
@@ -369,7 +376,7 @@ filterPanelServer <- function(id, data, default_filters, auto_populate = list())
         end = max(d$Date)
       )
     })
-    
+
     observeEvent(input$allData, {
       d <- reactiveData()
       updateDateRangeInput(
@@ -381,62 +388,56 @@ filterPanelServer <- function(id, data, default_filters, auto_populate = list())
         end = max(d$Date)
       )
     })
-    
-    #---
-    
+
+    # ------------------------------------------------------------------------------
+    # Module return
+    # ------------------------------------------------------------------------------
+
     return(list(
       filteredData = filteredData,
       activeFilters = reactive({
         filters <- list()
         originalData <- reactiveData()
-        
+
         if (!is.null(input$removeAB) && length(input$removeAB) > 0) {
           filters[["Suppress Antimicrobials"]] <- input$removeAB
         }
-        
+
         if (!is.null(input$resistanceFilter) && length(input$resistanceFilter) > 0) {
           filters[["Resistant to"]] <- input$resistanceFilter
         }
-        
+
         if (!is.null(input$awareFilter) && length(input$awareFilter) > 0) {
           filters[["WHO AWaRe Class"]] <- input$awareFilter
         }
-        
+
         for (col in selected_filters$columns) {
-          
           if (col == "Date") {
             if (!is.null(input$timeFilter)) {
               filters[["Date"]] <- input$timeFilter
             } else {
-              filters[["Date"]] <- c(min(originalData$Date, na.rm = TRUE), max(originalData$Date, na.rm = TRUE))
+              filters[["Date"]] <- c(
+                min(originalData$Date, na.rm = TRUE),
+                max(originalData$Date, na.rm = TRUE)
+              )
             }
-            
           } else {
             val <- input[[paste0(col, "Filter")]]
-            
+
             if (is.null(val) || length(val) == 0) {
               if (isTRUE(auto_populate[[col]])) {
                 val <- names(sort(table(originalData[[col]]), decreasing = TRUE))[1]
               }
             }
-            
+
             if (!is.null(val) && length(val) > 0) {
               filters[[col]] <- val
             }
           }
         }
-        
-        
+
         return(filters)
       })
     ))
-    
-    
-    
-    #---
   })
 }
-
-
-
-
