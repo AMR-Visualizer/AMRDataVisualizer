@@ -1,5 +1,4 @@
-classicAB <- function(data, obs_cols, drug_targets, combined_js, height){
-  
+classicAB <- function(data, obs_cols, drug_targets, combined_js, height) {
   datatable(
     data,
     rownames = FALSE,
@@ -15,14 +14,15 @@ classicAB <- function(data, obs_cols, drug_targets, combined_js, height){
       fixedColumns = list(leftColumns = 2),
       paging = FALSE,
       ordering = FALSE,
-      
+
       columnDefs = list(
         list(targets = obs_cols - 1, visible = FALSE),
         list(targets = drug_targets, createdCell = combined_js),
-        
+
         list(
           targets = 0,
-          createdCell = JS("
+          createdCell = JS(
+            "
       function(td, cellData, rowData, row, col) {
         $(td).css({
           'width': '180px',
@@ -31,12 +31,14 @@ classicAB <- function(data, obs_cols, drug_targets, combined_js, height){
           'text-overflow': 'ellipsis'
         });
       }
-    ")
+    "
+          )
         ),
-        
+
         list(
           targets = 1,
-          createdCell = JS("
+          createdCell = JS(
+            "
       function(td, cellData, rowData, row, col) {
         $(td).css({
           'width': '120px',
@@ -45,12 +47,14 @@ classicAB <- function(data, obs_cols, drug_targets, combined_js, height){
           'text-overflow': 'ellipsis'
         });
       }
-    ")
+    "
+          )
         ),
-        
+
         list(
           targets = drug_targets,
-          createdCell = JS("
+          createdCell = JS(
+            "
       function(td, cellData, rowData, row, col) {
         $(td).css({
           'width': '25px',
@@ -59,11 +63,11 @@ classicAB <- function(data, obs_cols, drug_targets, combined_js, height){
           'text-overflow': 'ellipsis'
         });
       }
-    ")
+    "
+          )
         )
-        
       ),
-      
+
       headerCallback = JS(
         "function(thead, data, start, end, display) {",
         "  function rotateHeaders($ths) {",
@@ -92,10 +96,6 @@ classicAB <- function(data, obs_cols, drug_targets, combined_js, height){
         "  rotateHeaders($('.DTFC_Cloned thead th'));",
         "}"
       )
-
-      
     )
-    
   )
-  
 }

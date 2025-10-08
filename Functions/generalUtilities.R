@@ -1,8 +1,7 @@
 #' General Utilities
-#' 
+#'
 #' Functions:
 #' - `getCustomGuidelineName`: Returns a string for custom guidelines with the current year.
-
 
 #' Get the name for custom guidelines used throughout the app.
 #'
