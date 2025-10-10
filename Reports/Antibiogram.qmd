@@ -1,79 +1,177 @@
 ---
-title: "Antibiogram"
-date: today
 format:
   html:
-    self-contained: true 
+    self-contained: true
+    css: ["report.css"]
     theme: cosmo
+execute:
+  echo: false
+  warning: false
+page-layout: custom
+params:
+  vwidth: 1120
+  filters: null
+  bp: null
 ---
 
 ```{r setup, include=FALSE}
-filters <- readRDS("filters.RDS")
+library(shiny)
+# filters <- readRDS("filters.RDS")
+filters <- params$filters
 low_counts <- readLines("low_counts_flag.txt", warn = FALSE)
+
+
+
 ```
 
-::: {.callout-note title="Active Filters"}
-<div style= "
-line-height: 1.1;
-  white-space: normal;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  font-family: inherit;
-  font-size: 0.7rem;
-">
+
+
+
+<!-- First Page -->
+
+<img src="logo.png" alt="AMR logo" style="height: 80px; float: right;" />
+
+<hr class="blue-hr">
+
+<h3>Antibiogram Report</h3>
+
+```{r first-page, echo=FALSE, results='asis'}
+
+div(
+  id = "filter-grid",
+  span(strong("Host species: "), filters$Species %||% "All"),
+  span(strong("Bacteria: "), filters$Microorganism %||% "Not selected"),
+  span(strong("Sample source: "), filters$Source %||% "All"),
+  span(
+    strong("Date range: "),
+    ifelse(length(filters$Date) > 0, paste(filters$Date, collapse = " - "), "Not specified")
+  ),
+  span(strong("Breakpoints applied: "), filters$Bp %||% "All")
+)
+```
+
+
+An antibiogram is a cumulative report that summarizes the percentage of bacterial isolates susceptible to each antimicrobial. The antibiogram is shown for *all / top* [Maximum Rows] [Y-axis variable]s sorted by [Sort by]. *Bacteria are aggregated by genus.* Antimicrobials are divided by class with dashed vertical lines.
+
+Each cell shows the percentage of isolates interpreted as susceptible for a given *organism/source*–drug pair. *Organism/Source*–drug combinations with
+fewer than 30 isolates tested are *excluded / shown / shown but not colored*[^1].
+
+<!-- Percentages - Combined or Gram Negative -->
 
 ```{r, echo=FALSE, results='asis'}
-if (length(filters) == 0) {
-  cat("<p>No filters were applied.</p>")
-} else {
-  for (name in names(filters)) {
-    cat(sprintf("<p><strong>%s:</strong> %s</p>", name, paste(filters[[name]], collapse = ", ")))
-  }
-}
-if (identical(low_counts, "Exclude")) {
-  cat("<p><em>*Less than 30 observations have been removed.</em></p>")
-}
-```
-</div>
-:::
 
-------------------------------------------------------------------------
-
-<!-- Combined or Gram Negative -->
-
-```{r, echo=FALSE, results='asis'}
-if (file.exists("antibiogram_table2.png")) {
-  html <- paste0(
-    '<h3 style="text-align: center;">Gram-Negative</h3>',
-    '<div style="display: flex; justify-content: center;">',
-    '<img src="antibiogram_table.png" ',
-    'style="max-height: 75vh; width: auto; max-width: 90vw; object-fit: contain; border: 0; padding: 0.2rem;" />',
-    '</div>'
+tagList(
+  if (file.exists("antibiogram_table2.png")) {
+    h4("Gram-Negative", style="text-align: center;")
+  },
+  div(
+    style="display: flex; justify-content: center;",
+    img(src="antibiogram_table.png", style="max-height: 75vh; width: auto; max-width: 90vw; object-fit: contain; border: 0; padding: 0.2rem;")
   )
-  cat(html)
-} else {
-  html <- paste0(
-    '<div style="display: flex; justify-content: center;">',
-    '<img src="antibiogram_table.png" ',
-    'style="max-height: 75vh; width: auto; max-width: 90vw; object-fit: contain; border: 0; padding: 0.2rem;" />',
-    '</div>'
-  )
-  cat(html)
-  
-}
+)
 ```
+
 
 <!-- Gram Positive -->
 
 ```{r, echo=FALSE, results='asis'}
 if (file.exists("antibiogram_table2.png")) {
-  html <- paste0(
-    '<h3 style="text-align: center;">Gram-Positive</h3>',
-    '<div style="display: flex; justify-content: center;">',
-    '<img src="antibiogram_table2.png" ',
-    'style="max-height: 75vh; width: auto; max-width: 90vw; object-fit: contain; border: 0; padding: 0.2rem;" />',
-    '</div>'
+  tagList(
+    h4("Gram-Positive", style="text-align: center;"),
+    div(
+      style="display: flex; justify-content: center;",
+      img(src="antibiogram_table2.png", style="max-height: 75vh; width: auto; max-width: 90vw; object-fit: contain; border: 0; padding: 0.2rem;")
+    )
   )
-  cat(html)
 }
 ```
+
+[^1]: This is the footnote text.
+
+
+<!-- Second Page -->
+
+<div class="page-break"></div>
+
+<hr class="blue-hr">
+
+<h3>Number of Isolates Tested</h3>
+
+Each cell shows the number of isolates interpreted as susceptible over the total number of isolates tested for a given *organism/source*–drug pair.
+
+Organism/Source–drug combinations with fewer than 30 isolates tested are *excluded / shown.*
+
+<!-- Isolates - Combined or Gram Negative -->
+
+```{r, echo=FALSE, results='asis'}
+
+tagList(
+  if (file.exists("isolate_table2.png")) {
+    h4("Gram-Negative", style="text-align: center;")
+  },
+  div(
+    style="display: flex; justify-content: center;",
+    img(src="isolate_table.png", style="max-height: 75vh; width: auto; max-width: 90vw; object-fit: contain; border: 0; padding: 0.2rem;")
+  )
+)
+```
+
+
+<!-- Gram Positive -->
+
+```{r, echo=FALSE, results='asis'}
+if (file.exists("isolate_table2.png")) {
+  tagList(
+    h4("Gram-Positive", style="text-align: center;"),
+    div(
+      style="display: flex; justify-content: center;",
+      img(src="isolate_table2.png", style="max-height: 75vh; width: auto; max-width: 90vw; object-fit: contain; border: 0; padding: 0.2rem;")
+    )
+  )
+}
+```
+
+
+
+
+
+
+
+<!-- Third Page -->
+
+<div class="page-break"></div>
+
+<hr class="blue-hr">
+
+<h3>Percent Susceptible 95% Confidence Interval</h3>
+
+add another page titled "Percent Susceptible 95% Confidence Interval" with the same table but having clopper-pearson CI
+
+
+
+<!-- Fourth Page -->
+
+<div class="page-break"></div>
+
+<hr class="blue-hr">
+
+<h3>Background Information</h3>
+
+Antibiograms are a summary of antimicrobial susceptibility data, showing the percentage of susceptibility across pathogen and antimicrobial drug combinations. Antibiograms may be useful for guiding empiric antimicrobial therapy, in conjunction with information on the likely pathogen, infected body site, and antimicrobial pharmacokinetics and pharmacodynamics. They can also assist with antimicrobial resistance surveillance. When interpreting an antibiogram, consider the following:
+
+1. The precision of the susceptibility percentage estimate is related to the number of bacterial isolates tested. In general, it is recommended to only estimate the susceptibility percentage for pathogen-drug combinations that are represented by at least 30 isolates. This results in a minimum precision of 15 percentage points, meaning that an estimate of 50% susceptibility could reflect a true susceptibility percentage of 35% to 65%. Precision is greater with larger sample sizes and at the extreme percentages (e.g., 90% susceptibility has a greater precision than 50%).
+2. Antibiograms should only include one isolate per patient of each bacterial species. Including more than one isolate per patient can bias the susceptibility percentage since the same isolate may be isolated multiple times from a patient or the isolate susceptibilities from a single patient may be correlated.
+3. Antimicrobials that are routinely tested will produce the most accurate susceptibility percentage. Antimicrobials that are not tested on every isolate are likely to have biased susceptibility percentages, often towards higher levels of resistance, because these antimicrobials may only be tested on isolates that are resistant to routine antimicrobials.
+4. Costs of diagnostic testing can result in antibiogram bias. For example, in veterinary medicine, culture and susceptibility test costs are paid by animal owners. Overall, only a small percentage of infected animals have a culture and susceptibility test and animals with infections that did not respond to empiric therapy may be more likely to have a culture performed. This can bias the data, likely towards lower susceptibility percentages.
+5. There is not a standard susceptibility percentage that is considered acceptable for empiric therapy. The expected susceptibility percentage should be considered together with patient factors and good antimicrobial stewardship practices. A suggestion is that susceptibility greater than 80% is appropriate for empiric antimicrobial selection and lower than 60% would be a poor choice for empiric therapy. 5. Breakpoints change as additional information about antimicrobial pharmacokinetics and pharmacodynamics and clinical outcomes becomes available. If a breakpoint shifts outside the range of typically tested antimicrobial concentrations, then some MIC values may not be interpretable. If a large percentage of MICs are not interpretable for a specific antimicrobial, source, host species, and microorganism combination, then the percentage of susceptibility will be biased. This is particularly important if only small or large MICs are uninterpretable, leading to artificially low or high susceptibility percentages, respectively. For example, if the lowest concentration that a lab routinely tests an antibiotic at is 2 and the susceptibility breakpoint later changes to 1, the percentage of susceptibility will be biased towards decreased susceptibility, because the susceptibility of all of the previous results that were <= 2 cannot be interpreted, but any result with a value >2 will be classified as resistant.
+
+
+<img src="report-bp-example.png" alt="Breakpoint diagram" style="display: block; margin: auto; height: 300px; margin-bottom: 30px;"/>
+
+
+This antibiogram was generated with AMR Visualizer, an RShiny App [insert citation].
+
+
+
+
+

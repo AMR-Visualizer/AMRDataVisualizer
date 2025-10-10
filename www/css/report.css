@@ -1,0 +1,71 @@
+:root {
+  --primary-blue: #44cdc4;
+  --light-blue: #a7b6d4;
+  --dark-blue: #34435a;
+  --darker-blue: #2c384e;
+  --light-grey: #eae9ed;
+  --dark-grey: #555555;
+  --off-white: #f4f4f4;
+  --white: #fff;
+  --red: #D73027;
+  --yellow: #FEE08B;
+}
+
+/** Report Styles */
+
+.quarto-light > div {
+  padding: 80px 100px;
+}
+
+.blue-hr {
+  border: 2px solid var(--primary-blue);
+  opacity: 1;
+  margin: 10px 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--primary-blue);
+  font-weight: bold;
+  opacity: 1;
+  margin: 0 0 20px 0;
+}
+
+#filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  column-gap: 20px;
+  margin-bottom: 30px;
+  width: fit-content;
+}
+
+.page-break {
+  page-break-before: always;
+  break-before: page;
+}
+
+/*
+body, table, td, th {
+  font-family: "Carme", sans-serif !important;
+  font-size: %dpx !important;
+}
+.dataTables_wrapper {
+  overflow-x: visible !important;
+}
+table {
+  table-layout: fixed;
+}
+th:nth-child(1), td:nth-child(1) {
+  width: 180px !important;
+  max-width: 180px !important;
+}
+th:nth-child(2), td:nth-child(2) {
+  width: 120px !important;
+  max-width: 120px !important;
+}
+th:nth-child(n+3), td:nth-child(n+3) {
+  width: 25px !important;
+  max-width: 25px !important;
+} */

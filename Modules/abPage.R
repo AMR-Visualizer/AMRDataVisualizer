@@ -4,7 +4,13 @@ abPageUI <- function(id) {
     fluidRow(
       # Main Content ------------------------------------------------------------
 
-      column(9, uiOutput(ns("content"))),
+      column(
+        9,
+        tagList(
+          uiOutput(ns("has_data")),
+          uiOutput(ns("has_no_data"))
+        )
+      ),
 
       # Side menus -----------------------------------------------------------------
 
@@ -70,15 +76,26 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
     numAb <- reactiveVal(15)
     splitGram <- reactiveVal(FALSE)
     splitData <- reactiveVal()
-    plot2 <- reactiveVal()
-    table1 <- reactiveVal()
-    table2 <- reactiveVal()
+
+    # Group all the inputs in the controls panel into a single reactive
+    controls <- reactive({
+      return(list(
+        yVar = yVar(),
+        sortBy = sortBy(),
+        abType = abType(), # Antibiogram style
+        lowCounts = lowCounts(), # Handle low counts
+        numAb = numAb(), # Maximum rows
+        showColors = showColors(),
+        aggByGenus = aggByGenus(),
+        splitGram = splitGram()
+      ))
+    })
 
     # First filter the data to include in the plot
     filteredData <- reactive({
       yVar <- yVar()
 
-      plotData() %>%
+      data <- plotData() %>%
         filter(Interpretation %in% c("S", "R", "I")) %>%
         mutate(
           Interpretation = ifelse(Interpretation == "S", 1, 0),
@@ -115,250 +132,79 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
             )
           }
         } %>%
-        arrange(Class, Antimicrobial)
+        arrange(Class, Antimicrobial) %>%
+        mutate(
+          colour = case_when(
+            obs < 30 ~ "white",
+            prop < 0.7 ~ "#D73027",
+            prop >= 0.7 & prop <= 0.9 ~ "#FEE08B",
+            prop > 0.9 ~ "#44CDC4"
+          )
+        )
+      return(data)
     })
 
-    # Define Plot
-    plot <- reactive({
-      yVar <- yVar()
-      staticData <- reactiveData()
+    #' The type of output to generate.
+    #'
+    #' Similified: plotly plot
+    #' Classic: gt table (if gram split then 2 tables)
+    outputType <- reactive({
+      if (abType() == "Simplified") {
+        return("simplified")
+      }
+      if (splitGram() == TRUE && yVar() == "Microorganism") {
+        return("classic_split")
+      }
+      return("classic")
+    })
 
-      result_table <- filteredData()
-
-      if (nrow(result_table) == 0) {
+    #' A reactive to hold all the items needed to create the plot/tables.
+    outputItems <- reactive({
+      data <- filteredData()
+      if (nrow(data) == 0) {
         return(NULL)
       }
+      return(getAntibiogramPlotItems(data, controls(), reactiveData()))
+    })
 
-      uniqueDrugs <- result_table %>%
-        distinct(Antimicrobial, Class, .keep_all = TRUE) %>%
-        arrange(Class, Antimicrobial) %>%
-        mutate(Antimicrobial = as.ab(Antimicrobial)) %>%
-        pull(Antimicrobial)
+    # This plot only renders if the user selects Simplified AB
+    simplifiedPlot <- reactive({
+      req(outputType() == "simplified")
+      return(outputItems())
+    })
 
-      # Simplified AB ---------------------------------------------------------------
-      if (abType() == "Simplified") {
-        if (lowCounts() == "Exclude") {
-          result_table <- result_table %>%
-            filter(obs >= 30) %>%
-            mutate(alpha = 1)
-        } else {
-          result_table <- result_table %>%
-            mutate(alpha = ifelse(obs > 30, 1, obs / 30))
-        }
-
-        g <- ggplot(
-          result_table,
-          aes(
-            x = interaction(Antimicrobial, Class),
-            y = short_form,
-            size = size,
-            colour = Class,
-            fill = Class,
-            text = paste(
-              yVar,
-              !!sym(yVar),
-              "<br>Antimicrobial:",
-              Antimicrobial,
-              "<br>Class:",
-              Class,
-              "<br>% Susceptible:",
-              round(prop * 100, 2),
-              "<br>Isolates tested:",
-              obs
-            )
-          )
-        ) +
-          geom_point(shape = 21, stroke = 0.5, aes(alpha = alpha)) +
-          scale_alpha_identity() +
-          scale_x_discrete(
-            label = ifelse(
-              str_length(unique(staticData$Antimicrobial)) > 15,
-              str_c(str_sub(unique(staticData$Antimicrobial), 1, 15), "..."),
-              unique(staticData$Antimicrobial)
-            )
-          ) +
-          scale_size_manual(values = c("s" = 2, "m" = 5, "l" = 7)) +
-          labs(
-            title = "",
-            x = "",
-            y = ""
-          ) +
-          theme_minimal() +
-          theme(
-            legend.position = "none",
-            panel.background = element_rect(fill = 'transparent'),
-            plot.background = element_rect(fill = 'white', color = NA),
-            panel.grid.major = element_line(color = "grey90"),
-            panel.grid.minor = element_blank(),
-            legend.background = element_rect(fill = 'transparent'),
-            axis.text.y = element_text(colour = "grey20"),
-            axis.text.x = element_text(angle = 90, hjust = 0, color = "grey20")
-          ) +
-          guides(fill = "none")
-
-        plotly_plot <- ggplotly(g, tooltip = c("text")) %>%
-          config(
-            displaylogo = FALSE,
-            modeBarButtonsToRemove = list(
-              'sendDataToCloud',
-              'autoScale2d',
-              'resetScale2d',
-              'hoverClosestCartesian',
-              'hoverCompareCartesian',
-              'zoom2d',
-              'pan2d',
-              'select2d',
-              'lasso2d',
-              'zoomIn2d',
-              'zoomOut2d',
-              'toggleSpikelines'
-            )
-          )
-
-        # Classic AB --------------------------------------------------------------
-      } else {
-        df_wide <- result_table %>%
-          select(!!sym(yVar), Antimicrobial, prop, obs) %>%
-          mutate(prop = round(prop * 100, 0)) %>%
-
-          {
-            if (lowCounts() == "Exclude") {
-              filter(., obs >= 30)
-            } else {
-              .
-            }
-          } %>%
-
-          pivot_wider(
-            id_cols = !!sym(yVar),
-            names_from = Antimicrobial,
-            values_from = c(prop, obs),
-            names_sep = "_"
-          ) %>%
-          rowwise() %>%
-          mutate(
-            `n =` = paste0(
-              "(",
-              min(c_across(starts_with("obs_")), na.rm = TRUE),
-              " - ",
-              max(c_across(starts_with("obs_")), na.rm = TRUE),
-              ")"
-            )
-          ) %>%
-          ungroup() %>%
-          select(!!sym(yVar), `n =`, everything())
-
-        n_total <- ncol(df_wide)
-        n_drug <- (n_total - 2) / 2
-
-        colnames(df_wide) <- gsub("prop_", "", colnames(df_wide))
-        obs_cols <- which(grepl("obs_", names(df_wide)))
-
-        drug_names <- names(df_wide)[3:(n_drug + 2)]
-        drug_classes <- ab_group(drug_names)
-        drug_group_list <- split(seq_along(drug_names), drug_classes)
-
-        drug_class_starts <- sapply(drug_group_list, function(x) min(x)) + 1
-
-        drug_targets <- 2:(n_drug + 2)
-
-        combined_js <- JS(paste0(
-          "function(td, cellData, rowData, row, col) {",
-          "  var n_drug = (rowData.length - 2) / 2;",
-          "  var obsIndex = col + n_drug;",
-          "  var obsValue = parseFloat(rowData[obsIndex]);",
-          "  var cellValue = parseFloat(cellData);",
-          "  var tooltipText = '';",
-          "  var showColors = ",
-          tolower(as.character(showColors())),
-          ";",
-
-          "  if (!isNaN(obsValue)) {",
-          "    tooltipText = 'Number of tests: ' + obsValue;",
-          "  }",
-
-          "  $(td).attr('title', tooltipText);",
-
-          "  if (!isNaN(obsValue) && obsValue >= 30 && showColors === true) {",
-          "    if (!isNaN(cellValue)) {",
-          "      if (cellValue < 70) {",
-          "        $(td).css({'background-color': '#D73027', 'color': 'white'});",
-          "      } else if (cellValue < 90) {",
-          "        $(td).css({'background-color': '#FEE08B'});",
-          "      } else if (cellValue >= 90) {",
-          "        $(td).css({'background-color': '#44CDC4', 'color': 'white'});",
-          "      }",
-          "    }",
-          "  }",
-
-          "  var drug_class_starts = [",
-          paste(drug_class_starts, collapse = ","),
-          "];",
-          "  if (drug_class_starts.includes(col)) {",
-          "    $(td).css({'border-left': '3px dashed black'});",
-          "  }",
-          "}"
-        ))
-
-        df_wide <- switch(
-          sortBy(),
-          "Frequency" = df_wide %>%
-            rowwise() %>%
-            mutate(total_obs = sum(c_across(starts_with("obs_")), na.rm = TRUE)) %>%
-            ungroup() %>%
-            arrange(desc(total_obs)) %>%
-            select(-total_obs),
-          "Alphabetical" = df_wide %>% arrange(!!sym(yVar)),
-          "GramStain" = df_wide %>%
-            mutate(gram = mo_gramstain(yVar)) %>%
-            arrange(gram, !!sym(yVar)),
-          df_wide
-        )
-
-        if (splitGram() == T && yVar == "Microorganism") {
-          df_wide_neg <- df_wide %>%
-            mutate(gram = mo_gramstain(Microorganism)) %>%
-            filter(gram == "Gram-negative") %>%
-            select(-gram)
-
-          df_wide_pos <- df_wide %>%
-            mutate(gram = mo_gramstain(Microorganism)) %>%
-            filter(gram == "Gram-positive") %>%
-            select(-gram)
-
-          negTable <- classicAB(
-            data = df_wide_neg,
-            obs_cols = obs_cols,
-            drug_targets = drug_targets,
-            combined_js = combined_js,
-            height = "350px"
-          )
-
-          posTable <- classicAB(
-            data = df_wide_pos,
-            obs_cols = obs_cols,
-            drug_targets = drug_targets,
-            combined_js = combined_js,
-            height = "350px"
-          )
-
-          table1(df_wide_neg)
-          table2(df_wide_pos)
-
-          plot2(posTable)
-          return(negTable)
-        } else {
-          table1(df_wide)
-
-          classicAB(
-            data = df_wide,
-            obs_cols = obs_cols,
-            drug_targets = drug_targets,
-            combined_js = combined_js,
-            height = "750px"
-          )
-        }
+    #' Holds the first table for the classic AB output.
+    #' This table will differ based on if the user selected gram split or not.
+    classicAbTable <- reactive({
+      req(outputType() %in% c("classic", "classic_split"))
+      if (outputType() == "classic") {
+        return(outputItems()$table)
       }
+      return(outputItems()$negTable)
+    })
+
+    #' Holds the first table data for the classic AB output.
+    #' This data will differ based on if the user selected gram split or not.
+    classicAbTableData <- reactive({
+      req(outputType() %in% c("classic", "classic_split"))
+      if (outputType() == "classic") {
+        return(outputItems()$data)
+      }
+      return(outputItems()$df_wide_neg)
+    })
+
+    #' Holds the second table for the classic AB output when the user
+    #' has selected gram split = TRUE.
+    classicAbTable2 <- reactive({
+      req(outputType() == "classic_split")
+      return(outputItems()$posTable)
+    })
+
+    #' Holds the second table data for the classic AB output when the user
+    #' has selected gram split = TRUE.
+    classicAbTableData2 <- reactive({
+      req(outputType() == "classic_split")
+      return(outputItems()$df_wide_pos)
     })
 
     # Is there data to plot?
@@ -578,14 +424,6 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
       )
     })
 
-    # Render Content
-    output$content <- renderUI({
-      tagList(
-        uiOutput(ns("has_data")),
-        uiOutput(ns("has_no_data"))
-      )
-    })
-
     # If there is data, show the plot
     output$has_data <- renderUI({
       req(hasData())
@@ -595,39 +433,9 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
           style = "overflow-x: scroll; overflow-y: scroll; max-height: 80vh; min-width: 500px;",
           div(
             class = "ab-table-wrapper",
-            if (abType() == "Classic") {
-              if (splitGram() == TRUE && yVar() == "Microorganism") {
-                tagList(
-                  h4("Gram Negative"),
-                  fluidRow(
-                    column(
-                      align = "center",
-                      width = 12,
-                      withSpinner(DTOutput(ns("classicAB")), type = 4, color = "#44CDC4")
-                    )
-                  ),
-                  hr(),
-                  h4("Gram Positive"),
-                  fluidRow(
-                    column(
-                      align = "center",
-                      width = 12,
-                      withSpinner(DTOutput(ns("classicAB2")), type = 4, color = "#44CDC4")
-                    )
-                  )
-                )
-              } else {
-                fluidRow(
-                  column(
-                    align = "center",
-                    width = 12,
-                    withSpinner(DTOutput(ns("classicAB")), type = 4, color = "#44CDC4")
-                  )
-                )
-              }
-            } else {
-              withSpinner(plotlyOutput(ns("plot"), height = "750px"), type = 4, color = "#44CDC4")
-            }
+            uiOutput(ns("classicAbContainer")), # Classic with no Gram Split
+            uiOutput(ns("classicGramSplit")), # Classic with Gram Split
+            uiOutput(ns("simplifiedContainer")), # Simplified
           ),
           class = "contentWell"
         ),
@@ -637,6 +445,46 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
           downloadButton(ns("save_table"), "Save Data", class = "plotSaveButton")
         )
       )
+    })
+
+    output$classicGramSplit <- renderUI({
+      req(outputType() == "classic_split")
+      return(tagList(
+        hr(),
+        h4("Gram Positive"),
+        fluidRow(
+          column(
+            align = "center",
+            width = 12,
+            withSpinner(gt::gt_output(ns("classicAB2")), type = 4, color = "#44CDC4")
+          )
+        )
+      ))
+    })
+
+    output$classicAbContainer <- renderUI({
+      req(outputType() %in% c("classic", "classic_split"))
+      return(tagList(
+        if (outputType() == "classic_split") {
+          h4("Gram Negative")
+        },
+        fluidRow(
+          column(
+            align = "center",
+            width = 12,
+            withSpinner(gt::gt_output(ns("classicAB")), type = 4, color = "#44CDC4")
+          )
+        )
+      ))
+    })
+
+    output$simplifiedContainer <- renderUI({
+      req(outputType() == "simplified")
+      return(withSpinner(
+        plotlyOutput(ns("simplifiedPlot"), height = "750px"),
+        type = 4,
+        color = "#44CDC4"
+      ))
     })
 
     # Show the custom breakpoint download only if custom breakpoints are present
@@ -667,16 +515,22 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
       )
     })
 
-    output$plot <- renderPlotly({
-      plot()
+    # Show a plotly plot for simplified AB
+    output$simplifiedPlot <- renderPlotly({
+      req(outputType() == "simplified", !is.null(simplifiedPlot()))
+      simplifiedPlot()
     })
 
-    output$classicAB <- renderDT({
-      plot()
+    # Show a gt table for classic AB (both split and not split)
+    output$classicAB <- gt::render_gt({
+      req(outputType() %in% c("classic", "classic_split"), !is.null(classicAbTable()))
+      classicAbTable()
     })
 
-    output$classicAB2 <- renderDT({
-      plot2()
+    # Show a gt table for classic AB gram negative (only split)
+    output$classicAB2 <- gt::render_gt({
+      req(outputType() == "classic_split", !is.null(classicAbTable2()))
+      classicAbTable2()
     })
 
     # ------------------------------------------------------------------------------
@@ -688,6 +542,91 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
         names,
         pattern = "\\b(\\w)\\w*\\s(\\w+)",
         replacement = "\\1. \\2"
+      )
+    }
+
+    #' Get the number of visible columns in the table.
+    #' This is used to calculate the width of the html table and the
+    #' font size for the table text.
+    #'
+    #' @param tableData The data used to create the table.
+    #' @return          The number of visible columns.
+    getVisibleCols <- function(tableData) {
+      tableData <- tableData %>%
+        select(-which(grepl("^obs_", names(tableData))))
+      return(ncol(tableData))
+    }
+
+    #' Get the width for the html table based on number of columns.
+    #' This is used to set the width for webshot when saving the report.
+    #'
+    #' @param tableData The data used to create the table.
+    #' @return          The width in pixels.
+    #' @seealso {@link{getVisibleCols}}
+    getHtmlTableWidth <- function(tableData) {
+      numCols <- getVisibleCols(tableData)
+
+      #' The fixed columns (first 2) are wider than the rest and have
+      #' a fixed width. Calculate the total width based on this.
+      fixedColsWidth <- ifelse("n = " %in% colnames(tableData), 300, 180)
+      vwidth <- fixedColsWidth + (numCols - 2) * 45 + 100
+      return(vwidth)
+    }
+
+    #' Add custom CSS styling to the html table.
+    #' Includes the Carme font from Google Fonts.
+    #'
+    #' @param tableHtml The html of the table.
+    #' @param tableData The data used to create the table.
+    #' @return          The html with the CSS added.
+    #' @seealso {@link{getVisibleCols}}
+    addStylingToHtml <- function(tableHtml, tableData) {
+      font_size <- max(12, 16 - 0.3 * getVisibleCols(tableData))
+
+      css <- sprintf(
+        '
+      <link href="https://fonts.googleapis.com/css2?family=Carme&display=swap" rel="stylesheet">
+      <style>
+        body, table, td, th {
+          font-family: "Carme", sans-serif !important;
+          font-size: %dpx !important;
+        }
+        .dataTables_wrapper {
+          overflow-x: visible !important;
+        }
+        table {
+          table-layout: fixed;
+        }
+      </style>',
+        round(font_size)
+      )
+
+      return(sub("</head>", paste0(css, "\n</head>"), tableHtml))
+    }
+
+    #' Save the visualisation as a png image.
+    #'
+    #' @param visualisation The visualisation to save (plotly or gt).
+    #' @param table_data    The data used to create the visualisation.
+    #' @param filename      The filename (without extension).
+    #' @return              None.
+    #' @seealso {@link{getHtmlTableWidth}}, {@link{addStylingToHtml}}
+    saveVisualisationPng <- function(visualisation, table_data, filename) {
+      htmlName <- paste0(filename, ".html")
+      pngName <- paste0(filename, ".png")
+
+      htmltools::save_html(visualisation, htmlName)
+      html_lines <- readLines(htmlName)
+
+      html_lines <- addStylingToHtml(html_lines, table_data)
+      writeLines(html_lines, htmlName)
+
+      pngWidth <- getHtmlTableWidth(table_data)
+
+      webshot2::webshot(
+        url = htmlName,
+        file = pngName,
+        vwidth = pngWidth
       )
     }
 
@@ -726,11 +665,11 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
 
       content = function(file) {
         withProgress(message = 'Rendering, please wait!', {
-          src <- normalizePath("./Reports/Antibiogram.qmd")
+          src <- normalizePath(".")
           tmp <- tempdir()
           unlink(list.files(tmp, full.names = TRUE), recursive = TRUE, force = TRUE)
 
-          owd <- setwd(tempdir())
+          owd <- setwd(tmp)
           on.exit({
             setwd(owd)
             unlink(
@@ -745,77 +684,62 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
               recursive = TRUE
             )
           })
-          file.copy(src, "Antibiogram.qmd", overwrite = TRUE)
-          htmltools::save_html(plot(), "antibiogram_table.html")
-          html_lines <- readLines("antibiogram_table.html")
-          table_data <- plot()
-          table_data$x$data <- table_data$x$data %>%
-            select(-which(grepl("^obs_", names(table_data$x$data))))
-          num_columns <- ncol(table_data$x$data)
-          vwidth <- 180 + 120 + (num_columns - 2) * 45 + 100
-          font_size <- max(12, 16 - 0.3 * num_columns)
+          normalizedReport <- normalizePath(file.path(src, "Reports", "Antibiogram.qmd"))
+          stylesPath <- normalizePath(file.path(src, "www", "css", "report.css"))
+          logoPath <- normalizePath(file.path(src, "www", "img", "logoDark.png"))
+          bpImgPath <- normalizePath(file.path(src, "www", "img", "report-bp-example.png"))
+          file.copy(normalizedReport, "Antibiogram.qmd", overwrite = TRUE)
+          file.copy(stylesPath, "report.css", overwrite = TRUE)
+          file.copy(logoPath, "logo.png", overwrite = TRUE)
+          file.copy(bpImgPath, "report-bp-example.png", overwrite = TRUE)
 
-          css <- sprintf(
-            '
-  <link href="https://fonts.googleapis.com/css2?family=Carme&display=swap" rel="stylesheet">
-  <style>
-    body, table, td, th {
-      font-family: "Carme", sans-serif !important;
-      font-size: %dpx !important;
-    }
-    .dataTables_wrapper {
-      overflow-x: visible !important;
-    }
-    table {
-      table-layout: fixed;
-    }
-    th:nth-child(1), td:nth-child(1) {
-      width: 180px !important;
-      max-width: 180px !important;
-    }
-    th:nth-child(2), td:nth-child(2) {
-      width: 120px !important;
-      max-width: 120px !important;
-    }
-    th:nth-child(n+3), td:nth-child(n+3) {
-      width: 25px !important;
-      max-width: 25px !important;
-    }
-  </style>',
-            round(font_size)
+          currentVisualisation <- switch(
+            outputType(),
+            "simplified" = simplifiedPlot(),
+            classicAbTable() %>% gt::cols_hide(columns = "n =")
           )
 
-          html_lines <- sub("</head>", paste0(css, "\n</head>"), html_lines)
+          table_data <- switch(
+            outputType(),
+            "simplified" = currentVisualisation$x$data,
+            currentVisualisation$`_data`
+          )
 
-          writeLines(html_lines, "antibiogram_table.html")
+          if ("n =" %in% colnames(table_data)) {
+            table_data <- table_data %>%
+              select(-`n =`)
+          }
 
-          webshot2::webshot(
-            url = "antibiogram_table.html",
-            file = "antibiogram_table.png",
-            vwidth = vwidth
+          saveVisualisationPng(currentVisualisation, table_data, "antibiogram_table")
+
+          # Number of Isolates Images
+          numIsolates <- getAntibiogramPlotItems(
+            filteredData(),
+            controls(),
+            reactiveData(),
+            isIsolateTable = TRUE
           )
 
           if (splitGram()) {
-            htmltools::save_html(plot2(), "antibiogram_table2.html")
-            html_lines2 <- readLines("antibiogram_table2.html")
-            html_lines2 <- sub("</head>", paste0(css, "\n</head>"), html_lines2)
-            writeLines(html_lines2, "antibiogram_table2.html")
+            visualisation2 <- classicAbTable2() %>% gt::cols_hide(columns = "n =")
+            saveVisualisationPng(visualisation2, table_data, "antibiogram_table2")
 
-            webshot2::webshot(
-              url = "antibiogram_table2.html",
-              file = "antibiogram_table2.png",
-              vwidth = vwidth
-            )
+            # Number of Isolates Images
+            saveVisualisationPng(numIsolates$negTable, table_data, "isolate_table")
+            saveVisualisationPng(numIsolates$posTable, table_data, "isolate_table2")
+          } else {
+            saveVisualisationPng(numIsolates$table, table_data, "isolate_table")
           }
 
-          saveRDS(activeFilters(), "filters.RDS")
+          filters <- lapply(activeFilters(), as.character)
           writeLines(lowCounts(), "low_counts_flag.txt")
 
+          browser()
           quarto::quarto_render(
             input = "Antibiogram.qmd",
             output_format = "html",
             output_file = "Antibiogram.html",
-            execute_params = list(vwidth = vwidth)
+            execute_params = list(vwidth = getHtmlTableWidth(table_data), filters = filters)
           )
 
           file.rename("Antibiogram.html", file)
@@ -831,12 +755,12 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
       content = function(file) {
         sheets <- if (splitGram()) {
           list(
-            "Gram Negative" = table1(),
-            "Gram Positive" = table2()
+            "Gram Negative" = classicAbTableData(),
+            "Gram Positive" = classicAbTableData2()
           )
         } else {
           list(
-            "Antibiogram" = table1()
+            "Antibiogram" = classicAbTableData()
           )
         }
         writexl::write_xlsx(sheets, path = file)
