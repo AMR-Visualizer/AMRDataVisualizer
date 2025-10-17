@@ -8,7 +8,6 @@ create_mic_frequency_tables <- function(
     guideline,
     s_bp = NULL,
     r_bp = NULL,
-    use_single_bp_as_both = TRUE,
     reference_data = AMR::clinical_breakpoints
 ) {
 
@@ -54,12 +53,6 @@ create_mic_frequency_tables <- function(
       bp_s <- if (is.na(bp_s)) suppressWarnings(as.numeric(hold$bp_s[1])) else bp_s
       bp_r <- if (is.na(bp_r)) suppressWarnings(as.numeric(hold$bp_r[1])) else bp_r
     }, silent = TRUE)
-  }
-  
-  single_bp_applied <- FALSE
-  if (use_single_bp_as_both && xor(is.na(bp_s), is.na(bp_r))) {
-    if (!is.na(bp_s)) bp_r <- bp_s else bp_s <- bp_r
-    single_bp_applied <- TRUE
   }
   
   # --- build frequency table (works even if no BPs)
