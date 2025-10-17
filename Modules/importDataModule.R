@@ -191,7 +191,8 @@ importDataServer <- function(id) {
                     span(icon("circle-check", style = "color: #44CDC4;")),
                     paste("Interpretted MIC values according to", selections$selectedBreakpoint)
                   )
-                }
+                },
+                actionButton(ns("reopenLog"), "View Processing Log", class = "white-btn")
               ),
 
               column(
@@ -392,10 +393,11 @@ importDataServer <- function(id) {
         rownames = FALSE,
         style = 'bootstrap',
         class = 'table-bordered',
+        filter = "top",
         options = list(
           dom = 't',
-          paging = FALSE,
-          ordering = FALSE,
+          paging = F,
+          ordering = T,
           scrollX = TRUE
         )
       ) %>%
@@ -768,51 +770,52 @@ importDataServer <- function(id) {
       removeModal()
 
       shinyjs::delay(500, {
-        showModal(modalDialog(
-          title = "Processing Log",
-          size = "l",
-
-          h5(
-            "The following log details how your uploaded data were processed. During this step, entries were standardized based on taxonomic reference databases. This includes resolving known synonyms, flagging uncertain matches, and identifying any entries that could not be confidently matched. Review the sections below to understand what changes were made and why.",
-            style = "text-align: center;"
-          ),
-          hr(),
-          br(),
-
-          tabsetPanel(
-            tabPanel("Microorganisms", changeLogUI(ns("moChangeLog"))),
-            tabPanel("Antimicrobials", changeLogUI(ns("abChangeLog"))),
-            if (!is.null(input$valueType) && input$valueType == "MIC") {
-              tabPanel(
-                "Interpretations",
-                div(
-                  class = "readonly-table",
-                  DT::dataTableOutput(ns("interpretation_log"))
-                )
-              )
-            }
-          ),
-
-          easyClose = TRUE,
-          footer = div(
-            id = "import-modal-footer",
-            downloadButton(ns("download_log"), "Download Log File"),
-            div(
-              class = "warning-parent",
-              p(
-                class = "antimicrobial-warning",
-                "Please save changes made to the Antimicrobial change log"
-              ),
-              p(
-                class = "microorganism-warning",
-                "Please save changes made to the Microorganism change log"
-              )
-            ),
-            modalButton("Close")
-          )
-        ))
+        showModal(processingLogModal())
       })
     })
+    
+    observeEvent(input$reopenLog, {
+      showModal(processingLogModal())
+    })
+    
+    processingLogModal <- function() {
+      modalDialog(
+        title = "Processing Log",
+        size  = "l",
+        
+        h5(
+          "The following log details how your uploaded data were processed. During this step, entries were standardized based on taxonomic reference databases. This includes resolving known synonyms, flagging uncertain matches, and identifying any entries that could not be confidently matched. Review the sections below to understand what changes were made and why.",
+          style = "text-align: center;"
+        ),
+        hr(), br(),
+        
+        tabsetPanel(
+          tabPanel("Microorganisms", changeLogUI(ns("moChangeLog"))),
+          tabPanel("Antimicrobials",  changeLogUI(ns("abChangeLog"))),
+          if (!is.null(input$valueType) && input$valueType == "MIC") {
+            tabPanel(
+              "Interpretations",
+              div(class = "readonly-table", DT::dataTableOutput(ns("interpretation_log")))
+            )
+          }
+        ),
+        
+        easyClose = TRUE,
+        footer = div(
+          id = "import-modal-footer",
+          downloadButton(ns("download_log"), "Download Log File"),
+          div(
+            class = "warning-parent",
+            p(class = "antimicrobial-warning",
+              "Please save changes made to the Antimicrobial change log"),
+            p(class = "microorganism-warning",
+              "Please save changes made to the Microorganism change log")
+          ),
+          modalButton("Close")
+        )
+      )
+    }
+    
 
     observe({
       req(input$sirCol)
@@ -1189,6 +1192,7 @@ importDataServer <- function(id) {
           render_env <- new.env()
           render_env$mo_change_log <- changeLogDataMo()
           render_env$ab_change_log <- changeLogDataAb()
+          render_env$bp_log <- bp_log()
 
           rmarkdown::render(
             input = "ProcessingLog.Rmd",

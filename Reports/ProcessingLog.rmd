@@ -28,3 +28,18 @@ datatable(
   filter = "top"
 )
 ```
+
+# Breakpoints
+## Log
+```{r, echo = FALSE}
+if (is.null(bp_log) || nrow(bp_log) == 0) {
+  cat("Data were pre-interpreted and no breakpoints were applied.")
+} else {
+  DT::datatable(
+    bp_log,
+    rownames = FALSE,
+    selection = "none",
+    filter = "top"
+  )
+}
+```

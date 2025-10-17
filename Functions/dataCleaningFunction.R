@@ -183,7 +183,7 @@ dataCleaner <- function(rawData, additionalCols = NULL, breakpoint = "CLSI") {
           uti = "UTI",
           host = "host",
           breakpoint_type = getOption("AMR_breakpoint_type", "animal"),
-          substitute_missing_r_breakpoint = getOption("AMR_substitute_missing_r_breakpoint", FALSE),
+          substitute_missing_r_breakpoint = getOption("AMR_substitute_missing_r_breakpoint", TRUE),
           capped_mic_handling = getOption("AMR_capped_mic_handling", "standard")
         ) |>
         mutate(
