@@ -19,23 +19,35 @@ library(purrr)
 #'    (I.e. "<= 16" -> "<=" and 16) Default is " ".
 #' @returns Data frame with MIC sign and value columns if they are found.
 .getMICDataColumns <- function(data, sep = " ") {
-  micColumn <- detectColumnByName(data, c("mic"), all_matches = TRUE)
+  micColumn <- detectColumnByName(data, c("mic", "mic_value", "mic_sign"), all_matches = TRUE)
+
   if (is.null(micColumn)) {
     warning("MIC column not found. Cannot extract MIC sign and value.")
     return(data)
   }
 
-  if (length(micColumn) > 1) {
+  if (all(c("MIC_Sign", "MIC_Value") %in% colnames(data))) {
+    # MIC sign and value columns already exist no need to extract them again.
+    return(data)
+  }
+  if (length(micColumn) > 1 && !("MIC" %in% micColumn)) {
     warning("Multiple MIC columns found. Only the first one will be used.")
     micColumn <- micColumn[1]
+  } else if (length(micColumn) > 1 && ("MIC" %in% micColumn)) {
+    # There is a MIC column, use that one.
+    micColumn <- "MIC"
   }
+
   # Could use `AMR::as.mic()` to convert the MIC values, but this would not extract the sign.
-  data <- data %>%
-    dplyr::mutate(
-      MIC_Sign = stringr::str_extract(!!sym(micColumn), "^([<>=]=?|=)"),
-      `MIC Value` = stringr::str_remove(!!sym(micColumn), "^([<>=]=?|=)\\s*")
-    ) %>%
-    dplyr::select(-!!sym(micColumn))
+  if (!"MIC_Sign" %in% colnames(data)) {
+    data <- data %>%
+      dplyr::mutate(MIC_Sign = stringr::str_extract(!!sym(micColumn), "^([<>=]=?|=)"))
+  }
+  if (!"MIC_Value" %in% colnames(data)) {
+    data <- data %>%
+      dplyr::mutate(MIC_Value = stringr::str_remove(!!sym(micColumn), "^([<>=]=?|=)\\s*"))
+  }
+  return(data)
 }
 
 #' Check if the data from a column is a SIR test.
@@ -91,10 +103,31 @@ library(purrr)
 .getTestTypeFromColumn <- function(abbreviation, data) {
   abbreviation <- tolower(abbreviation)
 
+  non_empty_data <- data[!is.na(data) & data != ""]
+
+  # If there is no data, return unknown.
+  if (length(non_empty_data) == 0) {
+    warning(
+      "!! empty data for abbreviation:",
+      abbreviation,
+      "!!\n--This will be filtered out--"
+    )
+    return("unknown")
+  }
+
+  # Values that indicate MIC sign only (no numbers).
+  mic_symbol_pattern <- "^([<>=]+)$"
+  is_symbol_only <- grepl(mic_symbol_pattern, non_empty_data)
+
+  # First check if the column data is MIC symbols only.
+  if (all(is_symbol_only)) {
+    return("MIC_Sign")
+  }
+
   # Try as.sir() without mo (for literal S/I/R, works), else try as.mic()
   sir_attempt <- tryCatch(
     {
-      result <- AMR::as.sir(data)
+      result <- AMR::as.sir(non_empty_data)
       TRUE
     },
     error = function(e) FALSE
@@ -106,12 +139,18 @@ library(purrr)
     # Try as.mic
     mic_attempt <- tryCatch(
       {
-        result <- AMR::as.mic(data)
+        result <- AMR::as.mic(non_empty_data)
         TRUE
       },
       error = function(e) FALSE
     )
-    if (mic_attempt) return("MIC")
+    if (mic_attempt) {
+      has_symbol_and_number <- grepl("<|=|>", non_empty_data)
+      if (any(has_symbol_and_number)) {
+        return("MIC")
+      }
+      return("MIC_Value")
+    }
   }
   warning(
     "!! unknown test type for abbreviation:",
@@ -190,14 +229,13 @@ library(purrr)
   abOnly <- abOnly |>
     rowwise() |>
     mutate(matched_ab_name = ifelse(grepl("unknown name", matched_ab_name), NA, matched_ab_name))
-  
+
   # Rename the column with the most ab matches to "ab_name"
   abOnly <- abOnly %>%
     rename(ab_name = !!sym(abColName), test_name = !!sym(testColName))
 
   columnInfo <- columnInfo %>%
     rename(ab_name = !!sym(abColName), test_name = !!sym(testColName))
-
 
   # Get all the unique test names to check.
   testAbbreviations <- unique(abOnly$test_name)
@@ -209,7 +247,6 @@ library(purrr)
     abOnly$test_name <- "unknown"
     testAbbreviations <- "unknown"
   }
-
 
   #' Keep track of the test types that have been found.
   #' This is to avoid duplicates in the test names.
@@ -231,6 +268,7 @@ library(purrr)
       unique() %>%
       head(20)
     testType <- .getTestTypeFromColumn(test, testData)
+
     if (testType %in% foundTests) {
       # If the test type has already been found, skip it otherwise duplicates are introduced.
       next
@@ -325,39 +363,43 @@ getLongData <- function(data, testColumns, isWideFormat = TRUE) {
     return(data)
   }
   data$row_id <- seq_len(nrow(data))
-  
+
   # Get the column information.
   columnInfo <- .getColumnInfo(data, testColumns)
-  
+
   # Unique tests found in the datas column names.
   tests <- unique(columnInfo$test_name)
   tests <- tests[!is.na(tests) & tests != ""]
-  
+
   # The expected final columns in the long data.
   finalColumns <- columnInfo %>%
     filter(!is_ab) %>%
     pull(ab_name)
   finalColumns <- c(finalColumns, "ab_name", "Antimicrobial", tests)
-  
+
   testType <- unique(columnInfo %>% filter(is_ab) %>% pull(test_name)) # e.g., "sir"
   # Columns that are metadata columns.
   metadataCols <- columnInfo %>% filter(!is_ab) %>% pull(original_col_name)
-  
+
   longData <- data %>%
     select(all_of(metadataCols))
-  
+
   # Iterate through rach test type and add to the long data.
   for (test in testType) {
     # All original columns names for the current test.
     testCols <- columnInfo %>% filter(is_ab, test_name == test) %>% pull(original_col_name)
-    
+
+    if (length(testCols) <= 0) {
+      next
+    }
+
     # If the columns are not all the same class, convert them to character.
     colClasses <- sapply(data[testCols], class)
     if (length(unique(colClasses)) > 1) {
       nonCharClasses <- colClasses[colClasses != "character"]
       data <- data %>% mutate(across(all_of(names(nonCharClasses)), as.character))
     }
-    
+
     # Pivot the test columns to long format.
     testData <- data %>%
       select(all_of(c("row_id", testCols))) %>%
@@ -372,10 +414,12 @@ getLongData <- function(data, testColumns, isWideFormat = TRUE) {
         by = "original_col_name"
       ) %>%
       select(row_id, ab_name, Antimicrobial, !!sym(test))
-    
-    if (test == testType[1]) {
+
+    if (!"Antimicrobial" %in% colnames(longData)) {
+      # If this is the first test we add, join on row_id only.
       longData <- left_join(longData, testData, by = "row_id")
     } else {
+      # This is not the first test we add.
       # ab_name and Antimicrobial are already in longData, so we need to join on those too.
       longData <- left_join(
         longData,
@@ -385,9 +429,9 @@ getLongData <- function(data, testColumns, isWideFormat = TRUE) {
     }
   }
   finalColumns <- finalColumns[finalColumns %in% colnames(longData)]
-  
+
   longData <- select(longData, all_of(finalColumns))
-  
+
   # If the data has a `MIC` column it need to be split into sign and value columns.
   if ("MIC" %in% colnames(longData)) {
     longData <- .getMICDataColumns(longData)
@@ -396,7 +440,7 @@ getLongData <- function(data, testColumns, isWideFormat = TRUE) {
     longData <- longData %>%
       rename(Interpretation = SIR)
   }
-  longData
+  return(longData)
 }
 
 #' Find UTI matches in the sources.

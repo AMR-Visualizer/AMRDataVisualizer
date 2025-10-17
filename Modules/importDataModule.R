@@ -1031,8 +1031,8 @@ importDataServer <- function(id) {
             "Not Present"
           )
           selections$micValCol <- ifelse(
-            "MIC Value" %in% colnames(long_df),
-            "MIC Value",
+            "MIC_Value" %in% colnames(long_df),
+            "MIC_Value",
             "Not Present"
           )
 

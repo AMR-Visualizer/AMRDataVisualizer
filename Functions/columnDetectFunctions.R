@@ -8,9 +8,22 @@
 #' @returns The name of the first column that matches any of the keywords, or \code{NULL} if not found.
 detectColumnByName <- function(data, keywords, all_matches = FALSE) {
   matches <- NULL
+
+  # If there are exact matches, return them right away
+  exact_matches <- tolower(names(data)) %in% tolower(keywords)
+  if (any(exact_matches)) {
+    exact_colnames <- names(data)[exact_matches]
+    if (all_matches) {
+      return(exact_colnames)
+    } else {
+      return(exact_colnames[1])
+    }
+  }
+
   for (col_name in names(data)) {
     if (tolower(col_name) %in% tolower(keywords)) {
       # Exact match found - return right away
+      # Note: This should never be reached because of the check above
       return(col_name)
     }
     if (any(grepl(paste(keywords, collapse = "|"), col_name, ignore.case = TRUE))) {

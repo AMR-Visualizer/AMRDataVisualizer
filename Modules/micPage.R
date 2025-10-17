@@ -201,55 +201,83 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
       }
       species
     })
-    
+
     appliedBpForDisplay <- reactive({
       req(input$moFilter, input$abFilter, input$typeFilter, selectedSpecies())
-      uti  <- identical(input$typeFilter, "Urinary")
+      uti <- identical(input$typeFilter, "Urinary")
       host <- tolower(selectedSpecies())
-      
+
       bp <- selectedBreakpoints()
-      s_user <- if (!is.null(bp) && nrow(bp) > 0) suppressWarnings(as.numeric(bp$breakpoint_S[1])) else NA_real_
-      r_user <- if (!is.null(bp) && nrow(bp) > 0) suppressWarnings(as.numeric(bp$breakpoint_R[1])) else NA_real_
-      
+      s_user <- if (!is.null(bp) && nrow(bp) > 0) {
+        suppressWarnings(as.numeric(bp$breakpoint_S[1]))
+      } else {
+        NA_real_
+      }
+      r_user <- if (!is.null(bp) && nrow(bp) > 0) {
+        suppressWarnings(as.numeric(bp$breakpoint_R[1]))
+      } else {
+        NA_real_
+      }
+
       pg <- processedGuideline()
-      guide <- if (!is.null(bp) && nrow(bp) > 0 && !is.na(bp$guideline[1]) && nzchar(bp$guideline[1]))
+      guide <- if (
+        !is.null(bp) && nrow(bp) > 0 && !is.na(bp$guideline[1]) && nzchar(bp$guideline[1])
+      ) {
         as.character(bp$guideline[1])
-      else if (!is.null(pg) && length(pg) == 1 && !is.na(pg) && nzchar(pg))
+      } else if (!is.null(pg) && length(pg) == 1 && !is.na(pg) && nzchar(pg)) {
         as.character(pg)
-      else
+      } else {
         "User selected breakpoint"
-      
+      }
+
       if (is.na(s_user) || is.na(r_user)) {
         AMR::sir_interpretation_history(clean = TRUE)
         dummy <- AMR::as.mic(2)
-        try({
-          invisible(AMR::as.sir(
-            dummy,
-            mo = input$moFilter,
-            ab = input$abFilter,
-            guideline = guide,
-            reference_data = customRefData(),
-            host = host,
-            uti = uti,
-            SDD = TRUE
-          ))
-        }, silent = TRUE)
-        
+        try(
+          {
+            invisible(AMR::as.sir(
+              dummy,
+              mo = input$moFilter,
+              ab = input$abFilter,
+              guideline = guide,
+              reference_data = customRefData(),
+              host = host,
+              uti = uti,
+              SDD = TRUE
+            ))
+          },
+          silent = TRUE
+        )
+
         hist <- AMR::sir_interpretation_history(clean = FALSE)
         if (nrow(hist) > 0) {
-          hist <- tidyr::separate(hist, breakpoint_S_R, into = c("bp_s", "bp_r"),
-                                  sep = "-", fill = "right", remove = FALSE)
+          hist <- tidyr::separate(
+            hist,
+            breakpoint_S_R,
+            into = c("bp_s", "bp_r"),
+            sep = "-",
+            fill = "right",
+            remove = FALSE
+          )
           s_app <- suppressWarnings(as.numeric(hist$bp_s[1]))
           r_app <- suppressWarnings(as.numeric(hist$bp_r[1]))
-          guide <- if (!is.na(hist$guideline[1]) && nzchar(hist$guideline[1])) hist$guideline[1] else guide
+          guide <- if (!is.na(hist$guideline[1]) && nzchar(hist$guideline[1])) {
+            hist$guideline[1]
+          } else {
+            guide
+          }
           applied_mo <- hist$mo[1]
         } else {
-          s_app <- NA_real_; r_app <- NA_real_; applied_mo <- NA_character_
+          s_app <- NA_real_
+          r_app <- NA_real_
+          applied_mo <- NA_character_
         }
       } else {
-        s_app <- s_user; r_app <- r_user; applied_mo <- AMR::as.mo(input$moFilter)
+        s_app <- s_user
+        r_app <- r_user
+        applied_mo <- AMR::as.mo(input$moFilter)
       }
-      
+
       list(
         s = s_app,
         r = r_app,
@@ -263,7 +291,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
       req(input$moFilter, input$abFilter, input$typeFilter, input$groupingVar)
       sp <- selectedSpecies()
       ap <- appliedBpForDisplay()
-      
+
       create_mic_frequency_tables(
         data = reactiveData(),
         group_by_var = input$groupingVar,
@@ -277,7 +305,6 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
         reference_data = customRefData()
       )
     })
-    
 
     # Boolean. Whether to show the error panel or the success panel.
     showErrorPanel <- reactive({
@@ -495,20 +522,22 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
       req(!showErrorPanel())
       ap <- appliedBpForDisplay()
       mo_input <- AMR::as.mo(input$moFilter)
-      used_label <- if (!is.null(ap$applied_mo) && length(ap$applied_mo) == 1 &&
-                        !is.na(ap$applied_mo) && ap$applied_mo != mo_input) {
-
+      used_label <- if (
+        !is.null(ap$applied_mo) &&
+          length(ap$applied_mo) == 1 &&
+          !is.na(ap$applied_mo) &&
+          ap$applied_mo != mo_input
+      ) {
         paste0(" Inferred using ", AMR::mo_name(ap$applied_mo, language = "en"), " breakpoints.")
       } else {
         ""
       }
-      
+
       htmltools::div(
         htmltools::strong(getBpLabel(ap$s, ap$r, ap$guideline)),
         htmltools::tags$small(used_label)
       )
     })
-    
 
     output$errorHandling <- renderUI({
       div(
