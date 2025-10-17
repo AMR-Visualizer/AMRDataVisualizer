@@ -128,7 +128,7 @@ library(purrr)
   sir_attempt <- tryCatch(
     {
       result <- AMR::as.sir(non_empty_data)
-      TRUE
+      any(!is.na(result)) # If all are NA, no error was thrown but it's not a SIR test.
     },
     error = function(e) FALSE
   )
@@ -140,7 +140,7 @@ library(purrr)
     mic_attempt <- tryCatch(
       {
         result <- AMR::as.mic(non_empty_data)
-        TRUE
+        any(!is.na(result)) # If all are NA, no error was thrown but it's not a MIC test.
       },
       error = function(e) FALSE
     )
@@ -437,8 +437,13 @@ getLongData <- function(data, testColumns, isWideFormat = TRUE) {
     longData <- .getMICDataColumns(longData)
   }
   if ("SIR" %in% colnames(longData)) {
+    #' Want to clean the interpretation history so that we only have the relevant
+    #' interpretations from this file + only SIR columns.
+    #' This avoids including interpretations from when checking what test type a column is.
+    hist <- AMR::sir_interpretation_history(clean = TRUE)
     longData <- longData %>%
-      rename(Interpretation = SIR)
+      rename(Interpretation = SIR) %>%
+      mutate(Interpretation = AMR::as.sir(Interpretation))
   }
   return(longData)
 }
