@@ -790,3 +790,15 @@ h6 {
 .custom-breakpoints-container > div:last-child .btn {
   width: fit-content;
 }
+
+.collapse-btn:hover,
+.collapse-btn:focus,
+.collapse-btn:active,
+.collapse-btn:active:focus,
+.collapse-btn {
+  border: none;
+  width: 100%;
+  background-color: transparent;
+  box-shadow: none;
+  font-weight: bold;
+}
