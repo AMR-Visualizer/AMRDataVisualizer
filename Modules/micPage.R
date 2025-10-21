@@ -336,6 +336,54 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
           breakpoint_type = customGuideline$type
         )
 
+# ------------------------------------------------------------------------------
+# TEMPORARY FUNCTION TO CORRECT BUG IN AMR PACKAGE
+# ------------------------------------------------------------------------------
+        bp_S <- customGuideline$breakpoint_S
+        bp_R <- customGuideline$breakpoint_R
+
+        parse_mic_interval <- function(x) {
+          op  <- str_match(x, "^(<=|>=|<|>|=)?\\s*([0-9.]+)$")[,2]
+          val <- as.numeric(str_match(x, "^(?:<=|>=|<|>|=)?\\s*([0-9.]+)$")[,2])
+          op[is.na(op)] <- "="
+          tibble(
+            low      = dplyr::case_when(op %in% c("<","<=") ~ -Inf,
+                                        TRUE                ~ val),
+            low_inc  = dplyr::case_when(op == ">=" ~ TRUE,
+                                        op %in% c(">","<","<=") ~ FALSE,
+                                        TRUE ~ TRUE),
+            high     = dplyr::case_when(op %in% c(">"," >=") ~ Inf,
+                                        op %in% c(">=")      ~ Inf,
+                                        TRUE                 ~ val),
+            high_inc = dplyr::case_when(op == "<=" ~ TRUE,
+                                        op %in% c("<",">",">=") ~ FALSE,
+                                        TRUE ~ TRUE)
+          )
+        }
+        
+        classify_interval <- function(low, low_inc, high, high_inc, S, R) {
+          entirely_S <- (high < S) | (high == S)
+          entirely_R <- (low  > R) | (low  == R)
+          entirely_I <- ((low  > S) | (low  == S & !low_inc)) &
+            ((high < R) | (high == R & !high_inc))
+          dplyr::case_when(
+            entirely_S ~ "S",
+            entirely_R ~ "R",
+            entirely_I ~ "I",
+            TRUE       ~ "NI"
+          )
+        }
+        
+        newInterpretations <- newInterpretations %>%
+          bind_cols(parse_mic_interval(as.character(.$MIC))) %>%
+          mutate(
+            Interpretation = classify_interval(low, low_inc, high, high_inc, bp_S, bp_R)
+          ) %>%
+          select(-low, -low_inc, -high, -high_inc)
+# ------------------------------------------------------------------------------
+# END OF TEMPORARY FIX                 
+# ------------------------------------------------------------------------------
+        
         matchingData <- matchingData %>%
           select(-Interpretation, -Guideline) %>%
           left_join(newInterpretations, by = "MIC")
