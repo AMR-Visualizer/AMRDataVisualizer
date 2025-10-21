@@ -8,7 +8,8 @@ create_mic_frequency_tables <- function(
   guideline,
   s_bp = NULL,
   r_bp = NULL,
-  reference_data = AMR::clinical_breakpoints
+  reference_data = AMR::clinical_breakpoints,
+  use_single_bp_as_both = TRUE
 ) {
   if (group_by_var == "Year") {
     data <- dplyr::mutate(data, Year = as.character(lubridate::year(.data$Date)))
@@ -64,6 +65,12 @@ create_mic_frequency_tables <- function(
       },
       silent = TRUE
     )
+  }
+  
+  single_bp_applied <- FALSE
+  if (use_single_bp_as_both && xor(is.na(bp_s), is.na(bp_r))) {
+    if (!is.na(bp_s)) bp_r <- bp_s else bp_s <- bp_r
+    single_bp_applied <- TRUE
   }
 
   # --- build frequency table (works even if no BPs)
