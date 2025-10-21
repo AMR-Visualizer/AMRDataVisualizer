@@ -1,6 +1,7 @@
 abPageUI <- function(id) {
   ns <- NS(id)
   tagList(
+    actionButton(ns('stop'), 'stop'),
     fluidRow(
       # Main Content ------------------------------------------------------------
 
@@ -41,6 +42,9 @@ abPageUI <- function(id) {
 abPageServer <- function(id, reactiveData, customBreakpoints) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    observeEvent(input$stop, {
+      browser()
+    })
 
     # ------------------------------------------------------------------------------
     # Sub-modules
@@ -61,7 +65,12 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
     # ------------------------------------------------------------------------------
 
     plotData <- reactive({
-      filters$filteredData()
+      data <- filters$filteredData()
+
+      if ("Interpretation" %in% colnames(data)) {
+        data$Interpretation <- AMR::as.sir(data$Interpretation)
+      }
+      return(data)
     })
     activeFilters <- reactive({
       filters$activeFilters()
@@ -91,6 +100,39 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
       ))
     })
 
+    clopperPearsonCI <- reactive({
+      data <- plotData()
+      req("Interpretation" %in% colnames(data))
+      ab_cols <- as.ab(unique(data$Antimicrobial))
+
+      #' Much faster than using AMR::sir_confidence_interval() but gets the same results
+      data <- data %>%
+        filter(Interpretation %in% c("S", "I", "R")) %>%
+        mutate(
+          ab = as.ab(Antimicrobial),
+          Interpretation = AMR::as.sir(Interpretation)
+        ) %>%
+        group_by(!!sym(yVar()), ab) %>%
+        summarise(
+          Antimicrobial = first(Antimicrobial),
+          n_s = sum(Interpretation == "S", na.rm = TRUE),
+          n = sum(!is.na(Interpretation)),
+          .groups = "drop"
+        ) %>%
+        mutate(
+          ci = map2(
+            n_s,
+            n,
+            ~ if (.y > 0) stats::binom.test(.x, .y)$conf.int else c(NA_real_, NA_real_)
+          ),
+          ci_min = map_dbl(ci, 1),
+          ci_max = map_dbl(ci, 2)
+        ) %>%
+        select(!!sym(yVar()), Antimicrobial, ci_min, ci_max)
+
+      return(data)
+    })
+
     # First filter the data to include in the plot
     filteredData <- reactive({
       yVar <- yVar()
@@ -98,6 +140,7 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
       data <- plotData() %>%
         filter(Interpretation %in% c("S", "R", "I")) %>%
         mutate(
+          Interp = Interpretation,
           Interpretation = ifelse(Interpretation == "S", 1, 0),
           Microorganism = if (aggByGenus()) mo_genus(Microorganism) else Microorganism
         ) %>%
@@ -113,6 +156,8 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
         } %>%
         group_by(!!sym(yVar), Antimicrobial, Class) %>%
         summarise(
+          Interp = first(Interp),
+          num_susceptible = sum(Interpretation == 1),
           obs = n(),
           prop = round(mean(Interpretation == 1), 3),
           .groups = 'drop'
@@ -164,7 +209,11 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
       if (nrow(data) == 0) {
         return(NULL)
       }
-      return(getAntibiogramPlotItems(data, controls(), reactiveData()))
+      return(getAntibiogramPlotItems(
+        data,
+        controls = controls(),
+        staticData = reactiveData()
+      ))
     })
 
     # This plot only renders if the user selects Simplified AB
@@ -714,9 +763,10 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
 
           # Number of Isolates Images
           numIsolates <- getAntibiogramPlotItems(
-            filteredData(),
-            controls(),
-            reactiveData(),
+            plotData = filteredData(),
+            controls = controls(),
+            staticData = reactiveData(),
+            clopperPearsonCIData = clopperPearsonCI(),
             isIsolateTable = TRUE
           )
 
@@ -731,6 +781,30 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
             saveVisualisationPng(numIsolates$table, table_data, "isolate_table")
           }
 
+          clopperPearson <- clopperPearsonCI() %>%
+            mutate(ci_min = 100 * ci_min, ci_max = 100 * ci_max) %>%
+            mutate(ci = paste0("(", round(ci_min, 0), "% - ", round(ci_max, 0), "%)")) %>%
+            pivot_wider(
+              id_cols = !!sym(yVar()),
+              names_from = Antimicrobial,
+              values_from = ci,
+              values_fill = "-"
+            )
+          
+          ab_cols <- colnames(table_data)
+          ab_cols <- ab_cols[!ab_cols %in% c(yVar(), paste0("obs_"))]
+          
+          missing_cols <- setdiff(x, colnames(df))
+          
+          
+          result <- table_data %>%
+            rbind(clopperPearson)
+
+          table_data <- table_data %>%
+            mutate(dplyr::across(dplyr::all_of(colnames(table_data)), as.character))
+
+          result <- rows_update(table_data, clopperPearson, by = yVar())
+
           filters <- lapply(activeFilters(), as.character)
           writeLines(lowCounts(), "low_counts_flag.txt")
 
@@ -739,7 +813,12 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
             input = "Antibiogram.qmd",
             output_format = "html",
             output_file = "Antibiogram.html",
-            execute_params = list(vwidth = getHtmlTableWidth(table_data), filters = filters)
+            execute_params = list(
+              vwidth = getHtmlTableWidth(table_data),
+              filters = filters,
+              tableRows = nrow(table_data),
+              controls = controls()
+            )
           )
 
           file.rename("Antibiogram.html", file)

@@ -23,6 +23,7 @@ getAntibiogramPlotItems <- function(
     splitGram = FALSE
   ),
   staticData = NULL,
+  clopperPearsonCIData = NULL,
   includeNEquals = TRUE,
   isIsolateTable = FALSE
 ) {
@@ -108,7 +109,7 @@ getAntibiogramPlotItems <- function(
     return(plotly_plot)
   } else {
     df_wide <- plotData %>%
-      select(!!sym(controls$yVar), Antimicrobial, prop, obs, colour) %>%
+      select(!!sym(controls$yVar), Antimicrobial, prop, obs, colour, num_susceptible) %>%
       mutate(prop = round(prop * 100, 0)) %>%
       filter(if (controls$lowCounts == "Exclude") obs >= 30 else TRUE) %>%
       pivot_wider(
