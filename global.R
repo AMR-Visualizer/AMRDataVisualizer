@@ -100,6 +100,7 @@ invisible(mapply(install_and_load, names(github_packages), github_packages))
 source("Modules/homePage.R")
 source("Modules/ovPage.R")
 source("Modules/micPage.R")
+source("Modules/micDistPage.R")
 source("Modules/abPage.R")
 source("Modules/mapPage.R")
 source("Modules/tsPage.R")
@@ -121,6 +122,7 @@ source("Functions/dataUtilityFunctions.R")
 source("Functions/micTableFunction.R")
 source("Functions/uiUtilities.R")
 source("Functions/generalUtilities.R")
+source("Functions/micDistributionPlot.R")
 
 # ------------------------------------------------------------------------------
 # Source external data
