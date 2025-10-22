@@ -78,6 +78,7 @@ dashboardPage(
       tabItem(tabName = "importTab", importDataUI("dataImport")),
       tabItem(tabName = "ovTab", ovPageUI("overviewModule")),
       tabItem(tabName = "micTab", micPageUI("micModule")),
+      tabItem(tabName = "micDistTab", micDistPageUI("micDistModule")),
       tabItem(tabName = "abTab", abPageUI("antibiogramModule")),
       tabItem(tabName = "mapTab", mapPageUI("mapModule")),
       tabItem(tabName = "trendsTab", tsPageUI("tsModule")),

@@ -243,11 +243,20 @@ dataCleaner <- function(rawData, additionalCols = NULL, breakpoint = "CLSI") {
       ) %>%
       distinct()
   }
+  
+  uniqueSources <- unique(cleanData$Source)
+  
+  uti_log <- data.frame(
+    "Original Source" = uniqueSources,
+    "Is UTI?" = findUtiMatch(uniqueSources),
+    check.names = FALSE
+  )
 
   return(list(
     mo_log = mo_log,
     ab_log = ab_log,
     bp_log = bp_log,
+    uti_log = uti_log,
     cleaned_data = cleanData
   ))
 }

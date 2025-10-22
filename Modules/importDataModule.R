@@ -65,6 +65,7 @@ importDataServer <- function(id) {
     mo_change_log <- reactiveVal(NULL)
     ab_change_log <- reactiveVal(NULL)
     bp_log <- reactiveVal(NULL)
+    uti_log <- reactiveVal(NULL)
 
     # Define Available Data
     availableData <- reactive({
@@ -141,7 +142,7 @@ importDataServer <- function(id) {
             "Browse available data",
             choices = c(
               "Select a dataset",
-              "2020 NARMS - National Antimicrobial Resistance Monitoring System" = "narms_2020.csv"
+              "2020 NAHLN Canine - National Animal Health Laboratory Network" = "narms_2020.csv"
             ),
             selected = NULL
           ),
@@ -407,6 +408,22 @@ importDataServer <- function(id) {
           fontStyle = DT::styleEqual("Could not interpret", "italic"),
           color = DT::styleEqual("Could not interpret", "#666") # optional: muted grey
         )
+    })
+    
+    output$uti_log <- DT::renderDataTable({
+      DT::datatable(
+        uti_log(),
+        rownames = FALSE,
+        style = 'bootstrap',
+        class = 'table-bordered',
+        filter = "top",
+        options = list(
+          dom = 't',
+          paging = F,
+          ordering = T,
+          scrollX = TRUE
+        )
+      )
     })
 
     # Render input for additional columns
@@ -709,6 +726,7 @@ importDataServer <- function(id) {
       mo_change_log(NULL)
       ab_change_log(NULL)
       bp_log(NULL)
+      uti_log(NULL)
       showModal(modalDialog(
         title = tags$div(style = "text-align: center;", "Processing Your Data"),
         div(
@@ -765,6 +783,7 @@ importDataServer <- function(id) {
       mo_change_log(results$mo_log)
       ab_change_log(results$ab_log)
       bp_log(results$bp_log)
+      uti_log(results$uti_log)
       cleanedData(results$cleaned_data)
       displayCleanedData(TRUE)
       removeModal()
@@ -796,6 +815,12 @@ importDataServer <- function(id) {
             tabPanel(
               "Interpretations",
               div(class = "readonly-table", DT::dataTableOutput(ns("interpretation_log")))
+            )
+          },
+          if (!is.null(input$valueType) && input$valueType == "MIC") {
+            tabPanel(
+              "Is UTI?",
+              div(class = "readonly-table", DT::dataTableOutput(ns("uti_log")))
             )
           }
         ),
@@ -1193,6 +1218,7 @@ importDataServer <- function(id) {
           render_env$mo_change_log <- changeLogDataMo()
           render_env$ab_change_log <- changeLogDataAb()
           render_env$bp_log <- bp_log()
+          render_env$uti_log <- uti_log()
 
           rmarkdown::render(
             input = "ProcessingLog.Rmd",

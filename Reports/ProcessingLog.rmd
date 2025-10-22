@@ -43,3 +43,18 @@ if (is.null(bp_log) || nrow(bp_log) == 0) {
   )
 }
 ```
+
+# UTI
+## Log
+```{r, echo = FALSE}
+if (is.null(bp_log) || nrow(bp_log) == 0) {
+  cat("This log displays only if MIC values were interepretted within the app.")
+} else {
+  DT::datatable(
+    uti_log,
+    rownames = FALSE,
+    selection = "none",
+    filter = "top"
+  )
+}
+```

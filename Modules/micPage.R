@@ -504,10 +504,24 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
     output$clinicalBpTable <- DT::renderDataTable({
       req(bpTableOpen())
       req(ab_clinical_breakpoints())
+      
+      refernce_bp_table <- ab_clinical_breakpoints() %>%
+        select(-method, -rank_index, -disk_dose, -is_SDD) %>%
+        rename_with(~ str_replace_all(., "_", " ")) %>%
+        rename_with(~ str_to_title(.)) %>%
+        rename_with(~ str_replace_all(., c(
+          "\\bMo\\b"           = "Organism",
+          "\\bAb\\b"           = "Antimicrobial",
+          "\\bUti\\b"          = "UTI",
+          "\\bRef Tbl\\b"      = "Reference Table",
+          "\\bBreakpoint S\\b" = "Breakpoint (S)",
+          "\\bBreakpoint R\\b" = "Breakpoint (R)"
+        )))
 
       DT::datatable(
-        ab_clinical_breakpoints(),
+        refernce_bp_table,
         rownames = FALSE,
+        filter = "top",
         options = list(autoWidth = TRUE)
       )
     })

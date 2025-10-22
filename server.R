@@ -18,6 +18,7 @@ server <- function(input, output, session) {
     reactiveData = clean,
     processedGuideline = processedGuideline
   )
+  micDistPageServer("micDistModule", reactiveData = dataWithCustomBreakpoints)
   abPageServer(
     "antibiogramModule",
     reactiveData = dataWithCustomBreakpoints,
@@ -63,7 +64,7 @@ server <- function(input, output, session) {
     if (isDataPresent()) {
       # Define menu items
       menu_items <- list(
-        menuItem("Overview", tabName = "ovTab", icon = icon("chart-simple", class = "nav-icon")),
+        menuItem("Overview", tabName = "ovTab", icon = icon("magnifying-glass-chart", class = "nav-icon")),
         menuItem("Antibiogram", tabName = "abTab", icon = icon("braille", class = "nav-icon")),
         menuItem("Map", tabName = "mapTab", icon = icon("map-location-dot", class = "nav-icon")),
         menuItem("Trends", tabName = "trendsTab", icon = icon("chart-line", class = "nav-icon")),
@@ -78,7 +79,12 @@ server <- function(input, output, session) {
           tabName = "micTab",
           icon = icon("vial", class = "nav-icon")
         )
-        menu_items <- c(list(mic_item), menu_items)
+        mic_dist_item <- menuItem(
+          "MIC Distributions",
+          tabName = "micDistTab",
+          icon = icon("chart-simple", class = "nav-icon")
+        )
+        menu_items <- c(list(mic_item, mic_dist_item), menu_items)
       }
 
       sidebarMenu(id = "tabs", menu_items)
@@ -131,6 +137,7 @@ server <- function(input, output, session) {
           importTab = includeMarkdown("Documentation/data-import.md"),
           ovTab = includeMarkdown("Documentation/overview-plots.md"),
           micTab = includeMarkdown("Documentation/mic-tables.md"),
+          #micDistTab = includeMarkdown("Documentation/mic-distributions.md"),
           abTab = includeMarkdown("Documentation/antibiograms.md"),
           mapTab = includeMarkdown("Documentation/maps.md"),
           trendsTab = includeMarkdown("Documentation/trends.md"),
