@@ -163,15 +163,15 @@ plot_mic_distribution <- function(
     ) +
     ggplot2::geom_text(
       data = mic_labels,
-      ggplot2::aes(x = x50_lab, y = y_top * 1.4, label = label50, color = DRUG),
-      angle = 90, vjust = 0, size = 6, fontface = "bold", show.legend = FALSE
+      ggplot2::aes(x = x50_lab, y = y_top * 1.3, label = label50, color = DRUG),
+      angle = 90, vjust = 0, size = 5, fontface = "bold", show.legend = FALSE
     ) +
     ggplot2::geom_text(
       data = mic_labels,
-      ggplot2::aes(x = x90_lab, y = y_top * 1.4, label = label90, color = DRUG),
-      angle = 90, vjust = 0, size = 6, fontface = "bold", show.legend = FALSE
+      ggplot2::aes(x = x90_lab, y = y_top * 1.3, label = label90, color = DRUG),
+      angle = 90, vjust = 0, size = 5, fontface = "bold", show.legend = FALSE
     ) +
-    ggplot2::expand_limits(y = y_top * 1.5) +
+    ggplot2::expand_limits(y = y_top * 1.7) +
     ggplot2::coord_cartesian(clip = "off") +
     ggplot2::scale_x_discrete(drop = FALSE) +
     ggplot2::labs(
@@ -180,7 +180,7 @@ plot_mic_distribution <- function(
       fill = "Drug",
       title = NULL
     ) +
-    ggplot2::theme_minimal(base_size = 18, base_family = "Carme")+
+    ggplot2::theme_minimal(base_size = 14, base_family = "Carme")+
     ggplot2::theme(legend.position = "bottom")
   
   list(

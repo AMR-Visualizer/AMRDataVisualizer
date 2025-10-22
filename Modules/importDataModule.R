@@ -142,7 +142,7 @@ importDataServer <- function(id) {
             "Browse available data",
             choices = c(
               "Select a dataset",
-              "2020 NARMS - National Antimicrobial Resistance Monitoring System" = "narms_2020.csv"
+              "2020 NAHLN Canine - National Animal Health Laboratory Network" = "narms_2020.csv"
             ),
             selected = NULL
           ),
