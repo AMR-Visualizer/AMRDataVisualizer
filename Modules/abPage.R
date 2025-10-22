@@ -680,53 +680,60 @@ abPageServer <- function(id, reactiveData, customBreakpoints) {
 
           saveVisualisationPng(currentVisualisation, ab_table_data, "antibiogram_table")
 
-          # Number of Isolates Images
-          isolate_items <- getAntibiogramPlotItems(
-            plotData = filtered_data,
-            controls = current_controls,
-            staticData = reactive_data,
-            table_type = "isolate"
-          )
-          # Get the table data for image width calculation
-          isolate_table_data <- if (splitGram()) {
-            isolate_items$df_wide_neg
-          } else {
-            isolate_items$data
-          }
-          isolate_table_data <- isolate_table_data %>%
-            select(any_of(c(yVar(), "n =", unique(filtered_data$Antimicrobial))))
-
-          # Number of Isolates Images
-          ci_items <- getAntibiogramPlotItems(
-            plotData = filtered_data,
-            controls = current_controls,
-            staticData = reactive_data,
-            clopper_pearson_ci_data = clopper_pearson_ci(),
-            table_type = "ci"
-          )
-          # Get the table data for image width calculation
-          ci_table_data <- if (splitGram()) {
-            ci_items$df_wide_neg
-          } else {
-            ci_items$data
-          }
-          ci_table_data <- ci_table_data %>%
-            select(any_of(c(yVar(), unique(filtered_data$Antimicrobial))))
-
-          if (splitGram()) {
-            visualisation2 <- classicAbTable2() %>% gt::cols_hide(columns = "n =")
-            saveVisualisationPng(visualisation2, ab_table_data, "antibiogram_table2")
+          if (outputType() != "simplified") {
+            # Number of Isolates Images
+            isolate_items <- getAntibiogramPlotItems(
+              plotData = filtered_data,
+              controls = current_controls,
+              staticData = reactive_data,
+              table_type = "isolate"
+            )
+            # Get the table data for image width calculation
+            isolate_table_data <- if (splitGram()) {
+              isolate_items$df_wide_neg
+            } else {
+              isolate_items$data
+            }
+            isolate_table_data <- isolate_table_data %>%
+              select(any_of(c(yVar(), "n =", unique(filtered_data$Antimicrobial))))
 
             # Number of Isolates Images
-            saveVisualisationPng(isolate_items$negTable, isolate_table_data, "isolate_table")
-            saveVisualisationPng(isolate_items$posTable, isolate_table_data, "isolate_table2")
+            ci_items <- getAntibiogramPlotItems(
+              plotData = filtered_data,
+              controls = current_controls,
+              staticData = reactive_data,
+              clopper_pearson_ci_data = clopper_pearson_ci(),
+              table_type = "ci"
+            )
+            # Get the table data for image width calculation
+            ci_table_data <- if (splitGram()) {
+              ci_items$df_wide_neg
+            } else {
+              ci_items$data
+            }
+            ci_table_data <- ci_table_data %>%
+              select(any_of(c(yVar(), unique(filtered_data$Antimicrobial))))
 
-            # Clopper Pearson CI Images
-            saveVisualisationPng(ci_items$negTable, ci_table_data, "ci_table", ab_cell_width = 60)
-            saveVisualisationPng(ci_items$posTable, ci_table_data, "ci_table2", ab_cell_width = 60)
-          } else {
-            saveVisualisationPng(isolate_items$table, isolate_table_data, "isolate_table")
-            saveVisualisationPng(ci_items$table, ci_table_data, "ci_table", ab_cell_width = 60)
+            if (splitGram()) {
+              visualisation2 <- classicAbTable2() %>% gt::cols_hide(columns = "n =")
+              saveVisualisationPng(visualisation2, ab_table_data, "antibiogram_table2")
+
+              # Number of Isolates Images
+              saveVisualisationPng(isolate_items$negTable, isolate_table_data, "isolate_table")
+              saveVisualisationPng(isolate_items$posTable, isolate_table_data, "isolate_table2")
+
+              # Clopper Pearson CI Images
+              saveVisualisationPng(ci_items$negTable, ci_table_data, "ci_table", ab_cell_width = 60)
+              saveVisualisationPng(
+                ci_items$posTable,
+                ci_table_data,
+                "ci_table2",
+                ab_cell_width = 60
+              )
+            } else {
+              saveVisualisationPng(isolate_items$table, isolate_table_data, "isolate_table")
+              saveVisualisationPng(ci_items$table, ci_table_data, "ci_table", ab_cell_width = 60)
+            }
           }
 
           ab_table_data <- ab_table_data %>%

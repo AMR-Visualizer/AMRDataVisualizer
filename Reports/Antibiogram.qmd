@@ -82,15 +82,17 @@ Each cell shows the percentage of isolates interpreted as susceptible for a give
 
 ```{r ab-table1, echo=FALSE, results='asis'}
 
-div(
-  if (file.exists("antibiogram_table2.png")) {
-    h4("Gram-Negative", style="text-align: center;")
-  },
+if (file.exists("antibiogram_table.png")) {
   div(
-    style="display: flex; justify-content: center;",
-    img(src="antibiogram_table.png", class="table-img")
+    if (file.exists("antibiogram_table2.png")) {
+      h4("Gram-Negative", style="text-align: center;")
+    },
+    div(
+      style="display: flex; justify-content: center;",
+      img(src="antibiogram_table.png", class="table-img")
+    )
   )
-)
+}
 ```
 
 
@@ -149,16 +151,17 @@ Each cell shows the number of isolates interpreted as susceptible over the total
 <!-- Isolates - Combined or Gram Negative -->
 
 ```{r isolate-table1, echo=FALSE, results='asis'}
-
-div(
-  if (file.exists("isolate_table2.png")) {
-    h4("Gram-Negative", style="text-align: center;")
-  },
+if (file.exists("isolate_table.png")) {
   div(
-    style="display: flex; justify-content: center;",
-    img(src="isolate_table.png", class="table-img")
+    if (file.exists("isolate_table2.png")) {
+      h4("Gram-Negative", style="text-align: center;")
+    },
+    div(
+      style="display: flex; justify-content: center;",
+      img(src="isolate_table.png", class="table-img")
+    )
   )
-)
+}
 ```
 
 
@@ -197,16 +200,17 @@ report_summary
 <!-- Isolates - Combined or Gram Negative -->
 
 ```{r ci-table1, echo=FALSE, results='asis'}
-
-div(
-  if (file.exists("ci_table2.png")) {
-    h4("Gram-Negative", style="text-align: center;")
-  },
+if (file.exists("ci_table.png")) {
   div(
-    style="display: flex; justify-content: center;",
-    img(src="ci_table.png", class="table-img")
+    if (file.exists("ci_table2.png")) {
+      h4("Gram-Negative", style="text-align: center;")
+    },
+    div(
+      style="display: flex; justify-content: center;",
+      img(src="ci_table.png", class="table-img")
+    )
   )
-)
+}
 ```
 
 
