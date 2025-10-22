@@ -1,55 +1,73 @@
+#' Get a classic antibiogram gt table.
+#'
+#' @param data A data frame containing the antibiogram data.
+#' @param obs_cols Numeric vector indicating the columns with observed data.
+#' @param drug_targets Numeric vector indicating the columns with drug target data.
+#' @param showColors Logical indicating whether to apply color coding.
+#' @param table_type Type of table to generate: "percentage", "isolate", or "ci".
+#' @param drug_class_starts Numeric vector indicating where drug class separators should be placed.
+#' @return A gt table formatted as a classic antibiogram.
 classicAB <- function(
   data,
   obs_cols,
   drug_targets,
-  combined_js,
-  height,
   showColors = TRUE,
-  includeN = TRUE,
-  isIsolateTable = FALSE,
+  table_type = "percentage", # Can be "percentage", "isolate", or "ci"
   drug_class_starts = NULL
 ) {
-  fixedCols <- 1
+  fixed_cols <- 1:ifelse(table_type != "ci" && "n =" %in% colnames(data), 2, 1)
 
-  if (!includeN) {
+  if (table_type == "ci" && "n =" %in% colnames(data)) {
     data <- data %>%
       dplyr::select(-dplyr::any_of("n ="))
-  }
-
-  if (includeN && "n =" %in% colnames(data)) {
-    fixedCols <- 1:2
+    obs_cols <- obs_cols - 1
+    drug_targets <- drug_targets - 1
   }
 
   abs <- colnames(data)[unique(c(obs_cols, drug_targets + 1))]
 
   abs <- unique(gsub("^obs_", "", abs))
-  abs <- abs[!abs %in% c(colnames(data)[fixedCols])]
+  abs <- abs[!abs %in% c(colnames(data)[fixed_cols])]
 
-  if (isIsolateTable) {
-    # Remove percentages columns are rename observed columns
-    oldData <- data
+  # The target column prefix based on table type.
+  # "percentage" tables have no prefix (just ab name).
+  column_prefix <- case_when(
+    table_type == "isolate" ~ "obs_",
+    table_type == "ci" ~ "ci_",
+    TRUE ~ ""
+  )
+
+  if (table_type != "percentage") {
+    #' Remove percentages columns.
+    #' Make sure the the target table type columns are first after fixedCols.
+    #' E.g., for table_type = "ci", move ci_<ab> columns next to fixedCols.
     data <- data %>%
-      dplyr::select(-dplyr::any_of(abs))
-    colnames(data) <- gsub("^obs_", "", colnames(data))
-    which(colnames(data) %in% abs)
-    obs_cols <- which(colnames(data) %in% abs)
-    drug_targets <- obs_cols - 1
+      dplyr::select(-dplyr::any_of(abs)) %>%
+      dplyr::select(any_of(c(colnames(data)[fixed_cols], paste0(column_prefix, abs))), everything())
+    obs_cols <- which(colnames(data) %in% paste0("obs_", abs))
+    drug_targets <- which(colnames(data) %in% paste0(column_prefix, abs)) - 1
   }
 
+  # data <- data %>%
+  #   mutate(across(everything(), ~ replace(., is.na(.), 0)))
+
   plt <- data %>%
-    mutate(dplyr::across(dplyr::all_of(fixedCols), as.character)) %>%
+    mutate(dplyr::across(dplyr::all_of(fixed_cols), as.character)) %>%
     gt::gt()
 
+  data <- data %>%
+    mutate(across(everything(), ~ replace(., is.na(.), 0)))
+
   if (showColors) {
-    maxCount <- data %>%
+    max_count <- data %>%
       dplyr::select(dplyr::all_of(drug_targets + 1)) %>%
       unlist() %>%
       max(na.rm = TRUE)
 
     for (ab in abs) {
-      prop_col <- ab
+      prop_col <- paste0(column_prefix, ab)
       colour_col <- paste0("colour_", ab)
-      obs_col <- paste0(ifelse(isIsolateTable, "", "obs_"), ab)
+      obs_col <- paste0("obs_", ab)
 
       if (!colour_col %in% colnames(data)) {
         # Add empty colour_col if it doesn't exist to stop errors being thrown below
@@ -57,49 +75,51 @@ classicAB <- function(
       }
 
       plt <- plt %>%
-        gt::data_color(columns = prop_col, fn = function(x, row) {
-          # If there is a colour_col, use that instead
-          color <- as.character(data[[colour_col]][row])
-
-          if (is.null(color)) {
-            # Get obs values for current column
-            obs_vals <- data[[obs_col]][row]
-            # Only color if obs > 30, otherwise transparent
-            vals <- suppressWarnings(as.numeric(x))
-            color <- ifelse(
-              obs_vals > 30,
-              as.character(cut(
-                vals,
-                breaks = c(0, 70, 90, maxCount),
-                labels = c("#D73027", "#FEE08B", "#44CDC4"),
-                include.lowest = TRUE
-              )),
-              "transparent"
-            )
-            color[is.na(color)] <- "transparent"
-          }
-          color
+        gt::data_color(columns = prop_col, fn = function(x) {
+          # Use the matching colour column for each cell
+          color_vec <- as.character(data[[colour_col]])
+          # Replace invalid colors with "transparent"
+          color_vec[is.na(color_vec) | color_vec %in% c("NA", "0", "")] <- "transparent"
+          color_vec
         })
     }
   }
+  # String for searching columns with the target prefix
+  search_column_prefix <- paste0("^", column_prefix)
 
-  colour_cols <- grep("^colour_", colnames(data))
-  hideColumns <- c(obs_cols, colour_cols)
-  if (isIsolateTable) {
-    hideColumns <- colour_cols
-  }
+  target_ab_cols <- grep(search_column_prefix, colnames(data), value = TRUE)
+  label_map <- setNames(gsub(search_column_prefix, "", target_ab_cols), target_ab_cols)
+
+  hide_columns <- colnames(data)[
+    !colnames(data) %in% c(colnames(data)[fixed_cols], paste0(column_prefix, abs))
+  ]
 
   plt <- plt %>%
-    gt::cols_hide(columns = hideColumns)
+    gt::cols_hide(columns = hide_columns) %>%
+    gt::cols_label(.list = label_map) # Remove prefix from ab column labels
 
   if (!is.null(drug_class_starts)) {
+    drug_col_width <- ifelse(table_type == "ci", 60, 40)
+    width_list <- Map(
+      function(col, width) as.formula(paste0("`", col, "` ~ gt::px(", width, ")")),
+      target_ab_cols,
+      drug_col_width
+    )
+
+    # Add the fixed column widths
+    width_list <- c(
+      list(gt::matches("^n =") ~ gt::px(120)),
+      list(1 ~ gt::px(180)),
+      width_list
+    )
+
     plt <- plt %>%
       #' This adds the `.gt_center` class to the fixed columns and
       #' `.gt_right` to the drug columns.
       #' Easier to style with CSS below with `opt_css`.
       gt::cols_align(
         align = "center",
-        columns = fixedCols
+        columns = fixed_cols
       ) %>%
       gt::cols_align(
         align = "left",
@@ -113,7 +133,7 @@ classicAB <- function(
       # Styling for all column labels
       gt::tab_style(
         style = gt::cell_text(weight = "bold", v_align = "bottom"),
-        locations = gt::cells_column_labels(columns = fixedCols)
+        locations = gt::cells_column_labels(columns = fixed_cols)
       ) %>%
       # Styling for all table cells
       gt::tab_style(
@@ -137,11 +157,7 @@ classicAB <- function(
         ),
         locations = gt::cells_body(columns = unname(drug_class_starts + 1))
       ) %>%
-      gt::cols_width(
-        gt::matches("^n =") ~ gt::px(120),
-        1 ~ gt::px(180),
-        everything() ~ gt::px(40)
-      ) %>%
+      gt::cols_width(.list = width_list) %>%
       # Rotate drug column labels
       gt::opt_css(
         css = "

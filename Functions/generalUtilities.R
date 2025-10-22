@@ -10,6 +10,19 @@ getCustomGuidelineName <- function() {
   paste("CUSTOM BREAKPOINTS", year(Sys.Date()))
 }
 
+
+#' Get items for the antibiogram plot/table.
+#'
+#' Create the plot (for simplified antibiogram) and the table (for classic antibiogram).
+#' If the `splitGram` control is TRUE and the yVar is "Microorganism", two tables are
+#' returned: one for Gram-positive and one for Gram-negative microorganisms.
+#'
+#' @param plotData                Data frame containing the data for the plot/table.
+#' @param controls                List of control parameters for the plot/table.
+#' @param staticData              Optional static data frame for additional information.
+#' @param table_type              Type of table to create: "percentage", "isolate", or "ci".
+#' @param clopper_pearson_ci_data Optional data frame containing Clopper-Pearson confidence intervals.
+#' @return                        A list containing the plot and/or table items for the antibiogram.
 getAntibiogramPlotItems <- function(
   plotData,
   controls = list(
@@ -17,18 +30,36 @@ getAntibiogramPlotItems <- function(
     sortBy = "Frequency",
     abType = "Classic",
     lowCounts = "Include",
-    numAb = 15,
-    showColours = TRUE,
+    maxRows = 15,
+    showColors = TRUE,
     aggByGenus = FALSE,
     splitGram = FALSE
   ),
   staticData = NULL,
-  clopperPearsonCIData = NULL,
-  includeNEquals = TRUE,
-  isIsolateTable = FALSE
+  table_type = "percentage",
+  clopper_pearson_ci_data = NULL
 ) {
   if (is.null(plotData) || nrow(plotData) == 0) {
     return(NULL)
+  }
+
+  # If the CP CI data is provided, join it to the main plot data.
+  if (!is.null(clopper_pearson_ci_data)) {
+    plotData <- plotData %>%
+      left_join(
+        clopper_pearson_ci_data,
+        by = c(controls$yVar, "Antimicrobial")
+      )
+  }
+
+  # Only keep the top `maxRows` most frequent microorganisms/source if needed.
+  if (controls$maxRows > length(unique(plotData[[controls$yVar]]))) {
+    plotData <- plotData %>%
+      group_by(!!sym(controls$yVar)) %>%
+      mutate(Frequency = n()) %>%
+      filter(., Frequency >= min(tail(sort(unique(.$Frequency)), controls$maxRows))) %>%
+      ungroup() %>%
+      select(-Frequency)
   }
 
   if (controls$abType == "Simplified") {
@@ -106,20 +137,44 @@ getAntibiogramPlotItems <- function(
           'toggleSpikelines'
         )
       )
-    return(plotly_plot)
+
+    plotData <- plotData %>%
+      select(-text, -alpha, -colour, -short_form, -size)
+
+    return(list(
+      plot = plotly_plot,
+      data = plotData
+    ))
   } else {
+    # If there is no colour column, add it based on prop and obs.
+    if (!"colour" %in% colnames(plotData)) {
+      plotData <- add_ab_cell_colours(plotData)
+    }
+
     df_wide <- plotData %>%
-      select(!!sym(controls$yVar), Antimicrobial, prop, obs, colour, num_susceptible) %>%
+      select(any_of(c(
+        controls$yVar,
+        "Antimicrobial",
+        "prop",
+        "obs",
+        "colour",
+        "num_susceptible",
+        "ci"
+      ))) %>%
       mutate(prop = round(prop * 100, 0)) %>%
       filter(if (controls$lowCounts == "Exclude") obs >= 30 else TRUE) %>%
       pivot_wider(
         id_cols = !!sym(controls$yVar),
         names_from = Antimicrobial,
-        values_from = c(prop, obs, colour),
+        values_from = any_of(c("prop", "obs", "colour", "ci")),
         names_sep = "_"
       )
 
-    if (includeNEquals) {
+    if (table_type != "ci") {
+      #' Want the "n =" column for both "isolate" and "percentage" table types.
+      #' For "percentage" we want it to show in the app, but it needs to be removed
+      #' later in the report download.
+      #' For "isolate" we want it to show always.
       df_wide <- df_wide %>%
         rowwise() %>%
         mutate(
@@ -139,10 +194,10 @@ getAntibiogramPlotItems <- function(
         select(!!sym(controls$yVar), everything())
     }
 
-    drug_start <- ifelse(includeNEquals, 2, 1)
+    # "ci" tables do not have the "n =" column (1 fixed column), others do (2 fixed columns).
+    drug_start <- ifelse(table_type != "ci", 2, 1)
 
-    n_total <- ncol(df_wide)
-    n_drug <- (n_total - drug_start) / 2
+    n_drug <- length(unique(plotData$Antimicrobial))
 
     colnames(df_wide) <- gsub("prop_", "", colnames(df_wide))
 
@@ -160,8 +215,6 @@ getAntibiogramPlotItems <- function(
     obs_cols <- which(grepl("obs_", names(df_wide)))
 
     drug_targets <- drug_start:(n_drug + drug_start)
-
-    combined_js <- get_ab_colours_js(df_wide, drug_start, controls$showColors)
 
     df_wide <- switch(
       controls$sortBy,
@@ -193,22 +246,18 @@ getAntibiogramPlotItems <- function(
         data = df_wide_neg,
         obs_cols = obs_cols,
         drug_targets = drug_targets,
-        combined_js = combined_js,
-        height = "350px",
         showColors = controls$showColors,
         drug_class_starts = drug_class_starts,
-        isIsolateTable = isIsolateTable
+        table_type = table_type
       )
 
       posTable <- classicAB(
         data = df_wide_pos,
         obs_cols = obs_cols,
         drug_targets = drug_targets,
-        combined_js = combined_js,
-        height = "350px",
         showColors = controls$showColors,
         drug_class_starts = drug_class_starts,
-        isIsolateTable = isIsolateTable
+        table_type = table_type
       )
 
       return(list(
@@ -222,12 +271,11 @@ getAntibiogramPlotItems <- function(
         data = df_wide,
         obs_cols = obs_cols,
         drug_targets = drug_targets,
-        combined_js = combined_js,
-        height = "750px",
         showColors = controls$showColors,
         drug_class_starts = drug_class_starts,
-        isIsolateTable = isIsolateTable
+        table_type = table_type
       )
+
       return(list(
         data = df_wide,
         table = plot
@@ -236,60 +284,23 @@ getAntibiogramPlotItems <- function(
   }
 }
 
-
-get_ab_colours_js <- function(df_wide, drug_start, showColors = TRUE) {
-  n_total <- ncol(df_wide)
-  n_drug <- (n_total - drug_start) / 2
-
-  colnames(df_wide) <- gsub("prop_", "", colnames(df_wide))
-
-  drug_names <- names(df_wide)[(drug_start + 1):(n_drug + drug_start)]
-  drug_classes <- AMR::ab_group(drug_names)
-  drug_group_list <- split(seq_along(drug_names), drug_classes)
-  drug_class_starts <- sapply(drug_group_list, function(x) min(x))
-
-  if (drug_start == 2) {
-    #' We are including the "n =" column.
-    #' So we need to shift the indices by 1.
-    drug_class_starts <- drug_class_starts + 1
+#' Add cell colours to antibiogram data based on proportions and observations.
+#'
+#' @param data  Data frame containing 'prop' and 'obs' columns.
+#' @return      Data frame with an additional 'colour' column.
+add_ab_cell_colours <- function(data) {
+  if (is.null(data)) {
+    return(data)
   }
-
-  combined_js <- JS(paste0(
-    "function(td, cellData, rowData, row, col) {",
-    sprintf("  var n_drug = (rowData.length - %s) / 2;", drug_start),
-    "  var obsIndex = col + n_drug;",
-    "  var obsValue = parseFloat(rowData[obsIndex]);",
-    "  var cellValue = parseFloat(cellData);",
-    "  var tooltipText = '';",
-    "  var showColors = ",
-    tolower(as.character(showColors)),
-    ";",
-
-    "  if (!isNaN(obsValue)) {",
-    "    tooltipText = 'Number of tests: ' + obsValue;",
-    "  }",
-
-    "  $(td).attr('title', tooltipText);",
-
-    "  if (!isNaN(obsValue) && obsValue >= 30 && showColors === true) {",
-    "    if (!isNaN(cellValue)) {",
-    "      if (cellValue < 70) {",
-    "        $(td).css({'background-color': '#D73027', 'color': 'white'});",
-    "      } else if (cellValue < 90) {",
-    "        $(td).css({'background-color': '#FEE08B'});",
-    "      } else if (cellValue >= 90) {",
-    "        $(td).css({'background-color': '#44CDC4', 'color': 'white'});",
-    "      }",
-    "    }",
-    "  }",
-
-    "  var drug_class_starts = [",
-    paste(drug_class_starts, collapse = ","),
-    "];",
-    "  if (drug_class_starts.includes(col)) {",
-    "    $(td).css({'border-left': '3px dashed black'});",
-    "  }",
-    "}"
-  ))
-  return(combined_js)
+  data <- data %>%
+    mutate(
+      colour = case_when(
+        obs < 30 ~ "white",
+        prop < 0.7 ~ "#D73027",
+        prop >= 0.7 & prop <= 0.9 ~ "#FEE08B",
+        prop > 0.9 ~ "#44CDC4",
+        TRUE ~ "white"
+      )
+    )
+  return(data)
 }
