@@ -58,94 +58,6 @@ getBreakpointsMessage <- function(bp_row, isCustom = FALSE) {
   )
 }
 
-#' Items for the simplified antibiogram legend.
-.simplified_legend_items <- list(
-  size = list(
-    list(
-      style = "font-size: 10px;",
-      label = "Low susceptibility (<70%)"
-    ),
-    list(
-      style = "font-size: 20px;",
-      label = "Moderate susceptibility (70 - 90%)"
-    ),
-    list(
-      style = "font-size: 30px;",
-      label = "High susceptibility (>90%)"
-    )
-  ),
-  opacity = list(
-    list(
-      style = "opacity: 0.1;",
-      label = "<30 Samples"
-    ),
-    list(
-      style = "",
-      label = "30+ Samples"
-    )
-  )
-)
-
-#' Helper to create a simplified legend item.
-#'
-#' @param class CSS class for the legend item.
-#' @param label Label text for the legend item.
-#' @param style CSS style for the legend circle.
-#' @return      A `div` element representing the legend item.
-.get_simplified_legend_item <- function(class, label, style) {
-  return(div(
-    class = class,
-    div(
-      style = "min-width: 30px; display: flex; justify-content: center; align-items: center;",
-      tags$i(
-        class = "fas fa-circle legend-circle",
-        style = style
-      )
-    ),
-    span(
-      label,
-      class = "legend-label",
-      style = "margin-left: 10px;"
-    )
-  ))
-}
-
-#' Get the simplified antibiogram legend.
-#'
-#' @return A `div` element containing the simplified legend.
-get_simplified_ab_legend <- function() {
-  return(div(
-    class = "legend-section simplified-legend",
-    div(
-      class = "legend-group",
-      h5("Size"),
-      div(
-        class = "legend-section",
-        lapply(.simplified_legend_items$size, function(item) {
-          .get_simplified_legend_item("legend-item", item$label, item$style)
-        })
-      )
-    ),
-    div(
-      class = "legend-group",
-      h5("Opacity"),
-      div(
-        class = "opacity-container",
-        .get_simplified_legend_item(
-          "opacity-item",
-          .simplified_legend_items$opacity[[1]]$label,
-          .simplified_legend_items$opacity[[1]]$style
-        ),
-        div(class = "vertical-divider"),
-        .get_simplified_legend_item(
-          "opacity-item",
-          .simplified_legend_items$opacity[[2]]$label,
-          .simplified_legend_items$opacity[[2]]$style
-        )
-      )
-    )
-  ))
-}
 
 #' Items for the classic antibiogram legend.
 .classic_legend_items <- list(
@@ -197,5 +109,37 @@ get_classic_ab_legend <- function() {
     lapply(.classic_legend_items, function(item) {
       .get_classic_legend_item(item$icon_class, item$label, item$colour)
     })
+  ))
+}
+
+#' Generate a clinical breakpoints data table.
+#'
+#' Used on the MIC Tables page and in the Antibiogram quarto report.
+#'
+#' @param data A data frame containing clinical breakpoints information.
+#' @return     A DT datatable object displaying the clinical breakpoints.
+get_clinical_bps_table <- function(data) {
+  table_data <- data %>%
+    select(-any_of(c("method", "rank_index", "disk_dose", "is_SDD"))) %>%
+    rename_with(~ str_replace_all(., "_", " ")) %>%
+    rename_with(~ str_to_title(.)) %>%
+    rename_with(
+      ~ str_replace_all(
+        .,
+        c(
+          "\\bMo\\b" = "Organism",
+          "\\bAb\\b" = "Antimicrobial",
+          "\\bUti\\b" = "UTI",
+          "\\bRef Tbl\\b" = "Reference Table",
+          "\\bBreakpoint S\\b" = "Breakpoint (S)",
+          "\\bBreakpoint R\\b" = "Breakpoint (R)"
+        )
+      )
+    )
+  return(DT::datatable(
+    table_data,
+    rownames = FALSE,
+    filter = "top",
+    options = list(autoWidth = TRUE)
   ))
 }

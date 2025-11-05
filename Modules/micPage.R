@@ -63,18 +63,6 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
     # Module variables
     # ------------------------------------------------------------------------------
 
-    abMapping <- data.frame(ab = unique(AMR::clinical_breakpoints$ab)) %>%
-      mutate(ab_name = AMR::ab_name(ab))
-
-    moMapping <- data.frame(mo = unique(AMR::clinical_breakpoints$mo)) %>%
-      mutate(mo_name = AMR::mo_name(mo))
-
-    #' `AMR::clinical_breakpoints` have the `ab` and `mo` columns as abbreviations.
-    #' Add the actual names for easier searching in the table.
-    fullClinicalBreakpoints <- AMR::clinical_breakpoints %>%
-      left_join(abMapping, by = "ab") %>%
-      left_join(moMapping, by = "mo")
-
     # A custom guideline name to use in the clinical breakpoints df.
     customBreakpointName <- getCustomGuidelineName()
 
@@ -171,8 +159,8 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
       sel <- customRefData() %>%
         filter(
           # guideline %in% c(processedGuideline(), customBreakpointName),
-          mo  == as.mo(input$moFilter),
-          ab  == as.ab(input$abFilter),
+          mo == as.mo(input$moFilter),
+          ab == as.ab(input$abFilter),
           uti == (input$typeFilter == "Urinary"),
           host == tolower(selectedSpecies())
         )
@@ -204,52 +192,68 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
 
     appliedBpForDisplay <- reactive({
       req(input$moFilter, input$abFilter, input$typeFilter, selectedSpecies())
-      uti  <- identical(input$typeFilter, "Urinary")
+      uti <- identical(input$typeFilter, "Urinary")
       host <- tolower(selectedSpecies())
-      
+
       bp <- selectedBreakpoints()
       s_user <- if (nrow(bp) > 0) suppressWarnings(as.numeric(bp$breakpoint_S[1])) else NA_real_
       r_user <- if (nrow(bp) > 0) suppressWarnings(as.numeric(bp$breakpoint_R[1])) else NA_real_
-      
+
       guide <- if (nrow(bp) > 0 && !is.na(bp$guideline[1]) && nzchar(bp$guideline[1])) {
         as.character(bp$guideline[1])
       } else {
         processedGuideline()
       }
-      
+
       if (is.na(s_user) || is.na(r_user)) {
         AMR::sir_interpretation_history(clean = TRUE)
         dummy <- AMR::as.mic(2)
-        try({
-          invisible(AMR::as.sir(
-            dummy,
-            mo = AMR::as.mo(input$moFilter),
-            ab = AMR::as.ab(input$abFilter),
-            guideline = guide,
-            reference_data = customRefData(),
-            host = host,
-            uti = uti
-          ))
-        }, silent = TRUE)
-        
+        try(
+          {
+            invisible(AMR::as.sir(
+              dummy,
+              mo = AMR::as.mo(input$moFilter),
+              ab = AMR::as.ab(input$abFilter),
+              guideline = guide,
+              reference_data = customRefData(),
+              host = host,
+              uti = uti
+            ))
+          },
+          silent = TRUE
+        )
+
         hist <- AMR::sir_interpretation_history(clean = FALSE)
         if (nrow(hist) > 0) {
-          hist <- tidyr::separate(hist, breakpoint_S_R, into = c("bp_s", "bp_r"),
-                                  sep = "-", fill = "right", remove = FALSE)
+          hist <- tidyr::separate(
+            hist,
+            breakpoint_S_R,
+            into = c("bp_s", "bp_r"),
+            sep = "-",
+            fill = "right",
+            remove = FALSE
+          )
           s_app <- suppressWarnings(as.numeric(hist$bp_s[1]))
           r_app <- suppressWarnings(as.numeric(hist$bp_r[1]))
-          guide <- if (!is.na(hist$guideline[1]) && nzchar(hist$guideline[1])) hist$guideline[1] else guide
+          guide <- if (!is.na(hist$guideline[1]) && nzchar(hist$guideline[1])) {
+            hist$guideline[1]
+          } else {
+            guide
+          }
           applied_mo <- hist$mo[1]
         } else {
-          s_app <- NA_real_; r_app <- NA_real_; applied_mo <- NA_character_
+          s_app <- NA_real_
+          r_app <- NA_real_
+          applied_mo <- NA_character_
         }
       } else {
-        s_app <- s_user; r_app <- r_user; applied_mo <- AMR::as.mo(input$moFilter)
+        s_app <- s_user
+        r_app <- r_user
+        applied_mo <- AMR::as.mo(input$moFilter)
       }
-      
+
       list(s = s_app, r = r_app, guideline = guide, applied_mo = applied_mo)
     })
-    
 
     # Table data based on filters.
     table_result <- reactive({
@@ -323,7 +327,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
         newInterpretations <- data.frame(
           MIC = unique(matchingData$MIC)
         )
-        
+
         newInterpretations$Interpretation <- as.sir(
           x = AMR::as.mic(newInterpretations$MIC),
           mo = customGuideline$mo,
@@ -336,54 +340,55 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
           breakpoint_type = customGuideline$type
         )
 
-# ------------------------------------------------------------------------------
-# TEMPORARY FUNCTION TO CORRECT BUG IN AMR PACKAGE
-# ------------------------------------------------------------------------------
+        # ------------------------------------------------------------------------------
+        # TEMPORARY FUNCTION TO CORRECT BUG IN AMR PACKAGE
+        # ------------------------------------------------------------------------------
         bp_S <- customGuideline$breakpoint_S
         bp_R <- customGuideline$breakpoint_R
 
         parse_mic_interval <- function(x) {
-          op  <- str_match(x, "^(<=|>=|<|>|=)?\\s*([0-9.]+)$")[,2]
-          val <- as.numeric(str_match(x, "^(?:<=|>=|<|>|=)?\\s*([0-9.]+)$")[,2])
+          op <- str_match(x, "^(<=|>=|<|>|=)?\\s*([0-9.]+)$")[, 2]
+          val <- as.numeric(str_match(x, "^(?:<=|>=|<|>|=)?\\s*([0-9.]+)$")[, 2])
           op[is.na(op)] <- "="
           tibble(
-            low      = dplyr::case_when(op %in% c("<","<=") ~ -Inf,
-                                        TRUE                ~ val),
-            low_inc  = dplyr::case_when(op == ">=" ~ TRUE,
-                                        op %in% c(">","<","<=") ~ FALSE,
-                                        TRUE ~ TRUE),
-            high     = dplyr::case_when(op %in% c(">"," >=") ~ Inf,
-                                        op %in% c(">=")      ~ Inf,
-                                        TRUE                 ~ val),
-            high_inc = dplyr::case_when(op == "<=" ~ TRUE,
-                                        op %in% c("<",">",">=") ~ FALSE,
-                                        TRUE ~ TRUE)
+            low = dplyr::case_when(op %in% c("<", "<=") ~ -Inf, TRUE ~ val),
+            low_inc = dplyr::case_when(
+              op == ">=" ~ TRUE,
+              op %in% c(">", "<", "<=") ~ FALSE,
+              TRUE ~ TRUE
+            ),
+            high = dplyr::case_when(op %in% c(">", " >=") ~ Inf, op %in% c(">=") ~ Inf, TRUE ~ val),
+            high_inc = dplyr::case_when(
+              op == "<=" ~ TRUE,
+              op %in% c("<", ">", ">=") ~ FALSE,
+              TRUE ~ TRUE
+            )
           )
         }
-        
+
         classify_interval <- function(low, low_inc, high, high_inc, S, R) {
           entirely_S <- (high < S) | (high == S)
-          entirely_R <- (low  > R) | (low  == R)
-          entirely_I <- ((low  > S) | (low  == S & !low_inc)) &
+          entirely_R <- (low > R) | (low == R)
+          entirely_I <- ((low > S) | (low == S & !low_inc)) &
             ((high < R) | (high == R & !high_inc))
           dplyr::case_when(
             entirely_S ~ "S",
             entirely_R ~ "R",
             entirely_I ~ "I",
-            TRUE       ~ "NI"
+            TRUE ~ "NI"
           )
         }
-        
+
         newInterpretations <- newInterpretations %>%
           bind_cols(parse_mic_interval(as.character(.$MIC))) %>%
           mutate(
             Interpretation = classify_interval(low, low_inc, high, high_inc, bp_S, bp_R)
           ) %>%
           select(-low, -low_inc, -high, -high_inc)
-# ------------------------------------------------------------------------------
-# END OF TEMPORARY FIX                 
-# ------------------------------------------------------------------------------
-        
+        # ------------------------------------------------------------------------------
+        # END OF TEMPORARY FIX
+        # ------------------------------------------------------------------------------
+
         matchingData <- matchingData %>%
           select(-Interpretation, -Guideline) %>%
           left_join(newInterpretations, by = "MIC")
@@ -401,16 +406,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
     #' The clinical breakpoints filtered based on the selected antimicrobial.
     #' Use a `bandCache` to avoid re-filtering unnecessarily.
     ab_clinical_breakpoints <- reactive({
-      data <- fullClinicalBreakpoints
-
-      if (!is.null(input$abFilter)) {
-        data <- data %>%
-          filter(ab == as.ab(input$abFilter))
-      }
-      data %>%
-        select(-ab, -mo) %>%
-        rename(ab = ab_name, mo = mo_name) %>%
-        select(all_of(colnames(AMR::clinical_breakpoints))) # Get the original column order
+      return(get_clinical_bps(g_fullClinicalBreakpoints, list(ab = AMR::as.ab(input$abFilter))))
     }) %>%
       bindCache(input$abFilter)
 
@@ -489,7 +485,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
           uiOutput(ns("breaksMessage")),
           div(
             class = "ab-table-wrapper",
-            withSpinner(gt_output(ns("plot")), type = 4, color = "#44CDC4")
+            withSpinner(gt::gt_output(ns("plot")), type = 4, color = "#44CDC4")
           ),
           class = "contentWell"
         ),
@@ -504,26 +500,8 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
     output$clinicalBpTable <- DT::renderDataTable({
       req(bpTableOpen())
       req(ab_clinical_breakpoints())
-      
-      refernce_bp_table <- ab_clinical_breakpoints() %>%
-        select(-method, -rank_index, -disk_dose, -is_SDD) %>%
-        rename_with(~ str_replace_all(., "_", " ")) %>%
-        rename_with(~ str_to_title(.)) %>%
-        rename_with(~ str_replace_all(., c(
-          "\\bMo\\b"           = "Organism",
-          "\\bAb\\b"           = "Antimicrobial",
-          "\\bUti\\b"          = "UTI",
-          "\\bRef Tbl\\b"      = "Reference Table",
-          "\\bBreakpoint S\\b" = "Breakpoint (S)",
-          "\\bBreakpoint R\\b" = "Breakpoint (R)"
-        )))
 
-      DT::datatable(
-        refernce_bp_table,
-        rownames = FALSE,
-        filter = "top",
-        options = list(autoWidth = TRUE)
-      )
+      return(get_clinical_bps_table(ab_clinical_breakpoints()))
     })
     outputOptions(output, "clinicalBpTable", suspendWhenHidden = FALSE)
 
@@ -595,6 +573,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
         class = "custom-breakpoints-container",
         tags$label("Custom breakpoints", class = "shiny-input-container"),
         div(
+          class = "align-end-row",
           column(
             6,
             numericInput(
@@ -613,6 +592,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
           )
         ),
         div(
+          class = "align-end-row",
           actionButton(
             ns("deleteCustomBreakpoints"),
             label = "Delete",
@@ -753,7 +733,8 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
     # Return the cleaned data with custom breakpoints applied and all custom breakpoints.
     return(list(
       dataWithCustomBreakpoints = dataWithCustomBreakpoints,
-      customBreakpoints = allCustomBreakpoints
+      customBreakpoints = allCustomBreakpoints,
+      all_breakpoints_used = selectedBreakpoints
     ))
   })
 }

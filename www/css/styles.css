@@ -632,6 +632,7 @@ h6 {
   margin-top: 10px;
 }
 
+#import-modal-footer > button,
 .changeLogButton {
   border-radius: 25px;
   color: var(--white);
@@ -751,13 +752,14 @@ h6 {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
 }
 
-/* Modal footer styles */
-#import-modal-footer {
+.align-end-row {
   display: flex;
-  justify-content: space-between;
+  flex-direction: row;
+  gap: 1rem;
+  justify-content: end;
   align-items: center;
 }
-
+/* Modal footer styles */
 #import-modal-footer .warning-parent {
   text-align: left;
 }
@@ -787,14 +789,6 @@ h6 {
 
 .custom-breakpoints-container > label {
   font-weight: bold;
-}
-
-.custom-breakpoints-container > div {
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-  align-items: center;
-  justify-content: end;
 }
 
 .custom-breakpoints-container:first-child > div > div {

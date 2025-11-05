@@ -11,34 +11,38 @@ page-layout: custom
 params:
   vwidth: 1120
   filters: null,
+  allFilterValues: null,
   tableRows: 0,
   controls: null,
-  bp: null
 ---
 
 ```{r setup, include=FALSE}
 library(shiny)
 library(dplyr)
+library(stringr)
 
 source("report_utils.R")
 source("ui_utils.R")
+source("general_utils.R")
 
 filters <- params$filters
 controls <- params$controls
 low_counts <- readLines("low_counts_flag.txt", warn = FALSE)
 
 # Filter summary to go at the top of each page
-report_summary <- get_report_summary(filters)
+# Need to generate separately for each page to get correct footnote numbers
+pg1_summary <- get_report_summary(filters, params$allFilterValues, 1)
+pg2_summary <- get_report_summary(filters, params$allFilterValues, 2)
+pg3_summary <- get_report_summary(filters, params$allFilterValues, 3)
+next_footnote_number <- pg1_summary$num_footnotes + 1 # Summaries have the same footnotes - use first
+
+final_footnote <- p("This antibiogram was generated with AMR Visualizer, an RShiny App [insert citation].", style = "margin-top: 10px;")
 
 table_legend <- NULL
 
 icon("square") # Needed for icons in the legends to render
 
-if (params$controls$abType == "Simplified") {
-  table_legend <- get_simplified_ab_legend()
-} else if (params$controls$showColors) {
-  table_legend <- get_classic_ab_legend()
-}
+table_legend <- get_classic_ab_legend()
 ```
 
 
@@ -51,9 +55,7 @@ if (params$controls$abType == "Simplified") {
 
 <h3>Antibiogram Report</h3>
 
-```{r ab-page-summary, echo=FALSE, results='asis'}
-report_summary
-```
+`r pg1_summary$ui`
 
 
 ```{r ab-summary-vars, echo=FALSE}
@@ -75,7 +77,7 @@ The antibiogram is shown for `r row_text` `r tolower(controls$yVar)`s sorted by 
 `r aggregate_text` Antimicrobials are divided by class with dashed vertical lines.
 
 Each cell shows the percentage of isolates interpreted as susceptible for a given `r pair_text`–drug pair.
-`r tools::toTitleCase(pair_text)`–drug combinations with fewer than 30 isolates tested are `r shown_text`<span id="fnref-1"><a href="#fn-1" class="footnote-arrow"><sup>1</sup></a></span>.
+`r tools::toTitleCase(pair_text)`–drug combinations with fewer than 30 isolates tested are `r shown_text``r get_report_footnote_link(next_footnote_number)`.
 
 
 <!-- Percentages - Combined or Gram Negative -->
@@ -119,11 +121,16 @@ if (file.exists("antibiogram_table2.png")) {
 Footnotes
 </span>
 
-<div id="fn-1" class="custom-footnote">
+`r pg1_summary$footnotes_ui`
 
-<a href="#fnref-1" class="footnote-arrow">1.</a>
+<div id="fn-`r next_footnote_number`" class="custom-footnote">
+
+<a href="#fnref-`r next_footnote_number`" class="footnote-arrow">`r next_footnote_number`.</a>
 The percent susceptible is calculated over all isolates tested for against the antimicrobial. The complement (100 - percent susceptible) is not the same as the percent resistant as there are other interpretation categories (susceptible-dose dependent, intermediate, resistant, and not interpretable).
+
 </div>
+
+`r final_footnote`
 
 </div>
 
@@ -138,14 +145,12 @@ The percent susceptible is calculated over all isolates tested for against the a
 
 <h3>Number of Isolates Tested</h3>
 
-```{r isolate-page-summary, echo=FALSE, results='asis'}
-report_summary
-```
+`r pg2_summary$ui`
 
 The table is shown for `r ifelse(params$tableRows > controls$numAb, paste("top", controls$numAb), "all")` `r tolower(controls$yVar)`s sorted by `r tolower(controls$sortBy)`.
 `r aggregate_text`
 
-Each cell shows the number of isolates interpreted as susceptible over the total number of isolates tested for a given `r pair_text`–drug pair.
+Each cell shows the number of isolates tested for a given `r pair_text`–drug pair.
 `r tools::toTitleCase(pair_text)`–drug combinations with fewer than 30 isolates tested are `r shown_text`.
 
 <!-- Isolates - Combined or Gram Negative -->
@@ -181,6 +186,18 @@ if (file.exists("isolate_table2.png")) {
 
 `r table_legend`
 
+<div class="footnotes">
+
+<span class="footnote-header">
+Footnotes
+</span>
+
+`r pg2_summary$footnotes_ui`
+
+`r final_footnote`
+
+</div>
+
 </div>
 
 <!-- Third Page -->
@@ -193,9 +210,9 @@ if (file.exists("isolate_table2.png")) {
 
 <h3>Percent Susceptible 95% Confidence Interval</h3>
 
-```{r ci-page-summary, echo=FALSE, results='asis'}
-report_summary
-```
+`r pg3_summary$ui`
+
+Each cell shows the 95% Clopper-Pearson confidence interval of the percent of susceptible isolates.
 
 <!-- Isolates - Combined or Gram Negative -->
 
@@ -230,6 +247,18 @@ if (file.exists("ci_table2.png")) {
 
 `r table_legend`
 
+<div class="footnotes">
+
+<span class="footnote-header">
+Footnotes
+</span>
+
+`r pg3_summary$footnotes_ui`
+
+`r final_footnote`
+
+</div>
+
 </div>
 
 <!-- Fourth Page -->
@@ -253,6 +282,14 @@ Antibiograms are a summary of antimicrobial susceptibility data, showing the per
 
 <img src="report-bp-example.png" alt="Breakpoint diagram" id="bp-img"/>
 
-This antibiogram was generated with AMR Visualizer, an RShiny App [insert citation].
+<div class="footnotes">
+
+<span class="footnote-header">
+Footnotes
+</span>
+
+`r final_footnote`
+
+</div>
 
 </div>

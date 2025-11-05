@@ -22,7 +22,9 @@ server <- function(input, output, session) {
   abPageServer(
     "antibiogramModule",
     reactiveData = dataWithCustomBreakpoints,
-    customBreakpoints = customBreakpoints
+    customBreakpoints = customBreakpoints,
+    mic_or_sir = importResults$mic_or_sir,
+    bp_log = importResults$bp_log
   )
   mapPageServer("mapModule", reactiveData = dataWithCustomBreakpoints)
   tsPageServer("tsModule", reactiveData = dataWithCustomBreakpoints)

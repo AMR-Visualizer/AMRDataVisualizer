@@ -194,7 +194,6 @@ dataCleaner <- function(rawData, additionalCols = NULL, breakpoint = "CLSI") {
       cleanedChunk <- cleanedChunk %>%
         left_join(sir_map, by = key_cols)
     }
-
     cleanedChunk <- cleanedChunk %>%
       select(any_of(c(
         "InternalID",
@@ -208,7 +207,9 @@ dataCleaner <- function(rawData, additionalCols = NULL, breakpoint = "CLSI") {
         "Antimicrobial",
         "Class",
         "MIC",
-        "Interpretation"
+        "Interpretation",
+        "host",
+        "UTI"
       )))
 
     if (!is.null(additionalColsData)) {
@@ -224,18 +225,25 @@ dataCleaner <- function(rawData, additionalCols = NULL, breakpoint = "CLSI") {
   #' If this is the first time running the app, this will be empty and throw an error.
   if (!is.null(bp_log)) {
     bp_log <- bp_log %>%
+      mutate(type = getOption("AMR_breakpoint_type", "animal")) %>% # Matches the default used in as.sir() above
       select(
         "Antimicrobial" = ab_given,
         "Microorganism" = mo_given,
         "Species" = host,
         "AB Used" = ab,
-        "MO used" = mo,
+        "MO Used" = mo,
         "UTI" = uti,
         "Guideline" = guideline,
         "Reference" = ref_table,
         "Breakpoint (S-R)" = breakpoint_S_R,
         "MIC" = input_given,
-        "Interpretation" = outcome
+        "Interpretation" = outcome,
+        #' These columns are used when downloading the used breakpoints but will not be 
+        #' shown in any preview of the bp log.
+        method,
+        type,
+        site,
+        host_given
       ) %>%
       mutate(
         Interpretation = as.character(Interpretation),
@@ -243,9 +251,9 @@ dataCleaner <- function(rawData, additionalCols = NULL, breakpoint = "CLSI") {
       ) %>%
       distinct()
   }
-  
+
   uniqueSources <- unique(cleanData$Source)
-  
+
   uti_log <- data.frame(
     "Original Source" = uniqueSources,
     "Is UTI?" = findUtiMatch(uniqueSources),

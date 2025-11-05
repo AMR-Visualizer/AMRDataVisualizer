@@ -15,11 +15,12 @@ classicAB <- function(
   table_type = "percentage", # Can be "percentage", "isolate", or "ci"
   drug_class_starts = NULL
 ) {
-  fixed_cols <- 1:ifelse(table_type != "ci" && "n =" %in% colnames(data), 2, 1)
+  fixed_cols <- 1
 
-  if (table_type == "ci" && "n =" %in% colnames(data)) {
+  if ("n =" %in% colnames(data)) {
     data <- data %>%
       dplyr::select(-dplyr::any_of("n ="))
+    fixed_cols <- 1:2
     obs_cols <- obs_cols - 1
     drug_targets <- drug_targets - 1
   }
@@ -48,12 +49,9 @@ classicAB <- function(
     drug_targets <- which(colnames(data) %in% paste0(column_prefix, abs)) - 1
   }
 
-  # data <- data %>%
-  #   mutate(across(everything(), ~ replace(., is.na(.), 0)))
-
   plt <- data %>%
     mutate(dplyr::across(dplyr::all_of(fixed_cols), as.character)) %>%
-    gt::gt()
+    gt::gt(id="classic-ab-table")
 
   data <- data %>%
     mutate(across(everything(), ~ replace(., is.na(.), 0)))
@@ -161,29 +159,29 @@ classicAB <- function(
       # Rotate drug column labels
       gt::opt_css(
         css = "
-            .gt_col_heading.gt_left {
+            #classic-ab-table .gt_col_heading.gt_left {
             writing-mode: vertical-rl;
             transform: scale(-1);
             }
-            .gt_col_headings {
+            #classic-ab-table .gt_col_headings {
             border-top-color: white !important;
             }
             /** Make sure fixed columns don't move */
-            .gt_center {
+            #classic-ab-table .gt_center {
               position: sticky;
               background-color: white;
               z-index: 2;
             }
             
-            .gt_table_body tr td:first-child.gt_center,
-            .gt_col_headings th:first-child.gt_center {
+            #classic-ab-table .gt_table_body tr td:first-child.gt_center,
+            #classic-ab-table .gt_col_headings th:first-child.gt_center {
               left: 0;
             }
-            .gt_table_body tr td:nth-child(2).gt_center,
-            .gt_col_headings th:nth-child(2).gt_center {
+            #classic-ab-table .gt_table_body tr td:nth-child(2).gt_center,
+            #classic-ab-table .gt_col_headings th:nth-child(2).gt_center {
               left: 180px;
             }
-            * {
+            #classic-ab-table * {
               font-family: 'Carme', sans-serif;
             }
             "
