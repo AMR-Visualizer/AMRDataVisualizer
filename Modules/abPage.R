@@ -688,6 +688,86 @@ abPageServer <- function(id, reactiveData, customBreakpoints, mic_or_sir, bp_log
       )
     }
 
+    #' Get the custom breakpoints data for download.
+    #'
+    #' Want the downloaded format to be in the same format that is needed for
+    #' custom breakpoints uploading.
+    #'
+    #' @param include_all_used  Whether to include all breakpoints used (or just the custom ones).
+    #' @return                  A data frame with the breakpoints to download.
+    get_custom_bp_download_data <- function(include_all_used = TRUE) {
+      custom_breakpoints <- customBreakpoints()
+      download_cols <- c(
+        "guideline",
+        "type",
+        "method",
+        "site",
+        "mo",
+        "ab",
+        "host",
+        "ref_tbl",
+        "breakpoint_S",
+        "breakpoint_R",
+        "uti"
+      )
+
+      if (!include_all_used) {
+        if (is.null(custom_breakpoints) || nrow(custom_breakpoints) == 0) {
+          return(data.frame())
+        }
+        download_cols <- download_cols[!download_cols %in% c("guideline", "ref_tbl")]
+        custom_breakpoints <- custom_breakpoints %>%
+          select(all_of(download_cols))
+        return(custom_breakpoints)
+      }
+
+      #' Get the bp log from processing.
+      #' Here we are trying to match the `AMR::clinical_breakpoints` format
+      #' so that users can easily re-import them if needed.
+      used_bps <- bp_log() %>%
+        # Split the `Breakpoint (S-R)` column into S and R columns
+        separate(`Breakpoint (S-R)`, into = c("breakpoint_S", "breakpoint_R"), sep = "-") %>%
+        select(
+          guideline = Guideline,
+          type,
+          method,
+          site,
+          mo = `MO Used`,
+          ab = `AB Used`,
+          host = `Host Used`,
+          ref_tbl = Reference,
+          breakpoint_S,
+          breakpoint_R,
+          uti = UTI
+        ) %>%
+        distinct()
+
+      # Override any custom breakpoints used
+      if (nrow(custom_breakpoints) > 0) {
+        #' For each custom breakpoint, replace it's default values with the custom ones.
+        for (i in 1:nrow(custom_breakpoints)) {
+          row <- custom_breakpoints[i, ]
+          new_bp <- row %>%
+            select(all_of(download_cols))
+
+          #' First filter out any existing breakpoints that match the custom one.
+          #' Then add the custom one.
+          used_bps <- used_bps %>%
+            filter(
+              !((is.na(uti) & is.na(row$uti) | uti == row$uti) &
+                (is.na(site) & is.na(row$site) | site == row$site) &
+                (is.na(method) & is.na(row$method) | method == row$method) &
+                (is.na(host) & is.na(row$host) | host == row$host) &
+                (is.na(type) & is.na(row$type) | type == row$type) &
+                (is.na(mo) & is.na(row$mo) | mo == row$mo) &
+                (is.na(ab) & is.na(row$ab) | ab == row$ab))
+            ) %>%
+            rbind(new_bp)
+        }
+      }
+      return(used_bps)
+    }
+
     # ------------------------------------------------------------------------------
     # Observes
     # ------------------------------------------------------------------------------
@@ -712,7 +792,7 @@ abPageServer <- function(id, reactiveData, customBreakpoints, mic_or_sir, bp_log
         paste("Custom_Breakpoints.csv")
       },
       content = function(file) {
-        write.csv(customBreakpoints(), file, row.names = FALSE)
+        write.csv(get_custom_bp_download_data(include_all_used = FALSE), file, row.names = FALSE)
       }
     )
 
@@ -748,56 +828,8 @@ abPageServer <- function(id, reactiveData, customBreakpoints, mic_or_sir, bp_log
           tmp_xlsx <- file.path(tmp, "Breakpoints_Used.xlsx")
 
           #' We want to ZIP the report and breakpoints used.
-          custom_breakpoints <- customBreakpoints()
-
-          #' Get the bp log from processing.
-          #'
-          #' Here we are trying to match the `AMR::clinical_breakpoints` format
-          #' so that users can easily re-import them if needed.
-          used_bps <- bp_log() %>%
-            # Split the `Breakpoint (S-R)` column into S and R columns
-            separate(`Breakpoint (S-R)`, into = c("breakpoint_S", "breakpoint_R"), sep = "-") %>%
-            select(
-              guideline = Guideline,
-              type,
-              host = host_given,
-              method,
-              site,
-              mo = `MO Used`,
-              ab = `AB Used`,
-              ref_tbl = Reference,
-              breakpoint_S,
-              breakpoint_R,
-              uti = UTI
-            ) %>%
-            distinct()
-
-          # Override any custom breakpoints used
-          if (nrow(custom_breakpoints) > 0) {
-            #' For each custom breakpoint, replace it's default values with the custom ones.
-            for (i in 1:nrow(custom_breakpoints)) {
-              row <- custom_breakpoints[i, ]
-              new_bp <- row %>%
-                select(all_of(colnames(used_bps)))
-
-              #' First filter out any existing breakpoints that match the custom one.
-              #' Then add the custom one.
-              used_bps <- used_bps %>%
-                filter(
-                  !((is.na(uti) & is.na(row$uti) | uti == row$uti) &
-                    (is.na(site) & is.na(row$site) | site == row$site) &
-                    (is.na(method) & is.na(row$method) | method == row$method) &
-                    (is.na(host) & is.na(row$host) | host == row$host) &
-                    (is.na(type) & is.na(row$type) | type == row$type) &
-                    (is.na(mo) & is.na(row$mo) | mo == row$mo) &
-                    (is.na(ab) & is.na(row$ab) | ab == row$ab))
-                ) %>%
-                rbind(new_bp)
-            }
-          }
-
           openxlsx::write.xlsx(
-            used_bps,
+            get_custom_bp_download_data(),
             file = tmp_xlsx,
             asTable = TRUE,
             overwrite = TRUE
@@ -821,10 +853,10 @@ abPageServer <- function(id, reactiveData, customBreakpoints, mic_or_sir, bp_log
         sheets <- list()
 
         if (outputType() == "classic") {
-          sheets[["Antibiogram"]] <- classicAbTableData()
+          sheets[["Antibiogram"]] <- classicAbTableData() %>% select(-starts_with("colour_"))
         } else if (outputType() == "classic_split") {
-          sheets[["Gram Negative"]] <- classicAbTableData()
-          sheets[["Gram Positive"]] <- classicAbTableData2()
+          sheets[["Gram Negative"]] <- classicAbTableData() %>% select(-starts_with("colour_"))
+          sheets[["Gram Positive"]] <- classicAbTableData2() %>% select(-starts_with("colour_"))
         }
 
         writexl::write_xlsx(sheets, path = file)

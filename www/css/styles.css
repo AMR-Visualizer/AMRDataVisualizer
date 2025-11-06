@@ -810,3 +810,17 @@ h6 {
   box-shadow: none;
   font-weight: bold;
 }
+
+#custom-bp-upload-container {
+  display: flex;
+  align-items: start;
+  gap: 1rem;
+}
+
+#custom-bp-upload-container > button {
+  padding: 5px;
+  margin: 0;
+  height: fit-content;
+  line-height: 0;
+  margin-top: 25px;
+}

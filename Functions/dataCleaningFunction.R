@@ -229,27 +229,39 @@ dataCleaner <- function(rawData, additionalCols = NULL, breakpoint = "CLSI") {
       select(
         "Antimicrobial" = ab_given,
         "Microorganism" = mo_given,
-        "Species" = host,
+        "Species" = host_given,
         "AB Used" = ab,
         "MO Used" = mo,
+        "Host Used" = host,
         "UTI" = uti,
         "Guideline" = guideline,
         "Reference" = ref_table,
         "Breakpoint (S-R)" = breakpoint_S_R,
         "MIC" = input_given,
         "Interpretation" = outcome,
-        #' These columns are used when downloading the used breakpoints but will not be 
+        #' These columns are used when downloading the used breakpoints but will not be
         #' shown in any preview of the bp log.
         method,
         type,
-        site,
-        host_given
+        site
       ) %>%
       mutate(
         Interpretation = as.character(Interpretation),
         Interpretation = replace_na(Interpretation, "Could not interpret")
       ) %>%
       distinct()
+
+    # Update the host in the cleaned data with the host that the AMR package converted it to
+    host_map <- bp_log %>%
+      select(host = Species, mapped_host = `Host Used`) %>%
+      distinct()
+
+    cleanData <- cleanData %>%
+      left_join(host_map, by = "host") %>%
+      mutate(
+        host = ifelse(is.na(mapped_host), host, mapped_host)
+      ) %>%
+      select(-mapped_host)
   }
 
   uniqueSources <- unique(cleanData$Source)
