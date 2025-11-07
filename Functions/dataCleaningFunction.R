@@ -222,8 +222,7 @@ dataCleaner <- function(rawData, additionalCols = NULL, breakpoint = "CLSI") {
   cleanData <- clean_chunk(chunk = rawData, additionalCols = additionalCols)
 
   bp_log <- sir_interpretation_history()
-  #' If this is the first time running the app, this will be empty and throw an error.
-  if (!is.null(bp_log)) {
+  if (!is.null(bp_log) && nrow(bp_log) > 0) {
     bp_log <- bp_log %>%
       mutate(type = getOption("AMR_breakpoint_type", "animal")) %>% # Matches the default used in as.sir() above
       select(
@@ -255,15 +254,19 @@ dataCleaner <- function(rawData, additionalCols = NULL, breakpoint = "CLSI") {
     host_map <- bp_log %>%
       select(host = Species, mapped_host = `Host Used`) %>%
       distinct()
-
+    
+    host_col <- case_when(
+      "host"    %in% names(cleanData) ~ "host",
+      "Host"    %in% names(cleanData) ~ "Host",
+      "Species" %in% names(cleanData) ~ "Species",
+      TRUE ~ NA_character_
+    )
+    
     cleanData <- cleanData %>%
-      left_join(host_map, by = "host") %>%
-      mutate(
-        host = ifelse(is.na(mapped_host), host, mapped_host)
-      ) %>%
+      left_join(host_map, by = setNames("host", host_col)) %>%
+      mutate(!!host_col := coalesce(.data[[host_col]], mapped_host)) %>%
       select(-mapped_host)
   }
-
   uniqueSources <- unique(cleanData$Source)
 
   uti_log <- data.frame(
