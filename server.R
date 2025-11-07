@@ -16,7 +16,8 @@ server <- function(input, output, session) {
   micData <- micPageServer(
     "micModule",
     reactiveData = clean,
-    processedGuideline = processedGuideline
+    processedGuideline = processedGuideline,
+    bp_log = importResults$bp_log
   )
   micDistPageServer("micDistModule", reactiveData = dataWithCustomBreakpoints)
   abPageServer(

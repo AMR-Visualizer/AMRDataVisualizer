@@ -31,6 +31,20 @@ micPageUI <- function(id, data) {
     fluidRow(
       column(
         12,
+        div(
+          id = "custom-bp-upload-container",
+          fileInput(
+            ns("custom_bp_upload"),
+            label = "Upload Custom Breakpoints (csv/xlsx)",
+            accept = c(".csv", ".xlsx")
+          ),
+          actionButton(ns("file_info"), icon("circle-info"), class = "info")
+        )
+      )
+    ),
+    fluidRow(
+      column(
+        12,
         bsCollapse(
           id = ns("clinicalBpTableContainer"),
           open = NULL,
@@ -52,7 +66,7 @@ micPageUI <- function(id, data) {
   )
 }
 
-micPageServer <- function(id, reactiveData, processedGuideline) {
+micPageServer <- function(id, reactiveData, processedGuideline, bp_log) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -78,6 +92,17 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
         Microorganism = character(0),
         Antimicrobial = character(0)
       )
+
+    #' Expected format of uploaded custom breakpoints.
+    expected_format_df <- data.frame(
+      type = c("animal", "human"),
+      host = c("canine", "human"),
+      mo = c("Escherichia coli", "B_ESCHR_COLI"),
+      ab = c("Amoxicillin-clavulanic acid", "AMX"),
+      breakpoint_S = c(8, 16),
+      breakpoint_R = c(32, 32),
+      uti = c(TRUE, TRUE)
+    )
 
     # ------------------------------------------------------------------------------
     # Reactives
@@ -129,20 +154,8 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
     #' taking into account the selected microorganism, antimicrobial, type, and species.
     defaultGuideline <- reactive({
       bp <- AMR::clinical_breakpoints %>%
-        filter(
-          guideline == processedGuideline(),
-          mo == as.mo(input$moFilter),
-          ab == as.ab(input$abFilter),
-          uti == (input$typeFilter == "Urinary"),
-          host == tolower(selectedSpecies())
-        )
-
-      if ("MIC" %in% bp$method) {
-        bp <- bp %>%
-          filter(method == "MIC")
-      }
-
-      bp <- bp %>%
+        filter_by_filters() %>%
+        filter(guideline == processedGuideline()) %>%
         slice(1)
 
       if (nrow(bp) == 0) {
@@ -156,46 +169,63 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
     #' If custom breakpoints are set, use those.
     selectedBreakpoints <- reactive({
       req(allInputsReady())
-      sel <- customRefData() %>%
-        filter(
-          # guideline %in% c(processedGuideline(), customBreakpointName),
-          mo == as.mo(input$moFilter),
-          ab == as.ab(input$abFilter),
-          uti == (input$typeFilter == "Urinary"),
-          host == tolower(selectedSpecies())
-        )
+
+      sel <- filter_by_filters(customRefData())
+
       # If no custom breakpoints are set, use the default ones
       if (customBreakpointName %in% sel$guideline) {
         sel <- dplyr::filter(sel, guideline == customBreakpointName)
       } else {
         sel <- dplyr::filter(sel, guideline == processedGuideline())
       }
-      dplyr::slice(sel, 1)
+      sel <- dplyr::slice(sel, 1)
+      return(sel)
     })
 
     #' Reference data for the table generation.
     #' If custom breakpoints are set, append them to the clinical breakpoints.
     customRefData <- reactive({
-      allCustomBreakpoints() %>%
+      data <- allCustomBreakpoints() %>%
         select(all_of(colnames(AMR::clinical_breakpoints))) %>%
         bind_rows(AMR::clinical_breakpoints)
+      return(data)
     })
 
     # The selected species from the filter.
     selectedSpecies <- reactive({
+      req(!is.null(reactiveData()))
       species <- input$speciesFilter
       if (is.null(species) && !is.null(reactiveData()$Species)) {
         species <- reactiveData()$Species[[1]]
       }
-      species
+      return(species)
+    })
+
+    #' The mapped host name for the selected species.
+    #' Need to find the mapped host value from the bp_log.
+    #' The host value needs to be either:
+    #' "ECOFF", "aquatic", "cats", "cattle", "dogs", "horse", "human", "poultry", or "swine".
+    #' See https://amr-for-r.org/reference/clinical_breakpoints.html?q=host#format for more info.
+    selected_host <- reactive({
+      req(selectedSpecies())
+      selected_host <- tolower(selectedSpecies()) # Fallback value
+      host_map <- bp_log() %>%
+        select(host = Species, mapped_host = `Host Used`) %>%
+        distinct() %>%
+        filter(host == selected_host)
+      if (nrow(host_map) > 0) {
+        selected_host <- host_map$mapped_host[1]
+      }
+      return(selected_host)
     })
 
     appliedBpForDisplay <- reactive({
       req(input$moFilter, input$abFilter, input$typeFilter, selectedSpecies())
       uti <- identical(input$typeFilter, "Urinary")
-      host <- tolower(selectedSpecies())
+      host <- selectedSpecies()
 
       bp <- selectedBreakpoints()
+
       s_user <- if (nrow(bp) > 0) suppressWarnings(as.numeric(bp$breakpoint_S[1])) else NA_real_
       r_user <- if (nrow(bp) > 0) suppressWarnings(as.numeric(bp$breakpoint_R[1])) else NA_real_
 
@@ -251,17 +281,17 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
         r_app <- r_user
         applied_mo <- AMR::as.mo(input$moFilter)
       }
-
       list(s = s_app, r = r_app, guideline = guide, applied_mo = applied_mo)
     })
 
     # Table data based on filters.
     table_result <- reactive({
       req(input$moFilter, input$abFilter, input$typeFilter, input$groupingVar)
+
       sp <- selectedSpecies()
       ap <- appliedBpForDisplay()
 
-      create_mic_frequency_tables(
+      table <- create_mic_frequency_tables(
         data = reactiveData(),
         group_by_var = input$groupingVar,
         ab = input$abFilter,
@@ -274,6 +304,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
         reference_data = customRefData(),
         use_single_bp_as_both = TRUE
       )
+      return(table)
     })
 
     # Boolean. Whether to show the error panel or the success panel.
@@ -317,17 +348,16 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
         # Data which matches the custom breakpoint criteria
         matchingData <- data %>%
           filter(
-            Species == customBp$Species,
-            Antimicrobial == customBp$Antimicrobial,
-            Microorganism == customBp$Microorganism,
-            Source %in% utiValues
+            host == customBp$host,
+            Antimicrobial == AMR::ab_name(customBp$Antimicrobial),
+            Microorganism == AMR::mo_name(customBp$Microorganism),
+            UTI == isUti
           )
 
         # Re-calculate MIC interpretations based on custom breakpoints
         newInterpretations <- data.frame(
           MIC = unique(matchingData$MIC)
         )
-
         newInterpretations$Interpretation <- as.sir(
           x = AMR::as.mic(newInterpretations$MIC),
           mo = customGuideline$mo,
@@ -336,7 +366,6 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
           reference_data = customGuideline,
           host = customGuideline$host,
           uti = customGuideline$uti,
-          method = "MIC",
           breakpoint_type = customGuideline$type
         )
 
@@ -500,8 +529,13 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
     output$clinicalBpTable <- DT::renderDataTable({
       req(bpTableOpen())
       req(ab_clinical_breakpoints())
+      clinical_bps <- ab_clinical_breakpoints()
+      data <- allCustomBreakpoints() %>%
+        select(all_of(colnames(clinical_bps))) %>%
+        mutate(mo = AMR::mo_name(mo), ab = AMR::ab_name(ab)) %>%
+        rbind(clinical_bps)
 
-      return(get_clinical_bps_table(ab_clinical_breakpoints()))
+      return(get_clinical_bps_table(data))
     })
     outputOptions(output, "clinicalBpTable", suspendWhenHidden = FALSE)
 
@@ -512,9 +546,9 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
 
       existingBp <- allCustomBreakpoints() %>%
         filter(
-          Microorganism == input$moFilter,
-          Antimicrobial == input$abFilter,
-          Source == input$typeFilter
+          (Microorganism == input$moFilter | mo == AMR::as.mo(input$moFilter)),
+          (Antimicrobial == input$abFilter | ab == AMR::as.ab(input$abFilter)),
+          host == selected_host()
         )
 
       if (nrow(existingBp) == 0) {
@@ -559,9 +593,37 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
       table_result()
     })
 
+    # Example format for custom breakpoint uploads.
+    output$expectedFormatTable <- DT::renderDataTable({
+      return(DT::datatable(
+        expected_format_df,
+        rownames = FALSE,
+        options = list(dom = '', ordering = FALSE)
+      ))
+    })
+
     # ------------------------------------------------------------------------------
     # Utility functions
     # ------------------------------------------------------------------------------
+
+    #' Filter breakpoint data based on selected filters.
+    #'
+    #' @param data  The clinical breakpoints data to filter.
+    #' @return      The filtered clinical breakpoints data.
+    filter_by_filters <- function(data) {
+      is_uti <- input$typeFilter == "Urinary"
+      mo_val <- AMR::as.mo(input$moFilter)
+      ab_val <- AMR::as.ab(input$abFilter)
+      host_val <- selected_host()
+
+      data <- data %>%
+        filter(method == "MIC") %>%
+        filter(uti == is_uti) %>%
+        filter(host == host_val) %>%
+        filter(mo == mo_val) %>%
+        filter(ab == ab_val)
+      return(data)
+    }
 
     #' Get the UI inputs for custom breakpoints.
     #'
@@ -569,7 +631,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
     #' @param rValue  Initial numeric value for the R breakpoint input (default is NULL).
     #' @return        A `div` containing the UI for custom breakpoints.
     getCustomBpInputs <- function(sValue = NULL, rValue = NULL) {
-      div(
+      return(div(
         class = "custom-breakpoints-container",
         tags$label("Custom breakpoints", class = "shiny-input-container"),
         div(
@@ -604,7 +666,7 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
             class = "blue-btn"
           )
         )
-      )
+      ))
     }
 
     #' Enable multiple inputs by their IDs.
@@ -630,6 +692,144 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
     # ------------------------------------------------------------------------------
     # Observes
     # ------------------------------------------------------------------------------
+
+    #' Handles a click on the file info button.
+    #' Opens a modal with information about the expected format of custom breakpoint files.
+    observe({
+      showModal(modalDialog(
+        title = "Custom Breakpoints Upload Information",
+        size = "l",
+        easyClose = TRUE,
+        footer = modalButton("Close"),
+        p("Only CSV and XLSX files are supported for upload."),
+        p("The following format is what is expected for upload files (extra columns are ignored)."),
+        p("Please ensure that the column names match exactly, including case sensitivity."),
+        br(),
+        p("Please pay attention to the following rules:"),
+        tags$ul(
+          tags$li("type: Must be either \"ECOFF\", \"animal\", or \"human\"."),
+          tags$li(
+            "host: Must be either \"ECOFF\", \"aquatic\", \"cats\", \"cattle\", \"dogs\", \"horse\", \"human\", \"poultry\", or \"swine\"."
+          ),
+        ),
+        br(),
+        p(
+          "For more information on column formatting, please refer to the ",
+          tags$a(
+            href = "https://amr-for-r.org/reference/clinical_breakpoints.html?q=ref_tbl#format",
+            target = "_blank",
+            "AMR package documentation"
+          )
+        ),
+        DT::dataTableOutput(ns("expectedFormatTable"))
+      ))
+    }) %>%
+      bindEvent(input$file_info)
+
+    #' Handles the upload of any custom breakpoints from a csv or xlsx file.
+    observe({
+      req(input$custom_bp_upload)
+
+      file <- input$custom_bp_upload
+      ext <- tools::file_ext(file$datapath)
+
+      if (!ext %in% c("csv", "xlsx")) {
+        showNotification(
+          ui = "Invalid file type. Please upload a CSV or XLSX file.",
+          type = "error",
+          duration = 5
+        )
+        shinyjs::reset("custom_bp_upload")
+        req(FALSE)
+      }
+      uploaded_data <- tryCatch(
+        {
+          if (ext == "csv") {
+            read.csv(file$datapath, stringsAsFactors = FALSE)
+          } else if (ext == "xlsx") {
+            readxl::read_excel(file$datapath)
+          }
+        },
+        error = function(e) {
+          showNotification(
+            ui = paste("Error reading file:", e$message),
+            type = "error",
+            duration = 5
+          )
+          shinyjs::reset("custom_bp_upload")
+          req(FALSE)
+        }
+      )
+
+      if (!all(colnames(expected_format_df) %in% colnames(uploaded_data))) {
+        showNotification(
+          ui = "Uploaded file is missing required columns. Please click the info button for the expected format.",
+          type = "error",
+          duration = 5
+        )
+        shinyjs::reset("custom_bp_upload")
+        req(FALSE)
+      }
+
+      # Make sure that the ab and mo columns are of class ab and mo
+      new_custom_bps <- uploaded_data %>%
+        rowwise() %>%
+        mutate(
+          guideline = customBreakpointName,
+          method = "MIC",
+          rank_index = if ("rank_index" %in% colnames(uploaded_data)) {
+            rank_index
+          } else {
+            NA_real_
+          },
+          ref_tbl = if ("ref_tbl" %in% colnames(uploaded_data)) {
+            ref_tbl
+          } else {
+            NA_character_
+          },
+          disk_dose = if ("disk_dose" %in% colnames(uploaded_data)) {
+            disk_dose
+          } else {
+            NA_character_
+          },
+          is_SDD = if ("is_SDD" %in% colnames(uploaded_data)) {
+            is_SDD
+          } else {
+            FALSE # TODO: Check if this is the right default
+          },
+          site = if ("site" %in% colnames(uploaded_data)) {
+            site
+          } else {
+            NA_character_
+          },
+          Species = host,
+          Source = if (uti) {
+            "Urinary"
+          } else {
+            "Non-urinary"
+          },
+          # These should be the original values provided by the user
+          Microorganism = AMR::mo_name(mo),
+          Antimicrobial = AMR::ab_name(ab),
+          ab = AMR::as.ab(ab),
+          mo = AMR::as.mo(mo),
+          # Make sure these columns are logical
+          uti = as.logical(uti),
+          # Make sure these columns are doubles
+          breakpoint_S = as.numeric(breakpoint_S),
+          breakpoint_R = as.numeric(breakpoint_R),
+          # Make sure these columns are character
+          site = as.character(site),
+          disk_dose = as.character(disk_dose),
+          ref_tbl = as.character(ref_tbl)
+        ) %>%
+        select(all_of(colnames(allCustomBreakpoints()))) %>%
+        rbind(allCustomBreakpoints()) %>%
+        distinct()
+
+      allCustomBreakpoints(new_custom_bps)
+    }) %>%
+      bindEvent(input$custom_bp_upload)
 
     #' Controls the enabling/disabling of the custom breakpoint inputs and buttons.
     #'
@@ -676,13 +876,14 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
       if (nrow(newCustomBp) == 0) {
         #' A default bp is not found in `AMR::clinical_breakpoints` that meet the criteria.
         #' Create a new row with the necessary values.
+        selected_host <- selected_host()
         newCustomBp <- add_row(emptyCustomBp) |>
           mutate(
             mo = as.mo(input$moFilter),
             ab = as.ab(input$abFilter),
             method = "MIC",
             type = "animal",
-            host = tolower(selectedSpecies()),
+            host = selected_host,
             uti = input$typeFilter == "Urinary",
             is_SDD = FALSE
           )
@@ -711,10 +912,10 @@ micPageServer <- function(id, reactiveData, processedGuideline) {
       customBpRemoved <- allCustomBreakpoints() %>%
         filter(
           !(guideline == customBreakpointName &
-            mo == as.mo(input$moFilter) &
-            ab == as.ab(input$abFilter) &
+            mo == AMR::as.mo(input$moFilter) &
+            ab == AMR::as.ab(input$abFilter) &
             uti == (input$typeFilter == "Urinary") &
-            host == tolower(selectedSpecies()))
+            host == selected_host())
         )
       allCustomBreakpoints(customBpRemoved)
     }) %>%

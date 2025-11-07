@@ -390,7 +390,7 @@ importDataServer <- function(id) {
 
     output$interpretation_log <- DT::renderDataTable({
       data <- bp_log() %>%
-        select(-method, -type, -site, -host_given) # Remove hidden columns
+        select(-method, -type, -site) # Remove hidden columns
       DT::datatable(
         data,
         rownames = FALSE,
