@@ -295,7 +295,7 @@ importDataServer <- function(id) {
     output$cleanedDataPreview <- renderDT({
       req(cleanedData())
       data <- head(cleanedData(), 100) %>%
-        select(-InternalID)
+        .remove_extra_cols()
       DT::datatable(
         data,
         options = list(
@@ -341,7 +341,7 @@ importDataServer <- function(id) {
       }
 
       head(availableData, 100) %>%
-        select(-InternalID)
+        .remove_extra_cols()
     })
 
     # View first line of data to assist with wide data column selection
@@ -389,8 +389,10 @@ importDataServer <- function(id) {
     })
 
     output$interpretation_log <- DT::renderDataTable({
+      data <- bp_log() %>%
+        select(-method, -type, -site, -host_given) # Remove hidden columns
       DT::datatable(
-        bp_log(),
+        data,
         rownames = FALSE,
         style = 'bootstrap',
         class = 'table-bordered',
@@ -409,7 +411,7 @@ importDataServer <- function(id) {
           color = DT::styleEqual("Could not interpret", "#666") # optional: muted grey
         )
     })
-    
+
     output$uti_log <- DT::renderDataTable({
       DT::datatable(
         uti_log(),
@@ -584,6 +586,22 @@ importDataServer <- function(id) {
     # ------------------------------------------------------------------------------
     # Utility functions
     # ------------------------------------------------------------------------------
+
+    #' Remove extra columns from data previews
+    #'
+    #' @note The "host" and "UTI" columns are used elsewhere so cannot be removed
+    #' but we do not want them to show in data previews.
+    #'
+    #' @param data  Data frame to remove extra columns from
+    #' @return      Data frame with extra columns removed
+    .remove_extra_cols <- function(data) {
+      if (length(data) == 0) {
+        return(data)
+      }
+      data <- data %>%
+        select(-any_of(c("InternalID", "host", "UTI")))
+      return(data)
+    }
 
     # If wide-data is detected ------------------------------------------------
     wideFormatModal <- function(ns) {
@@ -792,25 +810,42 @@ importDataServer <- function(id) {
         showModal(processingLogModal())
       })
     })
-    
+
     observeEvent(input$reopenLog, {
       showModal(processingLogModal())
     })
-    
+
     processingLogModal <- function() {
       modalDialog(
         title = "Processing Log",
-        size  = "l",
-        
+        size = "l",
+
         h5(
           "The following log details how your uploaded data were processed. During this step, entries were standardized based on taxonomic reference databases. This includes resolving known synonyms, flagging uncertain matches, and identifying any entries that could not be confidently matched. Review the sections below to understand what changes were made and why.",
           style = "text-align: center;"
         ),
-        hr(), br(),
-        
+        hr(),
+        br(),
+        div(
+          id = "import-modal-footer",
+          class = "align-end-row",
+          div(
+            class = "warning-parent",
+            p(
+              class = "antimicrobial-warning",
+              "Please save changes made to the Antimicrobial change log"
+            ),
+            p(
+              class = "microorganism-warning",
+              "Please save changes made to the Microorganism change log"
+            )
+          ),
+          downloadButton(ns("download_log"), "Download Log File", class = "changeLogButton white"),
+          modalButton("Close")
+        ),
         tabsetPanel(
           tabPanel("Microorganisms", changeLogUI(ns("moChangeLog"))),
-          tabPanel("Antimicrobials",  changeLogUI(ns("abChangeLog"))),
+          tabPanel("Antimicrobials", changeLogUI(ns("abChangeLog"))),
           if (!is.null(input$valueType) && input$valueType == "MIC") {
             tabPanel(
               "Interpretations",
@@ -824,23 +859,15 @@ importDataServer <- function(id) {
             )
           }
         ),
-        
-        easyClose = TRUE,
-        footer = div(
-          id = "import-modal-footer",
-          downloadButton(ns("download_log"), "Download Log File"),
-          div(
-            class = "warning-parent",
-            p(class = "antimicrobial-warning",
-              "Please save changes made to the Antimicrobial change log"),
-            p(class = "microorganism-warning",
-              "Please save changes made to the Microorganism change log")
-          ),
-          modalButton("Close")
-        )
+
+        #' Cannot be easy close as changes need to be saved before closing for
+        #' them to persist in the app.
+        #' Instead move the close and download buttons to the top to the modal
+        #' so the user does not need to scroll to the bottom.
+        easyClose = FALSE,
+        footer = NULL
       )
     }
-    
 
     observe({
       req(input$sirCol)
@@ -1238,12 +1265,14 @@ importDataServer <- function(id) {
 
     return(
       list(
-        data = reactive({
-          cleanedData()
-        }),
+        data = cleanedData,
         guideline = reactive({
           selections$selectedBreakpoint
-        }) # <- wrap observe as reactive
+        }),
+        mic_or_sir = reactive({
+          selections$valueType
+        }),
+        bp_log = bp_log
       )
     )
   })

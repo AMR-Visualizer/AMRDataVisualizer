@@ -1,43 +1,57 @@
+:root {
+  --primary-blue: #44cdc4;
+  --light-blue: #a7b6d4;
+  --dark-blue: #34435a;
+  --darker-blue: #2c384e;
+  --light-grey: #eae9ed;
+  --dark-grey: #555555;
+  --off-white: #f4f4f4;
+  --white: #fff;
+
+  --red: #d73027;
+  --yellow: #fee08b;
+}
+
 h1 {
-  color: #34435a;
+  color: var(--dark-blue);
 }
 
 h2 {
-  color: #34435a;
+  color: var(--dark-blue);
 }
 
 h3 {
-  color: #34435a;
+  color: var(--dark-blue);
 }
 
 h4 {
-  color: #34435a;
+  color: var(--dark-blue);
 }
 
 h5 {
-  color: #34435a;
+  color: var(--dark-blue);
 }
 
 h6 {
-  color: #34435a;
+  color: var(--dark-blue);
 }
 
 .white-btn,
 .blue-btn {
-  background-color: #44cdc4;
-  color: white;
+  background-color: var(--primary-blue);
+  color: var(--white);
   border-radius: 20px;
-  border: 2px solid #44cdc4;
+  border: 2px solid var(--primary-blue);
   margin: 5px;
 }
 
 .white-btn {
-  background-color: white;
-  color: #44cdc4;
+  background-color: var(--white);
+  color: var(--primary-blue);
 }
 
 .shiny-input-container {
-  color: #555555;
+  color: var(--dark-grey);
   font-weight: 400;
 }
 
@@ -49,17 +63,17 @@ h6 {
 }
 
 .content-wrapper {
-  background-color: #eae9ed;
+  background-color: var(--light-grey);
   border-radius: 0px 0px 30px 30px;
 }
 
 .skin-blue .main-header .logo {
-  background-color: #34435a;
+  background-color: var(--dark-blue);
   height: 0px;
 }
 
 .skin-blue .main-header .navbar {
-  background-color: #fff;
+  background-color: var(--white);
   height: 60px;
 }
 
@@ -70,12 +84,12 @@ h6 {
 .skin-blue .left-side,
 .skin-blue .main-sidebar,
 .skin-blue .wrapper {
-  background-color: #34435a;
-  color: #a7b6d4;
+  background-color: var(--dark-blue);
+  color: var(--light-blue);
 }
 
 .skin-blue .main-sidebar .sidebar .sidebar-menu a:hover {
-  color: white;
+  color: var(--white);
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 100px 0px 0px 100px;
 }
@@ -85,16 +99,16 @@ h6 {
 }
 
 .skin-blue .sidebar-menu > li.active > a {
-  background-color: #2c384e;
-  border-left-color: #2c384e;
+  background-color: var(--darker-blue);
+  border-left-color: var(--darker-blue);
   border-radius: 100px 0px 0px 100px;
-  color: white;
+  color: var(--white);
 }
 
 .info {
-  color: #44cdc4;
-  background-color: white;
-  border-color: white;
+  color: var(--primary-blue);
+  background-color: var(--white);
+  border-color: var(--white);
   margin-top: 5px;
   margin-right: 30px;
   font-size: 22px;
@@ -102,9 +116,9 @@ h6 {
 }
 
 .info:hover {
-  color: #44cdc4;
-  background-color: white;
-  border-color: white;
+  color: var(--primary-blue);
+  background-color: var(--white);
+  border-color: var(--white);
 }
 
 .sidebar-toggle {
@@ -112,9 +126,9 @@ h6 {
 }
 
 .bttn-float.bttn-royal {
-  border-color: #44cdc4;
-  background: #44cdc4;
-  color: white;
+  border-color: var(--primary-blue);
+  background: var(--primary-blue);
+  color: var(--white);
   height: 10vh;
   width: 10vh;
   border-radius: 100%;
@@ -122,8 +136,8 @@ h6 {
 }
 
 .uploadWell {
-  background-color: white;
-  border-color: #44cdc4;
+  background-color: var(--white);
+  border-color: var(--primary-blue);
   border-style: dashed;
   text-align: center;
   border-radius: 18px;
@@ -133,8 +147,8 @@ h6 {
 }
 
 .dataPreviewWell {
-  background-color: white;
-  border-color: #44cdc4;
+  background-color: var(--white);
+  border-color: var(--primary-blue);
   border-radius: 10px;
   width: 100%;
   height: auto;
@@ -144,7 +158,7 @@ h6 {
 }
 
 .dataPreview {
-  background-color: white;
+  background-color: var(--white);
   text-align: center;
   border-radius: 10px;
   width: 100%;
@@ -155,7 +169,7 @@ h6 {
 }
 
 .cleanDataPreview {
-  background-color: white;
+  background-color: var(--white);
   text-align: center;
   border-radius: 10px;
   width: 100%;
@@ -166,8 +180,8 @@ h6 {
 }
 
 .colAssignWell {
-  background-color: white;
-  border-color: #44cdc4;
+  background-color: var(--white);
+  border-color: var(--primary-blue);
   border-radius: 10px;
   width: 100%;
   height: auto;
@@ -176,8 +190,8 @@ h6 {
 }
 
 .contentWell {
-  background-color: white;
-  border-color: #44cdc4;
+  background-color: var(--white);
+  border-color: var(--primary-blue);
   border-radius: 10px;
   width: 100%;
   height: auto;
@@ -187,7 +201,7 @@ h6 {
 
 .uploadIcon {
   font-size: 80px;
-  color: #44cdc4;
+  color: var(--primary-blue);
   display: block;
   margin-left: auto;
   margin-right: auto;
@@ -195,50 +209,50 @@ h6 {
 }
 
 .submitButton {
-  background-color: #44cdc4;
-  color: white;
-  border-color: #44cdc4;
+  background-color: var(--primary-blue);
+  color: var(--white);
+  border-color: var(--primary-blue);
   border-radius: 100px;
 }
 
 .clearButton {
-  background-color: white;
-  color: #44cdc4;
-  border-color: #44cdc4;
+  background-color: var(--white);
+  color: var(--primary-blue);
+  border-color: var(--primary-blue);
   border-radius: 100px;
 }
 
 .processButton {
-  background-color: #44cdc4;
-  color: white;
-  border-color: #44cdc4;
+  background-color: var(--primary-blue);
+  color: var(--white);
+  border-color: var(--primary-blue);
   border-radius: 100px;
   float: right;
   margin-top: 10px;
 }
 
 .resetButton {
-  background-color: white;
-  color: #44cdc4;
-  border-color: white;
+  background-color: var(--white);
+  color: var(--primary-blue);
+  border-color: var(--white);
   border-radius: 100px;
   margin-top: -20px;
   float: right;
 }
 
 .resetButton:hover {
-  background-color: white;
+  background-color: var(--white);
   color: grey;
-  border-color: white;
+  border-color: var(--white);
   border-radius: 100px;
   margin-top: -20px;
   float: right;
 }
 
 .resetButton:focus {
-  background-color: white;
-  color: #44cdc4;
-  border-color: white;
+  background-color: var(--white);
+  color: var(--primary-blue);
+  border-color: var(--white);
   border-radius: 100px;
   margin-top: -20px;
   float: right;
@@ -255,7 +269,7 @@ h6 {
 .progress > .progress-bar,
 .progress > .progress-bar .progress-bar {
   border-radius: 100px;
-  background-color: #44cdc4;
+  background-color: var(--primary-blue);
 }
 
 .selectize-input {
@@ -273,7 +287,7 @@ h6 {
   max-width: 100%;
   margin-bottom: 0px;
   font-size: 12px;
-  color: #34435a;
+  color: var(--dark-blue);
   white-space: nowrap;
 }
 
@@ -302,7 +316,7 @@ h6 {
 }
 
 .quickDateButton {
-  background-color: #f2f2f2;
+  background-color: var(--off-white);
   min-width: 35px;
   margin: 1px;
   border-radius: 10px;
@@ -318,8 +332,8 @@ h6 {
 .legendWell {
   max-width: 270px;
   float: left;
-  background-color: white;
-  border-color: #44cdc4;
+  background-color: var(--white);
+  border-color: var(--primary-blue);
   border-radius: 10px;
   width: 100%;
   height: auto;
@@ -344,12 +358,12 @@ h6 {
 
 .legend-circle {
   font-size: 20px;
-  color: #2c384e;
+  color: var(--darker-blue);
 }
 
 .legend-label {
   font-size: 12px;
-  color: #555555;
+  color: var(--dark-grey);
   margin-left: 10px;
 }
 
@@ -372,7 +386,7 @@ h6 {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  border-left: 1px dotted #2c384e;
+  border-left: 1px dotted var(--darker-blue);
   height: 30px;
 }
 
@@ -406,9 +420,9 @@ h6 {
 .irs--shiny .irs-bar {
   top: 25px;
   height: 8px;
-  border-top: 1px solid #44cdc4;
-  border-bottom: 1px solid #44cdc4;
-  background: #44cdc4;
+  border-top: 1px solid var(--primary-blue);
+  border-bottom: 1px solid var(--primary-blue);
+  background: var(--primary-blue);
   cursor: s-resize;
   z-index: 2;
 }
@@ -425,8 +439,8 @@ h6 {
 }
 
 .exploreFiltersWell {
-  background-color: white;
-  border-color: #44cdc4;
+  background-color: var(--white);
+  border-color: var(--primary-blue);
   text-align: center;
   border-radius: 10px;
   margin: auto;
@@ -437,8 +451,8 @@ h6 {
 
 .checkbox-primary input[type="checkbox"]:checked + label::before,
 .checkbox-primary input[type="radio"]:checked + label::before {
-  background-color: #44cdc4;
-  border-color: #44cdc4;
+  background-color: var(--primary-blue);
+  border-color: var(--primary-blue);
 }
 
 .activeFilters {
@@ -454,7 +468,7 @@ h6 {
   width: calc(100vw - 229px);
   height: 100vh;
   margin: -15px;
-  background-color: #fff;
+  background-color: var(--white);
   overflow: hidden;
   position: relative;
 }
@@ -507,7 +521,7 @@ h6 {
   margin: 10px;
   color: transparent;
   border-width: 2px;
-  border-color: #44cdc4;
+  border-color: var(--primary-blue);
   position: relative;
   overflow: hidden;
   transition: background-color 0.3s, color 0.3s;
@@ -536,7 +550,7 @@ h6 {
 
 .homeButtons:hover {
   background-size: 0px;
-  color: #44cdc4;
+  color: var(--primary-blue);
 }
 
 .mdrLegend {
@@ -545,9 +559,9 @@ h6 {
     to right,
     tomato,
     pink,
-    #f4f4f4,
-    #44cdc4,
-    #34435a
+    var(--off-white),
+    var(--primary-blue),
+    var(--dark-blue)
   );
   border: 1px solid #ccc;
 }
@@ -561,9 +575,9 @@ h6 {
 .nav-tabs > li.active > a,
 .nav-tabs > li.active > a:hover,
 .nav-tabs > li.active > a:focus {
-  color: white;
+  color: var(--white);
   cursor: default;
-  background-color: #44cdc4;
+  background-color: var(--primary-blue);
   border: 0px;
   border-radius: 45px;
 }
@@ -571,8 +585,8 @@ h6 {
 .nav-tabs > li > a {
   margin-right: 6px;
   border-radius: 45px;
-  border-color: #44cdc4;
-  color: #44cdc4;
+  border-color: var(--primary-blue);
+  color: var(--primary-blue);
   font-size: 12px;
 }
 
@@ -586,7 +600,7 @@ h6 {
 }
 
 .pretty.p-default input:checked ~ .state label:after {
-  background-color: #44cdc4 !important;
+  background-color: var(--primary-blue) !important;
 }
 
 .sweet-alert.alert-size-s {
@@ -594,16 +608,16 @@ h6 {
 }
 
 .alert .confirm {
-  background-color: #44cdc4 !important;
-  color: white !important;
+  background-color: var(--primary-blue) !important;
+  color: var(--white) !important;
 }
 
 .plotSaveButton {
   float: right;
   border-radius: 25px;
-  color: white;
-  background-color: #44cdc4;
-  border-color: white;
+  color: var(--white);
+  background-color: var(--primary-blue);
+  border-color: var(--white);
   font-size: 12px;
   margin-top: 10px;
 }
@@ -611,38 +625,39 @@ h6 {
 .dataSaveButton {
   float: right;
   border-radius: 25px;
-  color: white;
-  background-color: #44cdc4;
-  border-color: white;
+  color: var(--white);
+  background-color: var(--primary-blue);
+  border-color: var(--white);
   font-size: 14px;
   margin-top: 10px;
 }
 
+#import-modal-footer > button,
 .changeLogButton {
   border-radius: 25px;
-  color: white;
-  background-color: #44cdc4;
-  border-color: white;
+  color: var(--white);
+  background-color: var(--primary-blue);
+  border-color: var(--white);
   font-size: 14px;
   margin-top: 10px;
 }
 
 .changeLogButton.white {
-  border-color: #44cdc4;
-  background-color: white;
-  color: #44cdc4;
+  border-color: var(--primary-blue);
+  background-color: var(--white);
+  color: var(--primary-blue);
 }
 
 .panel-group .panel {
   margin-bottom: 0;
   margin-top: 10px;
   border-radius: 10px;
-  border: 1px solid #44cdc4;
+  border: 1px solid var(--primary-blue);
 }
 
 .panel-default > .panel-heading {
-  color: #34435a;
-  background-color: #ffffff;
+  color: var(--dark-blue);
+  background-color: var(--white);
   border: 0px;
   border-radius: 10px;
   font-size: 18px;
@@ -675,7 +690,7 @@ h6 {
 
 #summary-stats-table-container th {
   font-weight: bold;
-  color: #44cdc4;
+  color: var(--primary-blue);
   font-size: 18px;
   text-align: left;
   padding: 10px;
@@ -688,7 +703,7 @@ h6 {
 
 #summary-stats-table-container td:first-child {
   font-weight: bold;
-  color: #44cdc4;
+  color: var(--primary-blue);
   font-size: 14px;
 }
 
@@ -732,18 +747,19 @@ h6 {
 
 .readonly-table {
   padding: 1rem;
-  background-color: #fff;
+  background-color: var(--white);
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
 }
 
-/* Modal footer styles */
-#import-modal-footer {
+.align-end-row {
   display: flex;
-  justify-content: space-between;
+  flex-direction: row;
+  gap: 1rem;
+  justify-content: end;
   align-items: center;
 }
-
+/* Modal footer styles */
 #import-modal-footer .warning-parent {
   text-align: left;
 }
@@ -767,20 +783,12 @@ h6 {
 
 /** Custom Breakpoints Container */
 .custom-breakpoints-container {
-  border-top: 1px solid #44cdc4;
+  border-top: 1px solid var(--primary-blue);
   padding-top: 5px;
 }
 
 .custom-breakpoints-container > label {
   font-weight: bold;
-}
-
-.custom-breakpoints-container > div {
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-  align-items: center;
-  justify-content: end;
 }
 
 .custom-breakpoints-container:first-child > div > div {

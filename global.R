@@ -4,6 +4,10 @@
 # Description: Initializes global environment (i.e., libraries, functions, etc.)
 # ------------------------------------------------------------------------------
 
+# TODO: Move all packages to renv and call them via library()
+library(zip)
+library(openxlsx)
+
 # ------------------------------------------------------------------------------
 # Helper function to install and load a package (CRAN or GitHub)
 # ------------------------------------------------------------------------------
@@ -173,6 +177,10 @@ g_test_mapping <- list(
   "mic" = g_mic_keywords,
   "interp" = g_sir_keywords
 )
+
+
+# Full df of AMR clinical breakpoints with ab and mo names added
+g_fullClinicalBreakpoints <- getFullClinicalBps()
 
 # ------------------------------------------------------------------------------
 # Increase maximum allowable file upload
