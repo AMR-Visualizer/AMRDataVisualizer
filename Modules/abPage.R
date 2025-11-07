@@ -534,7 +534,7 @@ abPageServer <- function(id, reactiveData, customBreakpoints, mic_or_sir, bp_log
     #' @param tmp   Temporary directory to use for report generation.
     #' @return      None.
     download_html_report <- function(tmp) {
-      src <- normalizePath(".")
+      src <- normalizePath(getOption("report_src_dir", getwd()), winslash = "/", mustWork = TRUE)
       # tmp <- tempdir()
       unlink(list.files(tmp, full.names = TRUE), recursive = TRUE, force = TRUE)
 
@@ -803,6 +803,7 @@ abPageServer <- function(id, reactiveData, customBreakpoints, mic_or_sir, bp_log
       content = function(file) {
         withProgress(message = 'Rendering, please wait!', {
           tmp <- tempdir()
+          options(report_src_dir = normalizePath(getwd(), winslash = "/", mustWork = TRUE))
           download_html_report(tmp)
           # file.rename("Antibiogram.html", file)
           tmp_html <- file.path(tmp, "Antibiogram.html")
@@ -822,6 +823,7 @@ abPageServer <- function(id, reactiveData, customBreakpoints, mic_or_sir, bp_log
       content = function(file) {
         withProgress(message = 'Rendering, please wait!', {
           tmp <- tempdir()
+          options(report_src_dir = normalizePath(getwd(), winslash = "/", mustWork = TRUE))
           download_html_report(tmp)
 
           tmp_html <- file.path(tmp, "Antibiogram.html")
