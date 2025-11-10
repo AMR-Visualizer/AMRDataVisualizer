@@ -98,22 +98,6 @@ invisible(mapply(install_and_load, names(github_packages), github_packages))
 # renv::snapshot()
 # renv::deactivate()
 
-library(fs)
-library(rprojroot)
-
-APP_DIR <- tryCatch(
-  rprojroot::find_root(
-    rprojroot::has_file(".here") | rprojroot::has_file("app.R") | rprojroot::has_dir("www")
-  ),
-  error = function(e) normalizePath(getwd())
-)
-
-options(amrvis.paths = list(
-  app_dir = APP_DIR,
-  reports = fs::path(APP_DIR, "Reports")
-))
-
-
 # ------------------------------------------------------------------------------
 # Source external modules
 # ------------------------------------------------------------------------------
