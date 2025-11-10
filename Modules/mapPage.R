@@ -332,7 +332,9 @@ mapPageServer <- function(id, reactiveData) {
 
       content = function(file) {
         withProgress(message = 'Rendering, please wait!', {
-          src <- normalizePath("./Reports/Map.qmd")
+          p <- getOption("amrvis.paths")
+          src <- fs::path(p$reports, "Map.qmd")
+          if (!fs::file_exists(src)) stop("Missing report template: ", src, call. = FALSE)
           tmp <- tempdir()
           unlink(list.files(tmp, full.names = TRUE), recursive = TRUE, force = TRUE)
 
