@@ -1248,7 +1248,7 @@ importDataServer <- function(id) {
           render_env$uti_log <- uti_log()
 
           rmarkdown::render(
-            input = "ProcessingLog.Rmd",
+            input = "ProcessingLog.rmd",
             output_format = "html_document",
             output_file = "ProcessingLog.html",
             envir = render_env

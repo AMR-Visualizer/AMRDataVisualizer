@@ -1,6 +1,8 @@
 #' Utilities used in the report generation process
 #'
 
+`%||%` <- function(x, y) if (is.null(x) || length(x) == 0) y else x
+
 #' Helper to prepare summary values
 #'
 #' @param values  A vector of filter values
