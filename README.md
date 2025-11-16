@@ -4,6 +4,9 @@
 
 </p>
 
+[![R Version](https://img.shields.io/badge/R-%3E%3D4.5.1-blue)]()
+[![Status](https://img.shields.io/badge/status-development-orange)]()
+
 An interactive **R Shiny** application for cleaning, harmonising, interpreting, and visualising antimicrobial resistance (AMR) data derived from antimicrobial susceptibility testing (AST).
 
 Developed by researchers and professionals in the AMR community, this tool streamlines routine AST workflows for users who may lack the time, technical resources, or coding expertise to build analyses from scratch. It leverages internationally recognised guidelines (e.g. **CLSI**, **EUCAST**) and, while originally created for veterinary datasets, is equally applicable to human health data.
