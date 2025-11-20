@@ -51,7 +51,7 @@ classicAB <- function(
 
   plt <- data %>%
     mutate(dplyr::across(dplyr::all_of(fixed_cols), as.character)) %>%
-    gt::gt(id="classic-ab-table")
+    gt::gt(id = "classic-ab-table")
 
   data <- data %>%
     mutate(across(everything(), ~ replace(., is.na(.), 0)))

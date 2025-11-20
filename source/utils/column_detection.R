@@ -1,3 +1,10 @@
+#' This file contains general utility functions for detecting
+#' common column types in data frames.
+#'
+#' @keywords internal
+NULL
+
+
 #' Detect a column by name
 #'
 #' Detects a column in a data frame based on keywords in the column name.

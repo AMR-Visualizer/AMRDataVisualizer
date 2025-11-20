@@ -66,10 +66,14 @@ create_mic_frequency_tables <- function(
       silent = TRUE
     )
   }
-  
+
   single_bp_applied <- FALSE
   if (use_single_bp_as_both && xor(is.na(bp_s), is.na(bp_r))) {
-    if (!is.na(bp_s)) bp_r <- bp_s else bp_s <- bp_r
+    if (!is.na(bp_s)) {
+      bp_r <- bp_s
+    } else {
+      bp_s <- bp_r
+    }
     single_bp_applied <- TRUE
   }
 
