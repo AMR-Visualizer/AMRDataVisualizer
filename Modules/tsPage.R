@@ -1,8 +1,3 @@
-# library(tidyverse)
-# library(lubridate)
-# library(plotly)
-# library(zoo)
-
 # To-do -------------------------------------------------------------------
 # - Confidence bands?
 

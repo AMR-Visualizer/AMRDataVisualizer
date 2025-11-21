@@ -1,9 +1,3 @@
-library(foreach)
-library(doParallel)
-library(dplyr)
-library(stringr)
-library(AMR)
-
 dataCleaner <- function(rawData, additionalCols = NULL, breakpoint = "CLSI") {
   # Precompute mappings
   ab_name_data <- unique(rawData$Antimicrobial) %>%
@@ -254,14 +248,14 @@ dataCleaner <- function(rawData, additionalCols = NULL, breakpoint = "CLSI") {
     host_map <- bp_log %>%
       select(host = Species, mapped_host = `Host Used`) %>%
       distinct()
-    
+
     host_col <- case_when(
-      "host"    %in% names(cleanData) ~ "host",
-      "Host"    %in% names(cleanData) ~ "Host",
+      "host" %in% names(cleanData) ~ "host",
+      "Host" %in% names(cleanData) ~ "Host",
       "Species" %in% names(cleanData) ~ "Species",
       TRUE ~ NA_character_
     )
-    
+
     cleanData <- cleanData %>%
       left_join(host_map, by = setNames("host", host_col)) %>%
       mutate(!!host_col := coalesce(.data[[host_col]], mapped_host)) %>%

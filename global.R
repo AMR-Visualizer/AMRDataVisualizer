@@ -4,99 +4,73 @@
 # Description: Initializes global environment (i.e., libraries, functions, etc.)
 # ------------------------------------------------------------------------------
 
-# TODO: Move all packages to renv and call them via library()
+# Shiny and related
+library(shiny)
+library(shinyalert)
+library(shinyBS)
+library(shinycssloaders)
+library(shinydashboard)
+library(shinydashboardPlus)
+library(shinyjs)
+library(shinyWidgets)
+library(fresh)
+
+# Data + data manipulation
+library(AMR)
+library(dplyr)
+library(stringr)
+library(stringdist)
+library(tidyr)
+library(purrr)
+library(jsonlite)
+library(sf)
+library(tidyverse)
+library(zoo)
+
+# File reading/upload/download
 library(zip)
 library(openxlsx)
+library(chromote)
+library(nanoparquet)
+library(quarto)
+library(yaml)
+library(readxl)
+library(writexl)
+library(webshot2)
+library(vroom)
+library(arrow)
 
-# ------------------------------------------------------------------------------
-# Helper function to install and load a package (CRAN or GitHub)
-# ------------------------------------------------------------------------------
-install_and_load <- function(pkg, github = NULL) {
-  if (!requireNamespace(pkg, quietly = TRUE)) {
-    message("Installing '", pkg, "'...")
-    tryCatch(
-      {
-        if (is.null(github)) {
-          install.packages(pkg)
-        } else {
-          if (!requireNamespace("devtools", quietly = TRUE)) {
-            install.packages("devtools")
-          }
-          devtools::install_github(github)
-        }
-      },
-      error = function(e) {
-        warning("Failed to install ", pkg, ": ", e$message)
-      }
-    )
-  }
-  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
-}
+# Visualization - Tables
+library(data.table)
+library(DT)
+library(gt)
 
-# CRAN Packages
-cran_packages <- c(
-  "AMR",
-  "arrow",
-  "chromote",
-  "colorspace",
-  "data.table",
-  "doParallel",
-  "DT",
-  "foreach",
-  "fresh",
-  "ggpattern",
-  "gt",
-  "jsonlite",
-  "leaflet",
-  "mapview",
-  "nanoparquet",
-  "plotly",
-  "quarto",
-  "readxl",
-  "renv",
-  "scales",
-  "sf",
-  "shiny",
-  "shinyalert",
-  "shinyBS",
-  "shinycssloaders",
-  "shinydashboard",
-  "shinydashboardPlus",
-  "shinyjs",
-  "shinyWidgets",
-  "spacyr",
-  "stringdist",
-  "tigris",
-  "tidyverse",
-  "tools",
-  "vroom",
-  "webshot2",
-  "writexl",
-  "zoo"
-)
+# Visualization - Mapping
+library(leaflet)
+library(mapview)
+library(tigris)
+library(HatchedPolygons)
 
-# GitHub Packages
-github_packages <- list(
-  HatchedPolygons = "statnmap/HatchedPolygons",
-  typedjs = "JohnCoene/typedjs"
-)
+# Visualization - Plots
+library(plotly)
+library(ggplot2)
+library(ggpattern)
 
-# ------------------------------------------------------------------------------
-# Install and Load All Packages
-# ------------------------------------------------------------------------------
-# Load CRAN packages
-invisible(lapply(cran_packages, install_and_load))
+# Visualization - Other
+library(scales)
+library(colorspace)
 
-# Load GitHub packages
-invisible(mapply(install_and_load, names(github_packages), github_packages))
+# Performance
+library(foreach)
+library(doParallel)
 
-# ------------------------------------------------------------------------------
-# RENV set-up and maintenance
-# ------------------------------------------------------------------------------
-# renv::init()
-# Run this line and select option 2 for dockerizing.
-# renv::snapshot()
-# renv::deactivate()
+# Other
+library(renv)
+library(lubridate)
+library(spacyr)
+library(typedjs)
+
+# For renv setup see the "Managing Dependencies with `renv`" section in `Documentation/quick_start_guide.md`
 
 # ------------------------------------------------------------------------------
 # Source external modules

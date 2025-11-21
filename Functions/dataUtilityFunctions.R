@@ -4,12 +4,6 @@
 #' - `getLongData`:   Transforms a data frame into long format.
 #' - `findUtiMatch`:  Checks if a source matches UTI criteria.
 
-library(dplyr)
-library(stringr)
-library(tidyr)
-library(purrr)
-
-
 #' Get the MIC sign and value from the MIC column.
 #'
 #' If the MIC column cannot be found, a warning is issued and the original data is returned.
