@@ -201,6 +201,14 @@ micPageServer <- function(id, reactiveData, processedGuideline, bp_log) {
       return(species)
     })
 
+    # For mapping between species and host values
+    host_mapping <- reactive({
+      req(bp_log())
+      bp_log() %>%
+        select(host = Species, mapped_host = `Host Used`) %>%
+        distinct()
+    })
+
     #' The mapped host name for the selected species.
     #' Need to find the mapped host value from the bp_log.
     #' The host value needs to be either:
@@ -209,9 +217,8 @@ micPageServer <- function(id, reactiveData, processedGuideline, bp_log) {
     selected_host <- reactive({
       req(selectedSpecies())
       selected_host <- tolower(selectedSpecies()) # Fallback value
-      host_map <- bp_log() %>%
-        select(host = Species, mapped_host = `Host Used`) %>%
-        distinct() %>%
+
+      host_map <- host_mapping() %>%
         filter(host == selected_host)
       if (nrow(host_map) > 0) {
         selected_host <- host_map$mapped_host[1]
@@ -344,11 +351,20 @@ micPageServer <- function(id, reactiveData, processedGuideline, bp_log) {
           utiValues <- sourceValues[!utiMatches]
           isUti <- FALSE
         }
+        sel_host <- selected_host()
+        host_map <- host_mapping() %>%
+          filter(mapped_host %in% sel_host)
+        allowed_values <- unique(c(
+          tolower(customBp$Species),
+          tolower(customBp$host),
+          sel_host,
+          host_map$host
+        ))
 
         # Data which matches the custom breakpoint criteria
         matchingData <- data %>%
+          filter(host %in% allowed_values) %>%
           filter(
-            host == customBp$host,
             Antimicrobial == AMR::ab_name(customBp$Antimicrobial),
             Microorganism == AMR::mo_name(customBp$Microorganism),
             UTI == isUti
@@ -358,6 +374,7 @@ micPageServer <- function(id, reactiveData, processedGuideline, bp_log) {
         newInterpretations <- data.frame(
           MIC = unique(matchingData$MIC)
         )
+
         newInterpretations$Interpretation <- as.sir(
           x = AMR::as.mic(newInterpretations$MIC),
           mo = customGuideline$mo,
@@ -761,7 +778,10 @@ micPageServer <- function(id, reactiveData, processedGuideline, bp_log) {
         }
       )
 
-      if (!all(colnames(expected_format_df) %in% colnames(uploaded_data))) {
+      expected_colnames <- colnames(expected_format_df)
+      uploaded_colnames <- colnames(uploaded_data)
+
+      if (!all(expected_colnames %in% uploaded_colnames)) {
         showNotification(
           ui = "Uploaded file is missing required columns. Please click the info button for the expected format.",
           type = "error",
@@ -771,33 +791,51 @@ micPageServer <- function(id, reactiveData, processedGuideline, bp_log) {
         req(FALSE)
       }
 
+      # Check if any non-custom bps are being uploaded
+      amr_data <- AMR::clinical_breakpoints %>%
+        select(all_of(expected_colnames))
+      formatted_upload_data <- uploaded_data %>%
+        select(all_of(expected_colnames))
+
+      matching <- merge(amr_data, formatted_upload_data)
+      if (nrow(matching) > 0) {
+        showNotification(
+          ui = "Uploaded file contains non-custom breakpoints that already exist in the AMR package. Please remove these and try again.",
+          type = "error",
+          duration = 5
+        )
+        shinyjs::reset("custom_bp_upload")
+        req(FALSE)
+      }
+
+      current_custom_bps <- allCustomBreakpoints()
       # Make sure that the ab and mo columns are of class ab and mo
       new_custom_bps <- uploaded_data %>%
         rowwise() %>%
         mutate(
           guideline = customBreakpointName,
           method = "MIC",
-          rank_index = if ("rank_index" %in% colnames(uploaded_data)) {
+          rank_index = if ("rank_index" %in% uploaded_colnames) {
             rank_index
           } else {
             NA_real_
           },
-          ref_tbl = if ("ref_tbl" %in% colnames(uploaded_data)) {
+          ref_tbl = if ("ref_tbl" %in% uploaded_colnames) {
             ref_tbl
           } else {
             NA_character_
           },
-          disk_dose = if ("disk_dose" %in% colnames(uploaded_data)) {
+          disk_dose = if ("disk_dose" %in% uploaded_colnames) {
             disk_dose
           } else {
             NA_character_
           },
-          is_SDD = if ("is_SDD" %in% colnames(uploaded_data)) {
+          is_SDD = if ("is_SDD" %in% uploaded_colnames) {
             is_SDD
           } else {
             FALSE # TODO: Check if this is the right default
           },
-          site = if ("site" %in% colnames(uploaded_data)) {
+          site = if ("site" %in% uploaded_colnames) {
             site
           } else {
             NA_character_
@@ -823,8 +861,32 @@ micPageServer <- function(id, reactiveData, processedGuideline, bp_log) {
           disk_dose = as.character(disk_dose),
           ref_tbl = as.character(ref_tbl)
         ) %>%
-        select(all_of(colnames(allCustomBreakpoints()))) %>%
-        rbind(allCustomBreakpoints()) %>%
+        select(all_of(colnames(current_custom_bps)))
+
+      bp_cols <- c("breakpoint_S", "breakpoint_R")
+      expected_colnames_not_bp <- expected_colnames[!expected_colnames %in% bp_cols]
+
+      # If there are already custom breakpoints set, show a notification saying they will be overriden
+      matching <- current_custom_bps %>%
+        ungroup() %>% # For rowwise
+        # Filter out any rows that match on all columns except the breakpoints
+        semi_join(new_custom_bps, by = expected_colnames_not_bp) %>%
+        # Then filter out rows that also match on bp cols
+        filter(!do.call(paste0, .[bp_cols]) %in% do.call(paste0, new_custom_bps[bp_cols]))
+
+      if (nrow(matching) > 0) {
+        showNotification(
+          ui = "Uploaded file contains custom breakpoints that already exist. These will be overridden.",
+          type = "warning",
+          duration = 5
+        )
+        # Remove any old custom bps that match the uploaded ones
+        current_custom_bps <- current_custom_bps %>%
+          anti_join(matching, by = expected_colnames_not_bp)
+      }
+
+      new_custom_bps <- new_custom_bps %>%
+        rbind(current_custom_bps) %>%
         distinct()
 
       allCustomBreakpoints(new_custom_bps)
