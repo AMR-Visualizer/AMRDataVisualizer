@@ -381,6 +381,21 @@ server <- function(id, reactiveData, processedGuideline, bp_log) {
             UTI == isUti
           )
 
+        if (nrow(matchingData) == 0) {
+          shiny::showNotification(
+            paste0(
+              "Custom breakpoint ignored: no matching isolates found for ",
+              customBp$Microorganism,
+              " + ",
+              customBp$Antimicrobial,
+              if (customBp$uti) " (UTI = TRUE)." else " (UTI = FALSE)."
+            ),
+            type = "warning",
+            duration = 8
+          )
+          next # skip this breakpoint
+        }
+
         # Re-calculate MIC interpretations based on custom breakpoints
         newInterpretations <- data.frame(
           MIC = unique(matchingData$MIC)
