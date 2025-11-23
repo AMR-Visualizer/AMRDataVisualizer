@@ -655,7 +655,7 @@ importDataServer <- function(id) {
     #' Checks if "verified" (doesn't need to be cleaned).
     observeEvent(input$submit, {
       if (!is.null(upload$file)) {
-        ext <- file_ext(upload$file$name)
+        ext <- tools::file_ext(upload$file$name)
         upload$content <- switch(
           ext,
           "csv" = {

@@ -1,3 +1,8 @@
+#' This file contains utility functions used in the map tab.
+#'
+#' @keywords internal
+NULL
+
 preprocessMapData <- function(data) {
   uniqueRegions <- unique(data$Region)
   uniqueSubregions <- unique(data$Subregion)
