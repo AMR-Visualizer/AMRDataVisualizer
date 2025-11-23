@@ -6,6 +6,12 @@
 #              reactive processing, and dynamic outputs.
 # ------------------------------------------------------------------------------
 
+#' Main server function for the Shiny application.
+#'
+#' @param input   Shiny input object.
+#' @param output  Shiny output object.
+#' @param session Shiny session object.
+#' @return        None. This function defines the server-side logic for the Shiny app.
 server <- function(input, output, session) {
   # ------------------------------------------------------------------------------
   # Sub-modules
@@ -67,7 +73,11 @@ server <- function(input, output, session) {
     if (isDataPresent()) {
       # Define menu items
       menu_items <- list(
-        menuItem("Overview", tabName = "ovTab", icon = icon("magnifying-glass-chart", class = "nav-icon")),
+        menuItem(
+          "Overview",
+          tabName = "ovTab",
+          icon = icon("magnifying-glass-chart", class = "nav-icon")
+        ),
         menuItem("Antibiogram", tabName = "abTab", icon = icon("braille", class = "nav-icon")),
         menuItem("Map", tabName = "mapTab", icon = icon("map-location-dot", class = "nav-icon")),
         menuItem("Trends", tabName = "trendsTab", icon = icon("chart-line", class = "nav-icon")),

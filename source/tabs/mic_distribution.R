@@ -1,3 +1,7 @@
+#' UI for the MIC distribution tab module.
+#'
+#' @param id  Module ID.
+#' @return    Module UI.
 micDistPageUI <- function(id, data) {
   ns <- NS(id)
 
@@ -14,7 +18,12 @@ micDistPageUI <- function(id, data) {
   )
 }
 
-micDistPageServer <- function(id, reactiveData, processedGuideline) {
+#' Server logic for the MIC distribution tab module.
+#'
+#' @param id            The ID of the module.
+#' @param reactiveData  A reactive that returns the cleaned data to be explored.
+#' @return              None.
+micDistPageServer <- function(id, reactiveData) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 

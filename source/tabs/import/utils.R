@@ -3,6 +3,14 @@
 #' @keywords internal
 NULL
 
+
+#' TODO: Documentation
+#' [Summary]
+#'
+#' @param rawData [Description]
+#' @param additionalCols [Description]
+#' @param breakpoint [Description]
+#' @return [Description]
 dataCleaner <- function(rawData, additionalCols = NULL, breakpoint = "CLSI") {
   # Precompute mappings
   ab_name_data <- unique(rawData$Antimicrobial) %>%
@@ -54,13 +62,20 @@ dataCleaner <- function(rawData, additionalCols = NULL, breakpoint = "CLSI") {
     "1" = "R"
   )
 
-  # Year fix helper
+  #' Get the valid year from a vector of years.
+  #'
+  #' @param years Vector of years.
+  #' @return      Vector of valid years.
   getValidYear <- function(years) {
     years <- as.integer(years)
     years[is.na(years) | is.null(years)] <- NA_integer_
     ifelse(!is.na(years) & years < 1900, 2000 + years, years)
   }
 
+  #' Detect the date format from a vector of date strings.
+  #'
+  #' @param date_vector Vector of date strings.
+  #' @return            Detected date format string or NULL if not detected.
   detect_date_format <- function(date_vector) {
     known_formats <- c(
       "%Y-%m-%d",
@@ -96,7 +111,12 @@ dataCleaner <- function(rawData, additionalCols = NULL, breakpoint = "CLSI") {
     return(NULL)
   }
 
-  # Chunk cleaning function
+  #' TODO: Documentation
+  #' [Summary]
+  #'
+  #' @param chunk [Description]
+  #' @param additionalCols [Description]
+  #' @return [Description]
   clean_chunk <- function(chunk, additionalCols = NULL) {
     additionalColsData <- if (!is.null(additionalCols)) {
       chunk %>% select(all_of(additionalCols))
@@ -622,6 +642,7 @@ dataCleaner <- function(rawData, additionalCols = NULL, breakpoint = "CLSI") {
 #' - For each test type pivot the appropriate columns to long format and add to the long data.
 #'
 #' @param data          The data frame to be transformed.
+#' @param testColumns   The indices of the columns that are tests (selected by user).
 #' @param isWideFormat  Logical indicating whether the data is in wide format (selected by user).
 #' @returns A long form data frame.
 #' @seealso {@link{.getColumnInfo}} for getting the column information.
@@ -721,6 +742,11 @@ getLongData <- function(data, testColumns, isWideFormat = TRUE) {
   return(longData)
 }
 
+#' TODO: Documentation
+#' [Summary]
+#'
+#' @param spec [Description]
+#' @return [Description]
 parseColSpec <- function(spec) {
   spec <- gsub("\\s+", "", spec)
 

@@ -1,4 +1,7 @@
-# Module UI ---------------------------------------------------------------
+#' UI for the change log module.
+#'
+#' @param id  Module ID.
+#' @return    Module UI.
 changeLogUI <- function(id) {
   ns <- NS(id)
   div(
@@ -12,8 +15,8 @@ changeLogUI <- function(id) {
   )
 }
 
-# Module Server -----------------------------------------------------------
-
+#' Server logic for the change log module.
+#'
 #' @param id              The ID of the module.
 #' @param changeLogData   The change log data to be displayed in the table.
 #' @param cleanedData     The cleaned data to be updated when the table is edited.

@@ -1,3 +1,7 @@
+#' UI for the MDR tab module.
+#'
+#' @param id  Module ID.
+#' @return    Module UI.
 mdrPageUI <- function(id) {
   ns <- NS(id)
   tagList(
@@ -46,6 +50,11 @@ mdrPageUI <- function(id) {
   )
 }
 
+#' Server logic for the MDR tab module.
+#'
+#' @param id            The ID of the module.
+#' @param reactiveData  A reactive that returns the cleaned data.
+#' @return              None.
 mdrPageServer <- function(id, reactiveData) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -242,6 +251,11 @@ mdrPageServer <- function(id, reactiveData) {
     # Utility functions
     # ------------------------------------------------------------------------------
 
+    #' TODO: Documentation
+    #' [Summary]
+    #'
+    #' @param data [Description]
+    #' @return [Description]
     cor_and_counts <- function(data) {
       n <- ncol(data)
       cor_matrix <- matrix(NA, n, n)
