@@ -2,7 +2,7 @@
 #'
 #' @param id  Module ID.
 #' @return    Module UI.
-abPageUI <- function(id) {
+ui <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(
@@ -23,7 +23,7 @@ abPageUI <- function(id) {
 
         # Filters -----------------------------------------------------------------
 
-        filterPanelUI(ns("filters")),
+        filter_panel$ui(ns("filters")),
 
         # Plot controls -----------------------------------------------------------
         uiOutput(ns("controls")),
@@ -44,7 +44,7 @@ abPageUI <- function(id) {
 #' @param mic_or_sir            Reactive value indicating if data is MIC or SIR.
 #' @param bp_log                Reactive df containing all breakpoints used in the data.
 #' @return                      None.
-abPageServer <- function(id, reactiveData, customBreakpoints, mic_or_sir, bp_log) {
+server <- function(id, reactiveData, customBreakpoints, mic_or_sir, bp_log) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -52,7 +52,7 @@ abPageServer <- function(id, reactiveData, customBreakpoints, mic_or_sir, bp_log
     # Sub-modules
     # ------------------------------------------------------------------------------
 
-    filters <- filterPanelServer(
+    filters <- filter_panel$server(
       "filters",
       reactiveData,
       default_filters = c("Microorganism", "Suppress Antimicrobials", "Species", "Source", "Date"),
@@ -873,3 +873,8 @@ abPageServer <- function(id, reactiveData, customBreakpoints, mic_or_sir, bp_log
     )
   })
 }
+
+antibiogram_tab <- list(
+  ui = ui,
+  server = server
+)

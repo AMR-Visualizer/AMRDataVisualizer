@@ -17,27 +17,27 @@ server <- function(input, output, session) {
   # Sub-modules
   # ------------------------------------------------------------------------------
 
-  homePageServer("home")
-  importResults <- importDataServer("dataImport") # Gather cleaned data from `importDataModule.R`
-  micData <- micPageServer(
+  home_tab$server("home")
+  importResults <- import_tab$server("dataImport") # Gather cleaned data from `importDataModule.R`
+  micData <- mic_table_tab$server(
     "micModule",
     reactiveData = clean,
     processedGuideline = processedGuideline,
     bp_log = importResults$bp_log
   )
-  micDistPageServer("micDistModule", reactiveData = dataWithCustomBreakpoints)
-  abPageServer(
+  mic_distribution_tab$server("micDistModule", reactiveData = dataWithCustomBreakpoints)
+  antibiogram_tab$server(
     "antibiogramModule",
     reactiveData = dataWithCustomBreakpoints,
     customBreakpoints = customBreakpoints,
     mic_or_sir = importResults$mic_or_sir,
     bp_log = importResults$bp_log
   )
-  mapPageServer("mapModule", reactiveData = dataWithCustomBreakpoints)
-  tsPageServer("tsModule", reactiveData = dataWithCustomBreakpoints)
+  map_tab$server("mapModule", reactiveData = dataWithCustomBreakpoints)
+  trends_tab$server("tsModule", reactiveData = dataWithCustomBreakpoints)
   # MicroGuide
-  mdrPageServer("mdrModule", reactiveData = dataWithCustomBreakpoints)
-  explorePageServer("exModule", reactiveData = dataWithCustomBreakpoints)
+  mdr_tab$server("mdrModule", reactiveData = dataWithCustomBreakpoints)
+  explore_tab$server("exModule", reactiveData = dataWithCustomBreakpoints)
 
   # ------------------------------------------------------------------------------
   # Module variables
@@ -173,7 +173,7 @@ server <- function(input, output, session) {
   # Overview tab
   observe({
     req(clean())
-    ovPageServer("overviewModule", clean())
+    overview_tab$server("overviewModule", clean())
   })
 
   # ------------------------------------------------------------------------------

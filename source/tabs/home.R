@@ -2,7 +2,7 @@
 #'
 #' @param id  Module ID.
 #' @return    Module UI.
-homePageUI <- function(id) {
+ui <- function(id) {
   ns <- NS(id)
   tagList(
     tags$head(
@@ -139,7 +139,7 @@ homePageUI <- function(id) {
 #'
 #' @param id  The ID of the module.
 #' @return    None.
-homePageServer <- function(id) {
+server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -287,3 +287,8 @@ homePageServer <- function(id) {
     # ------------------------------------------------------------------------------
   })
 }
+
+home_tab <- list(
+  ui = ui,
+  server = server
+)
