@@ -2,7 +2,7 @@
 #'
 #' @param id  Module ID.
 #' @return    Module UI.
-importDataUI <- function(id) {
+ui <- function(id) {
   ns <- NS(id)
   tagList(
     uiOutput(ns("importTabUI"))
@@ -13,7 +13,7 @@ importDataUI <- function(id) {
 #'
 #' @param id  The ID of the module.
 #' @return    A list containing cleaned data, bp logs, guideline used, and type.
-importDataServer <- function(id) {
+server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -21,13 +21,13 @@ importDataServer <- function(id) {
     # Sub-modules
     # ------------------------------------------------------------------------------
 
-    changeLogDataMo <- changeLogServer(
+    changeLogDataMo <- change_log$server(
       "moChangeLog",
       changeLogData = mo_change_log,
       cleanedData = cleanedData,
       availableData = availableData
     )
-    changeLogDataAb <- changeLogServer(
+    changeLogDataAb <- change_log$server(
       "abChangeLog",
       changeLogData = ab_change_log,
       cleanedData = cleanedData,
@@ -858,8 +858,8 @@ importDataServer <- function(id) {
           modalButton("Close")
         ),
         tabsetPanel(
-          tabPanel("Microorganisms", changeLogUI(ns("moChangeLog"))),
-          tabPanel("Antimicrobials", changeLogUI(ns("abChangeLog"))),
+          tabPanel("Microorganisms", change_log$ui(ns("moChangeLog"))),
+          tabPanel("Antimicrobials", change_log$ui(ns("abChangeLog"))),
           if (!is.null(input$valueType) && input$valueType == "MIC") {
             tabPanel(
               "Interpretations",
@@ -1296,3 +1296,8 @@ importDataServer <- function(id) {
     )
   })
 }
+
+import_tab <- list(
+  ui = ui,
+  server = server
+)

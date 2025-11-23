@@ -2,7 +2,7 @@
 #'
 #' @param id  Module ID.
 #' @return    Module UI.
-ovPageUI <- function(id) {
+ui <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(
@@ -61,7 +61,7 @@ ovPageUI <- function(id) {
 #' @param id    The ID of the module.
 #' @param data  The cleaned data.
 #' @return      None.
-ovPageServer <- function(id, data) {
+server <- function(id, data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -302,3 +302,9 @@ ovPageServer <- function(id, data) {
     # ------------------------------------------------------------------------------
   })
 }
+
+overview_tab <- list(
+  ui = ui,
+  server = server
+)
+
