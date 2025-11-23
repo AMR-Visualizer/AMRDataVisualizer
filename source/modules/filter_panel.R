@@ -2,7 +2,7 @@
 #'
 #' @param id  Module ID.
 #' @return    Module UI.
-filterPanelUI <- function(id) {
+ui <- function(id) {
   ns <- NS(id)
   bsCollapse(
     id = "collapsePanel",
@@ -40,7 +40,7 @@ filterPanelUI <- function(id) {
 #' @return                  List containing:
 #'                         - filteredData: Reactive filtered df.
 #'                        - activeFilters: Reactive selected filters.
-filterPanelServer <- function(id, data, default_filters, auto_populate = list()) {
+server <- function(id, data, default_filters, auto_populate = list()) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -451,3 +451,8 @@ filterPanelServer <- function(id, data, default_filters, auto_populate = list())
     ))
   })
 }
+
+filter_panel <- list(
+  ui = ui,
+  server = server
+)

@@ -2,7 +2,7 @@
 #'
 #' @param id  Module ID.
 #' @return    Module UI.
-micPageUI <- function(id, data) {
+ui <- function(id, data) {
   ns <- NS(id)
 
   tagList(
@@ -77,7 +77,7 @@ micPageUI <- function(id, data) {
 #' @param processedGuideline  A reactive that returns the guideline selected in data processing.
 #' @param bp_log              A reactive that returns the breakpoint log data.
 #' @return                    List of reactives relating to custom breakpoints and data with custom breakpoints applied.
-micPageServer <- function(id, reactiveData, processedGuideline, bp_log) {
+server <- function(id, reactiveData, processedGuideline, bp_log) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -1029,3 +1029,8 @@ micPageServer <- function(id, reactiveData, processedGuideline, bp_log) {
     ))
   })
 }
+
+mic_table_tab <- list(
+  ui = ui,
+  server = server
+)

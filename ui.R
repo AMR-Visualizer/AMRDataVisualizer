@@ -74,16 +74,16 @@ dashboardPage(
     # Tab menu items
     # -------------------------------------------------------------------------
     tabItems(
-      tabItem(tabName = "homeTab", homePageUI("home")),
-      tabItem(tabName = "importTab", importDataUI("dataImport")),
-      tabItem(tabName = "ovTab", ovPageUI("overviewModule")),
-      tabItem(tabName = "micTab", micPageUI("micModule")),
-      tabItem(tabName = "micDistTab", micDistPageUI("micDistModule")),
-      tabItem(tabName = "abTab", abPageUI("antibiogramModule")),
-      tabItem(tabName = "mapTab", mapPageUI("mapModule")),
-      tabItem(tabName = "trendsTab", tsPageUI("tsModule")),
-      tabItem(tabName = "mdrTab", mdrPageUI("mdrModule")),
-      tabItem(tabName = "exploreTab", explorePageUI("exModule"))
+      tabItem(tabName = "homeTab", home_tab$ui("home")),
+      tabItem(tabName = "importTab", import_tab$ui("dataImport")),
+      tabItem(tabName = "ovTab", overview_tab$ui("overviewModule")),
+      tabItem(tabName = "micTab", mic_table_tab$ui("micModule")),
+      tabItem(tabName = "micDistTab", mic_distribution_tab$ui("micDistModule")),
+      tabItem(tabName = "abTab", antibiogram_tab$ui("antibiogramModule")),
+      tabItem(tabName = "mapTab", map_tab$ui("mapModule")),
+      tabItem(tabName = "trendsTab", trends_tab$ui("tsModule")),
+      tabItem(tabName = "mdrTab", mdr_tab$ui("mdrModule")),
+      tabItem(tabName = "exploreTab", explore_tab$ui("exModule"))
     )
   )
 

@@ -2,7 +2,7 @@
 #'
 #' @param id  Module ID.
 #' @return    Module UI.
-importDataUI <- function(id) {
+ui <- function(id) {
   ns <- NS(id)
   tagList(
     uiOutput(ns("importTabUI"))
@@ -13,7 +13,7 @@ importDataUI <- function(id) {
 #'
 #' @param id  The ID of the module.
 #' @return    A list containing cleaned data, bp logs, guideline used, and type.
-importDataServer <- function(id) {
+server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -21,13 +21,13 @@ importDataServer <- function(id) {
     # Sub-modules
     # ------------------------------------------------------------------------------
 
-    changeLogDataMo <- changeLogServer(
+    changeLogDataMo <- change_log$server(
       "moChangeLog",
       changeLogData = mo_change_log,
       cleanedData = cleanedData,
       availableData = availableData
     )
-    changeLogDataAb <- changeLogServer(
+    changeLogDataAb <- change_log$server(
       "abChangeLog",
       changeLogData = ab_change_log,
       cleanedData = cleanedData,
@@ -609,8 +609,6 @@ importDataServer <- function(id) {
       return(data)
     }
 
-    # If wide-data is detected ------------------------------------------------
-
     #' Get the modal dialog for wide-format data.
     #'
     #' @param ns  Namespace function
@@ -638,6 +636,63 @@ importDataServer <- function(id) {
           justified = TRUE
         ),
         uiOutput(ns("abColsUI")),
+        easyClose = FALSE,
+        footer = NULL
+      )
+    }
+
+    #' Processing log modal dialog
+    #'
+    #' @return Modal dialog UI
+    processingLogModal <- function() {
+      modalDialog(
+        title = "Processing Log",
+        size = "l",
+
+        h5(
+          "The following log details how your uploaded data were processed. During this step, entries were standardized based on taxonomic reference databases. This includes resolving known synonyms, flagging uncertain matches, and identifying any entries that could not be confidently matched. Review the sections below to understand what changes were made and why.",
+          style = "text-align: center;"
+        ),
+        hr(),
+        br(),
+        div(
+          id = "import-modal-footer",
+          class = "align-end-row",
+          div(
+            class = "warning-parent",
+            p(
+              class = "antimicrobial-warning",
+              "Please save changes made to the Antimicrobial change log"
+            ),
+            p(
+              class = "microorganism-warning",
+              "Please save changes made to the Microorganism change log"
+            )
+          ),
+          downloadButton(ns("download_log"), "Download Log File", class = "changeLogButton white"),
+          modalButton("Close")
+        ),
+        tabsetPanel(
+          tabPanel("Microorganisms", change_log$ui(ns("moChangeLog"))),
+          tabPanel("Antimicrobials", change_log$ui(ns("abChangeLog"))),
+          if (!is.null(input$valueType) && input$valueType == "MIC") {
+            tabPanel(
+              "Interpretations",
+              div(class = "readonly-table", DT::dataTableOutput(ns("interpretation_log")))
+            )
+          },
+          if (!is.null(input$valueType) && input$valueType == "MIC") {
+            tabPanel(
+              "Is UTI?",
+              div(class = "readonly-table", DT::dataTableOutput(ns("uti_log")))
+            )
+          }
+        ),
+
+        #' Cannot be easy close as changes need to be saved before closing for
+        #' them to persist in the app.
+        #' Instead move the close and download buttons to the top to the modal
+        #' so the user does not need to scroll to the bottom.
         easyClose = FALSE,
         footer = NULL
       )
@@ -825,63 +880,6 @@ importDataServer <- function(id) {
     observeEvent(input$reopenLog, {
       showModal(processingLogModal())
     })
-
-    #' Processing log modal dialog
-    #'
-    #' @return Modal dialog UI
-    processingLogModal <- function() {
-      modalDialog(
-        title = "Processing Log",
-        size = "l",
-
-        h5(
-          "The following log details how your uploaded data were processed. During this step, entries were standardized based on taxonomic reference databases. This includes resolving known synonyms, flagging uncertain matches, and identifying any entries that could not be confidently matched. Review the sections below to understand what changes were made and why.",
-          style = "text-align: center;"
-        ),
-        hr(),
-        br(),
-        div(
-          id = "import-modal-footer",
-          class = "align-end-row",
-          div(
-            class = "warning-parent",
-            p(
-              class = "antimicrobial-warning",
-              "Please save changes made to the Antimicrobial change log"
-            ),
-            p(
-              class = "microorganism-warning",
-              "Please save changes made to the Microorganism change log"
-            )
-          ),
-          downloadButton(ns("download_log"), "Download Log File", class = "changeLogButton white"),
-          modalButton("Close")
-        ),
-        tabsetPanel(
-          tabPanel("Microorganisms", changeLogUI(ns("moChangeLog"))),
-          tabPanel("Antimicrobials", changeLogUI(ns("abChangeLog"))),
-          if (!is.null(input$valueType) && input$valueType == "MIC") {
-            tabPanel(
-              "Interpretations",
-              div(class = "readonly-table", DT::dataTableOutput(ns("interpretation_log")))
-            )
-          },
-          if (!is.null(input$valueType) && input$valueType == "MIC") {
-            tabPanel(
-              "Is UTI?",
-              div(class = "readonly-table", DT::dataTableOutput(ns("uti_log")))
-            )
-          }
-        ),
-
-        #' Cannot be easy close as changes need to be saved before closing for
-        #' them to persist in the app.
-        #' Instead move the close and download buttons to the top to the modal
-        #' so the user does not need to scroll to the bottom.
-        easyClose = FALSE,
-        footer = NULL
-      )
-    }
 
     observe({
       req(input$sirCol)
@@ -1296,3 +1294,8 @@ importDataServer <- function(id) {
     )
   })
 }
+
+import_tab <- list(
+  ui = ui,
+  server = server
+)

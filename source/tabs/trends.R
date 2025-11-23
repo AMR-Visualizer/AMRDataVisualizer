@@ -5,7 +5,7 @@
 #'
 #' @param id  Module ID.
 #' @return    Module UI.
-tsPageUI <- function(id) {
+ui <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(
@@ -17,7 +17,7 @@ tsPageUI <- function(id) {
 
       column(
         3,
-        filterPanelUI(ns("filters")),
+        filter_panel$ui(ns("filters")),
 
         # Controls ------------------------------------------------------------------
 
@@ -70,7 +70,7 @@ tsPageUI <- function(id) {
 #' @param id            The ID of the module.
 #' @param reactiveData  A reactive that returns the cleaned data.
 #' @return              None.
-tsPageServer <- function(id, reactiveData) {
+server <- function(id, reactiveData) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -78,7 +78,7 @@ tsPageServer <- function(id, reactiveData) {
     # Sub-modules
     # ------------------------------------------------------------------------------
 
-    filters <- filterPanelServer(
+    filters <- filter_panel$server(
       "filters",
       reactiveData,
       default_filters = c("Antimicrobial", "Microorganism", "Species", "Source", "Date"),
@@ -384,3 +384,8 @@ tsPageServer <- function(id, reactiveData) {
     # ------------------------------------------------------------------------------
   })
 }
+
+trends_tab <- list(
+  ui = ui,
+  server = server
+)

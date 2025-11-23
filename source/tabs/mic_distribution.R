@@ -2,7 +2,7 @@
 #'
 #' @param id  Module ID.
 #' @return    Module UI.
-micDistPageUI <- function(id, data) {
+ui <- function(id, data) {
   ns <- NS(id)
 
   tagList(
@@ -13,7 +13,7 @@ micDistPageUI <- function(id, data) {
 
       # Filters -----------------------------------------------------------------
 
-      column(3, filterPanelUI(ns("filters")))
+      column(3, filter_panel$ui(ns("filters")))
     )
   )
 }
@@ -23,7 +23,7 @@ micDistPageUI <- function(id, data) {
 #' @param id            The ID of the module.
 #' @param reactiveData  A reactive that returns the cleaned data to be explored.
 #' @return              None.
-micDistPageServer <- function(id, reactiveData) {
+server <- function(id, reactiveData) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -31,12 +31,16 @@ micDistPageServer <- function(id, reactiveData) {
     # Sub-modules
     # ------------------------------------------------------------------------------
 
-    filters <- filterPanelServer(
+    filters <- filter_panel$server(
       "filters",
       reactiveData,
       default_filters = c("Antimicrobial", "Microorganism", "Species", "Source", "Date"),
       auto_populate = list(Antimicrobial = TRUE, Microorganism = TRUE)
     )
+
+    # ------------------------------------------------------------------------------
+    # Reactives
+    # ------------------------------------------------------------------------------
 
     plotData <- reactive({
       filters$filteredData()
@@ -97,6 +101,10 @@ micDistPageServer <- function(id, reactiveData) {
       out$plot
     })
 
+    # ------------------------------------------------------------------------------
+    # Download Handlers
+    # ------------------------------------------------------------------------------
+
     output$save_btn <- downloadHandler(
       filename = function() paste0(Sys.Date(), "_AMRVisualizer_MICDistributions.png"),
       content = function(file) {
@@ -108,3 +116,8 @@ micDistPageServer <- function(id, reactiveData) {
     )
   })
 }
+
+mic_distribution_tab <- list(
+  ui = ui,
+  server = server
+)
