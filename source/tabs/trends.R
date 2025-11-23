@@ -1,6 +1,10 @@
 # To-do -------------------------------------------------------------------
 # - Confidence bands?
 
+#' UI for the trends tab module.
+#'
+#' @param id  Module ID.
+#' @return    Module UI.
 tsPageUI <- function(id) {
   ns <- NS(id)
   tagList(
@@ -61,6 +65,11 @@ tsPageUI <- function(id) {
   )
 }
 
+#' Server logic for the trends tab module.
+#'
+#' @param id            The ID of the module.
+#' @param reactiveData  A reactive that returns the cleaned data.
+#' @return              None.
 tsPageServer <- function(id, reactiveData) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -148,6 +157,11 @@ tsPageServer <- function(id, reactiveData) {
 
       tsData$Date <- as.Date(tsData$Date)
 
+      #' TODO: Documentation
+      #' [Summary]
+      #'
+      #' @param df [Description]
+      #' @return [Description]
       roll_forward <- function(df) {
         new_df <- df[1, ]
         new_df$Count <- 0
@@ -183,12 +197,7 @@ tsPageServer <- function(id, reactiveData) {
 
         numColors <- length(unique(tsDataRM$Antimicrobial))
 
-        gg_color_hue <- function(n) {
-          hues = seq(15, 375, length = n + 1)
-          hcl(h = hues, l = 65, c = 100)[1:n]
-        }
-
-        colorPalette = gg_color_hue(numColors)
+        colorPalette = get_gg_color_hue(numColors)
 
         plot_ly(
           tsDataRM,
@@ -217,6 +226,15 @@ tsPageServer <- function(id, reactiveData) {
           ) %>% # Adjust range to 0-100%
           config(displayModeBar = FALSE)
       } else if (input$tsType == "LOWESS") {
+        #' TODO: Documentation
+        #' [Summary]
+        #'
+        #' @param df [Description]
+        #' @param x [Description]
+        #' @param y [Description]
+        #' @param f [Description]
+        #'
+        #' @return [Description]
         apply_lowess <- function(df, x, y, f = input$lowessSpan) {
           lowess_result <- stats::lowess(df[[x]], df[[y]], f = f)
           df$low_propS <- lowess_result$y
@@ -235,12 +253,7 @@ tsPageServer <- function(id, reactiveData) {
 
         numColors <- length(unique(tsDataLowess$Antimicrobial))
 
-        gg_color_hue <- function(n) {
-          hues = seq(15, 375, length = n + 1)
-          hcl(h = hues, l = 65, c = 100)[1:n]
-        }
-
-        colorPalette = gg_color_hue(numColors)
+        colorPalette = get_gg_color_hue(numColors)
 
         plot_ly(
           tsDataLowess,
@@ -298,12 +311,7 @@ tsPageServer <- function(id, reactiveData) {
       } else {
         numColors <- length(unique(tsData$Antimicrobial))
 
-        gg_color_hue <- function(n) {
-          hues = seq(15, 375, length = n + 1)
-          hcl(h = hues, l = 65, c = 100)[1:n]
-        }
-
-        colorPalette = gg_color_hue(numColors)
+        colorPalette = get_gg_color_hue(numColors)
 
         plot_ly(
           tsData,

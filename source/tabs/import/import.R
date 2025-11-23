@@ -1,4 +1,7 @@
-# Module UI ---------------------------------------------------------------
+#' UI for the import tab module.
+#'
+#' @param id  Module ID.
+#' @return    Module UI.
 importDataUI <- function(id) {
   ns <- NS(id)
   tagList(
@@ -6,7 +9,10 @@ importDataUI <- function(id) {
   )
 }
 
-# Module Server -----------------------------------------------------------
+#' Server logic for the import tab module.
+#'
+#' @param id  The ID of the module.
+#' @return    A list containing cleaned data, bp logs, guideline used, and type.
 importDataServer <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -604,6 +610,11 @@ importDataServer <- function(id) {
     }
 
     # If wide-data is detected ------------------------------------------------
+
+    #' Get the modal dialog for wide-format data.
+    #'
+    #' @param ns  Namespace function
+    #' @return    Modal dialog UI
     wideFormatModal <- function(ns) {
       modalDialog(
         title = "Attention",
@@ -815,6 +826,9 @@ importDataServer <- function(id) {
       showModal(processingLogModal())
     })
 
+    #' Processing log modal dialog
+    #'
+    #' @return Modal dialog UI
     processingLogModal <- function() {
       modalDialog(
         title = "Processing Log",
@@ -1118,6 +1132,11 @@ importDataServer <- function(id) {
 
       data <- reactiveData()
 
+      #' TODO: Documentation
+      #' [Summary]
+      #'
+      #' @param colName [Description]
+      #' @return [Description]
       safeExtract <- function(colName) {
         if (colName %in% names(data) && !is.null(colName) && colName != "Not Present") {
           return(data[[colName]])

@@ -1,3 +1,7 @@
+#' UI for the antibiogram tab module.
+#'
+#' @param id  Module ID.
+#' @return    Module UI.
 abPageUI <- function(id) {
   ns <- NS(id)
   tagList(
@@ -32,7 +36,7 @@ abPageUI <- function(id) {
   )
 }
 
-#' Antibiogram page server.
+#' Server logic for the antibiogram tab module.
 #'
 #' @param id                    Module id.
 #' @param reactiveData          Reactive cleaned df (including any custom breakpoints).
@@ -426,6 +430,11 @@ abPageServer <- function(id, reactiveData, customBreakpoints, mic_or_sir, bp_log
     # Utility functions
     # ------------------------------------------------------------------------------
 
+    #' TODO: Documentation
+    #' [Summary]
+    #'
+    #' @param names Bacteria names to shorten.
+    #' @return      Shortened bacteria names.
     shorten_bacteria_names <- function(names) {
       str_replace(
         names,

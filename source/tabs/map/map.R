@@ -1,3 +1,7 @@
+#' UI for the map tab module.
+#'
+#' @param id  Module ID.
+#' @return    Module UI.
 mapPageUI <- function(id) {
   ns <- NS(id)
 
@@ -98,6 +102,10 @@ mapPageUI <- function(id) {
   )
 }
 
+#' Server logic for the map tab module.
+#'
+#' @param id  The ID of the module.
+#' @return    None.
 mapPageServer <- function(id, reactiveData) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
