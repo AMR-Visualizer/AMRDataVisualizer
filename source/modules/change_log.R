@@ -22,6 +22,7 @@ ui <- function(id) {
 #' @param cleanedData     The cleaned data to be updated when the table is edited.
 #' @param availableData   The available data to be used for filtering the cleaned data.
 #' @param type            The type of data being displayed in the table. Can be "microorganism" or "antimicrobial".
+#' @return                A reactive containing the updated change log data.
 server <- function(id, changeLogData, cleanedData, availableData, type = "microorganism") {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns

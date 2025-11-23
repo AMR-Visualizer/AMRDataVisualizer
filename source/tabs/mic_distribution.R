@@ -38,6 +38,10 @@ server <- function(id, reactiveData) {
       auto_populate = list(Antimicrobial = TRUE, Microorganism = TRUE)
     )
 
+    # ------------------------------------------------------------------------------
+    # Reactives
+    # ------------------------------------------------------------------------------
+
     plotData <- reactive({
       filters$filteredData()
     })
@@ -97,6 +101,10 @@ server <- function(id, reactiveData) {
       out$plot
     })
 
+    # ------------------------------------------------------------------------------
+    # Download Handlers
+    # ------------------------------------------------------------------------------
+
     output$save_btn <- downloadHandler(
       filename = function() paste0(Sys.Date(), "_AMRVisualizer_MICDistributions.png"),
       content = function(file) {
@@ -113,4 +121,3 @@ mic_distribution_tab <- list(
   ui = ui,
   server = server
 )
-
