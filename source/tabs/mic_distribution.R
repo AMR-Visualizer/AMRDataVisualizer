@@ -1,46 +1,59 @@
-micDistPageUI <- function(id, data) {
+#' UI for the MIC distribution tab module.
+#'
+#' @param id  Module ID.
+#' @return    Module UI.
+ui <- function(id, data) {
   ns <- NS(id)
-  
+
   tagList(
     fluidRow(
       # Main Content ------------------------------------------------------------
-      
+
       column(9, uiOutput(ns("content"))),
-      
+
       # Filters -----------------------------------------------------------------
-      
-      column(3, filterPanelUI(ns("filters")))
+
+      column(3, filter_panel$ui(ns("filters")))
     )
   )
 }
 
-micDistPageServer <- function(id, reactiveData, processedGuideline) {
+#' Server logic for the MIC distribution tab module.
+#'
+#' @param id            The ID of the module.
+#' @param reactiveData  A reactive that returns the cleaned data to be explored.
+#' @return              None.
+server <- function(id, reactiveData) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    
+
     # ------------------------------------------------------------------------------
     # Sub-modules
     # ------------------------------------------------------------------------------
-    
-    filters <- filterPanelServer(
+
+    filters <- filter_panel$server(
       "filters",
       reactiveData,
       default_filters = c("Antimicrobial", "Microorganism", "Species", "Source", "Date"),
       auto_populate = list(Antimicrobial = TRUE, Microorganism = TRUE)
     )
-    
+
+    # ------------------------------------------------------------------------------
+    # Reactives
+    # ------------------------------------------------------------------------------
+
     plotData <- reactive({
       filters$filteredData()
     })
-    
+
     initialData <- reactive({
       reactiveData()
     })
-    
+
     # ------------------------------------------------------------------------------
     # Render UI
     # ------------------------------------------------------------------------------
-    
+
     output$content <- renderUI({
       req(plotData())
       if (!is.null(plotData()) && nrow(plotData()) > 0) {
@@ -63,7 +76,7 @@ micDistPageServer <- function(id, reactiveData, processedGuideline) {
         )
       }
     })
-    
+
     output$errorHandling <- renderUI({
       div(
         style = "display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column; text-align: center;",
@@ -72,31 +85,39 @@ micDistPageServer <- function(id, reactiveData, processedGuideline) {
         h6("Try reducing the number of filters applied or adjust your data in the 'Import' tab.")
       )
     })
-    
+
     output$plot <- renderPlot({
       df <- plotData()
-      
+
       df$MIC <- as.character(df$MIC)
-      
+
       out <- plot_mic_distribution(
         data = df,
         drug_col = "Antimicrobial",
-        mic_col  = "MIC",
-        epsilon  = 1e-4
-      ) 
-      
+        mic_col = "MIC",
+        epsilon = 1e-4
+      )
+
       out$plot
     })
-    
+
+    # ------------------------------------------------------------------------------
+    # Download Handlers
+    # ------------------------------------------------------------------------------
+
     output$save_btn <- downloadHandler(
       filename = function() paste0(Sys.Date(), "_AMRVisualizer_MICDistributions.png"),
       content = function(file) {
-        df <- plotData(); df$MIC <- as.character(df$MIC)
+        df <- plotData()
+        df$MIC <- as.character(df$MIC)
         out <- plot_mic_distribution(df, drug_col = "Antimicrobial", mic_col = "MIC")
         ggplot2::ggsave(file, plot = out$plot, width = 12, height = 8, dpi = 300)
       }
     )
-    
-    
   })
 }
+
+mic_distribution_tab <- list(
+  ui = ui,
+  server = server
+)

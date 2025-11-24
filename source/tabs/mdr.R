@@ -1,4 +1,8 @@
-mdrPageUI <- function(id) {
+#' UI for the MDR tab module.
+#'
+#' @param id  Module ID.
+#' @return    Module UI.
+ui <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(
@@ -11,7 +15,7 @@ mdrPageUI <- function(id) {
       column(
         3,
 
-        filterPanelUI(ns("filters")),
+        filter_panel$ui(ns("filters")),
 
         # Legend ------------------------------------------------------------------
 
@@ -46,7 +50,12 @@ mdrPageUI <- function(id) {
   )
 }
 
-mdrPageServer <- function(id, reactiveData) {
+#' Server logic for the MDR tab module.
+#'
+#' @param id            The ID of the module.
+#' @param reactiveData  A reactive that returns the cleaned data.
+#' @return              None.
+server <- function(id, reactiveData) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -54,7 +63,7 @@ mdrPageServer <- function(id, reactiveData) {
     # Sub-modules
     # ------------------------------------------------------------------------------
 
-    filters <- filterPanelServer(
+    filters <- filter_panel$server(
       "filters",
       reactiveData,
       default_filters = c("Microorganism", "Species", "Source", "Date"),
@@ -242,6 +251,11 @@ mdrPageServer <- function(id, reactiveData) {
     # Utility functions
     # ------------------------------------------------------------------------------
 
+    #' TODO: Documentation
+    #' [Summary]
+    #'
+    #' @param data [Description]
+    #' @return [Description]
     cor_and_counts <- function(data) {
       n <- ncol(data)
       cor_matrix <- matrix(NA, n, n)
@@ -287,3 +301,8 @@ mdrPageServer <- function(id, reactiveData) {
     # ------------------------------------------------------------------------------
   })
 }
+
+mdr_tab <- list(
+  ui = ui,
+  server = server
+)

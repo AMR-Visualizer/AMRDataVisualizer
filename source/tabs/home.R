@@ -1,4 +1,8 @@
-homePageUI <- function(id) {
+#' UI for the home tab module.
+#'
+#' @param id  Module ID.
+#' @return    Module UI.
+ui <- function(id) {
   ns <- NS(id)
   tagList(
     tags$head(
@@ -131,8 +135,11 @@ homePageUI <- function(id) {
   )
 }
 
-
-homePageServer <- function(id) {
+#' Server logic for the home tab module.
+#'
+#' @param id  The ID of the module.
+#' @return    None.
+server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -152,6 +159,11 @@ homePageServer <- function(id) {
     # Utility functions
     # ------------------------------------------------------------------------------
 
+    #' Show the screenshot modal
+    #'
+    #' @param image Image path
+    #' @param text  Optional text to display above the image
+    #' @return      None
     showScreenshotModal <- function(image, text = NULL) {
       showModal(modalDialog(
         easyClose = TRUE,
@@ -275,3 +287,8 @@ homePageServer <- function(id) {
     # ------------------------------------------------------------------------------
   })
 }
+
+home_tab <- list(
+  ui = ui,
+  server = server
+)

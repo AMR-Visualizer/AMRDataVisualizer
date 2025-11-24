@@ -73,34 +73,47 @@ library(typedjs)
 # For renv setup see the "Managing Dependencies with `renv`" section in `Documentation/quick_start_guide.md`
 
 # ------------------------------------------------------------------------------
-# Source external modules
+# Source Tabs
 # ------------------------------------------------------------------------------
-source("Modules/homePage.R")
-source("Modules/ovPage.R")
-source("Modules/micPage.R")
-source("Modules/micDistPage.R")
-source("Modules/abPage.R")
-source("Modules/mapPage.R")
-source("Modules/tsPage.R")
-source("Modules/mdrPage.R")
-source("Modules/explorePage.R")
-source("Modules/importDataModule.R")
-source("Modules/filterPanelModule.R")
-source("Modules/changeLogModule.R")
+source("source/tabs/home.R")
+source("source/tabs/import/import.R")
+source("source/tabs/mic_table.R")
+source("source/tabs/mic_distribution.R")
+source("source/tabs/overview.R")
+source("source/tabs/antibiogram.R")
+source("source/tabs/map/map.R")
+source("source/tabs/trends.R")
+source("source/tabs/mdr.R")
+source("source/tabs/explore.R")
+
 
 # ------------------------------------------------------------------------------
-# Source external functions
+# Source Modules (Shiny modules)
 # ------------------------------------------------------------------------------
-source("Functions/dataCleaningFunction.R")
-source("Functions/columnDetectFunctions.R")
-source("Functions/regionMatching.R")
-source("Functions/parseWideColumns.R")
-source("Functions/formatAntibiogram.R")
-source("Functions/dataUtilityFunctions.R")
-source("Functions/micTableFunction.R")
-source("Functions/uiUtilities.R")
-source("Functions/generalUtilities.R")
-source("Functions/micDistributionPlot.R")
+source("source/modules/filter_panel.R")
+source("source/modules/change_log.R")
+
+
+# ------------------------------------------------------------------------------
+# Source Components (Non-Shiny modules)
+# ------------------------------------------------------------------------------
+source("source/components/ab_table.R")
+source("source/components/mic_dist_plot.R")
+source("source/components/mic_freq_table.R")
+
+# ------------------------------------------------------------------------------
+# Source Utilities
+# ------------------------------------------------------------------------------
+source("source/utils/utils.R")
+source("source/utils/ui_utils.R")
+source("source/utils/data_utils.R")
+source("source/utils/plot_utils.R")
+source("source/utils/report_utils.R")
+source("source/utils/column_detection.R")
+# Tab-specific utils
+source("source/tabs/import/utils.R")
+source("source/tabs/map/utils.R")
+
 
 # ------------------------------------------------------------------------------
 # Source external data

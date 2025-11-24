@@ -1,15 +1,7 @@
-#' General Utilities
+#' This file contains utility functions for plots.
 #'
-#' Functions:
-#' - `getCustomGuidelineName`: Returns a string for custom guidelines with the current year.
-
-#' Get the name for custom guidelines used throughout the app.
-#'
-#' @return A string representing the custom guideline name with the current year.
-getCustomGuidelineName <- function() {
-  paste("CUSTOM BREAKPOINTS", year(Sys.Date()))
-}
-
+#' @keywords internal
+NULL
 
 #' Get items for the antibiogram plot/table.
 #'
@@ -218,60 +210,5 @@ add_ab_cell_colours <- function(data) {
         TRUE ~ "white"
       )
     )
-  return(data)
-}
-
-#' Retrieve full clinical breakpoints with antibiotic and microorganism names.
-#'
-#' @return A data frame of clinical breakpoints with added antibiotic and microorganism names.
-getFullClinicalBps <- function() {
-  .ab_mapping <- data.frame(ab = unique(AMR::clinical_breakpoints$ab)) %>%
-    mutate(ab_name = AMR::ab_name(ab))
-
-  .mo_mapping <- data.frame(mo = unique(AMR::clinical_breakpoints$mo)) %>%
-    mutate(mo_name = AMR::mo_name(mo))
-
-  #' `AMR::clinical_breakpoints` have the `ab` and `mo` columns as abbreviations.
-  #' Add the actual names for easier searching in the table.
-  full_bps <- AMR::clinical_breakpoints %>%
-    left_join(.ab_mapping, by = "ab") %>%
-    left_join(.mo_mapping, by = "mo")
-  return(full_bps)
-}
-
-#' Retrieve clinical breakpoints with optional filtering.
-#'
-#' @param full_clinical_bps A data frame of clinical breakpoints, typically obtained from `getFullClinicalBps()`.
-#' @param filters           A named list of filters to apply to the clinical breakpoints data.
-#' @return                  A data frame of clinical breakpoints after applying the filters.
-#' @examples
-#' # Get all clinical breakpoints for E. coli
-#' get_clinical_bps(getFullClinicalBps(), filters = list(mo_name = "Escherichia coli"))
-#' # Get clinical breakpoints with multiple filters
-#' get_clinical_bps(getFullClinicalBps(), filters = list(mo_name = "Staphylococcus aureus", ab = c("AMX", "CIP")))
-#' @seealso AMR::clinical_breakpoints, AMR::as.ab, AMR::as.mo
-get_clinical_bps <- function(full_clinical_bps, filters = list()) {
-  data <- full_clinical_bps
-
-  for (filter in names(filters)) {
-    if (filter %in% colnames(data) && !is.null(filters[[filter]])) {
-      values <- unique(filters[[filter]])
-
-      # Convert to appropriate class if needed
-      if (filter == "ab" && !inherits(values, "ab")) {
-        values <- AMR::as.ab(values)
-      }
-      if (filter == "mo" && !inherits(values, "mo")) {
-        values <- AMR::as.mo(values)
-      }
-
-      data <- data %>%
-        filter(!!sym(filter) %in% values)
-    }
-  }
-  data <- data %>%
-    select(-ab, -mo) %>%
-    rename(ab = ab_name, mo = mo_name) %>%
-    select(all_of(colnames(AMR::clinical_breakpoints))) # Get the original column order
   return(data)
 }

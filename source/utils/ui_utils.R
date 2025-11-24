@@ -1,8 +1,7 @@
-#' General UI utility functions for the application.
+#' This file contains UI utility functions.
 #'
-#' Functions:
-#' - `getBpLabel`: Constructs a label for breakpoints.
-#' - `getBreakpointsMessage`: Creates a message displaying the breakpoints.
+#' @keywords internal
+NULL
 
 #' Get the label for breakpoints used in the app.
 #'

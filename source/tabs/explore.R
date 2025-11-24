@@ -1,11 +1,20 @@
-explorePageUI <- function(id) {
+#' UI for the explore tab module.
+#'
+#' @param id  Module ID.
+#' @return    Module UI.
+ui <- function(id) {
   ns <- NS(id)
   tagList(
     uiOutput(ns("content"))
   )
 }
 
-explorePageServer <- function(id, reactiveData) {
+#' Server logic for the explore tab module.
+#'
+#' @param id            The ID of the module.
+#' @param reactiveData  A reactive that returns the cleaned data to be explored.
+#' @return              None.
+server <- function(id, reactiveData) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -403,3 +412,8 @@ explorePageServer <- function(id, reactiveData) {
     # ------------------------------------------------------------------------------
   })
 }
+
+explore_tab <- list(
+  ui = ui,
+  server = server
+)

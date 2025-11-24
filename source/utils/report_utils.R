@@ -1,5 +1,7 @@
-#' Utilities used in the report generation process
+#' This file contains utility functions used in the report generation.
 #'
+#' @keywords internal
+NULL
 
 `%||%` <- function(x, y) if (is.null(x) || length(x) == 0) y else x
 
@@ -31,7 +33,7 @@ prepare_summary_value <- function(values) {
 }
 
 #' Get the report footnote link.
-#' 
+#'
 #' @param num        The footnote number
 #' @param page_num   The page number (optional)
 #' @return           A `span` element containing the footnote link.
@@ -52,7 +54,7 @@ get_report_footnote_link <- function(num, page_num = NULL) {
 }
 
 #' Get the footnote content.
-#' 
+#'
 #' @param num        The footnote number
 #' @param content    The content of the footnote
 #' @param page_num   The page number (optional)

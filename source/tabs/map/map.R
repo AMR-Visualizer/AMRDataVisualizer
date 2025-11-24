@@ -1,4 +1,8 @@
-mapPageUI <- function(id) {
+#' UI for the map tab module.
+#'
+#' @param id  Module ID.
+#' @return    Module UI.
+ui <- function(id) {
   ns <- NS(id)
 
   tagList(
@@ -11,7 +15,7 @@ mapPageUI <- function(id) {
 
       column(
         3,
-        filterPanelUI(ns("filters")),
+        filter_panel$ui(ns("filters")),
 
         # Legend ------------------------------------------------------------------
 
@@ -98,7 +102,11 @@ mapPageUI <- function(id) {
   )
 }
 
-mapPageServer <- function(id, reactiveData) {
+#' Server logic for the map tab module.
+#'
+#' @param id  The ID of the module.
+#' @return    None.
+server <- function(id, reactiveData) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -106,7 +114,7 @@ mapPageServer <- function(id, reactiveData) {
     # Sub-modules
     # ------------------------------------------------------------------------------
 
-    filters <- filterPanelServer(
+    filters <- filter_panel$server(
       "filters",
       reactiveData,
       default_filters = c("Antimicrobial", "Microorganism", "Species", "Source", "Date"),
@@ -375,3 +383,8 @@ mapPageServer <- function(id, reactiveData) {
     # ------------------------------------------------------------------------------
   })
 }
+
+map_tab <- list(
+  ui = ui,
+  server = server
+)

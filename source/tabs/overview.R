@@ -1,4 +1,8 @@
-ovPageUI <- function(id) {
+#' UI for the overview tab module.
+#'
+#' @param id  Module ID.
+#' @return    Module UI.
+ui <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(
@@ -52,7 +56,12 @@ ovPageUI <- function(id) {
   )
 }
 
-ovPageServer <- function(id, data) {
+#' Server logic for the overview tab module.
+#'
+#' @param id    The ID of the module.
+#' @param data  The cleaned data.
+#' @return      None.
+server <- function(id, data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -170,12 +179,7 @@ ovPageServer <- function(id, data) {
 
       numColors <- length(unique(plotData$Class))
 
-      gg_color_hue <- function(n) {
-        hues = seq(15, 375, length = n + 1)
-        hcl(h = hues, l = 65, c = 100)[1:n]
-      }
-
-      colorPalette = gg_color_hue(numColors)
+      colorPalette = get_gg_color_hue(numColors)
 
       plot_ly(
         data = plotData,
@@ -298,3 +302,9 @@ ovPageServer <- function(id, data) {
     # ------------------------------------------------------------------------------
   })
 }
+
+overview_tab <- list(
+  ui = ui,
+  server = server
+)
+

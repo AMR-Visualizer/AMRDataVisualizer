@@ -1,3 +1,18 @@
+#' Create MIC frequency tables with conditional formatting
+#'
+#' @param data                  Data frame with MIC data
+#' @param group_by_var          Variable to group by (e.g., "Year", "Month")
+#' @param ab                    Antimicrobial
+#' @param mo                    Microorganism
+#' @param type                  Type of sample ("Urinary" or other)
+#' @param species               Species
+#' @param guideline             Guideline for breakpoints
+#' @param s_bp                  S Breakpoint
+#' @param r_bp                  R Breakpoint
+#' @param reference_data        Reference data for breakpoints
+#' @param use_single_bp_as_both Logical, whether to use a single provided breakpoint as both S and R
+#'
+#' @return A {gt} table object
 create_mic_frequency_tables <- function(
   data,
   group_by_var,
@@ -66,10 +81,14 @@ create_mic_frequency_tables <- function(
       silent = TRUE
     )
   }
-  
+
   single_bp_applied <- FALSE
   if (use_single_bp_as_both && xor(is.na(bp_s), is.na(bp_r))) {
-    if (!is.na(bp_s)) bp_r <- bp_s else bp_s <- bp_r
+    if (!is.na(bp_s)) {
+      bp_r <- bp_s
+    } else {
+      bp_s <- bp_r
+    }
     single_bp_applied <- TRUE
   }
 

@@ -1,5 +1,8 @@
-# Module UI ---------------------------------------------------------------
-changeLogUI <- function(id) {
+#' UI for the change log module.
+#'
+#' @param id  Module ID.
+#' @return    Module UI.
+ui <- function(id) {
   ns <- NS(id)
   div(
     class = "changelog-table",
@@ -12,14 +15,15 @@ changeLogUI <- function(id) {
   )
 }
 
-# Module Server -----------------------------------------------------------
-
+#' Server logic for the change log module.
+#'
 #' @param id              The ID of the module.
 #' @param changeLogData   The change log data to be displayed in the table.
 #' @param cleanedData     The cleaned data to be updated when the table is edited.
 #' @param availableData   The available data to be used for filtering the cleaned data.
 #' @param type            The type of data being displayed in the table. Can be "microorganism" or "antimicrobial".
-changeLogServer <- function(id, changeLogData, cleanedData, availableData, type = "microorganism") {
+#' @return                A reactive containing the updated change log data.
+server <- function(id, changeLogData, cleanedData, availableData, type = "microorganism") {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -215,3 +219,8 @@ changeLogServer <- function(id, changeLogData, cleanedData, availableData, type 
     return(tableChangeLogData)
   })
 }
+
+change_log <- list(
+  ui = ui,
+  server = server
+)

@@ -1,4 +1,8 @@
-micPageUI <- function(id, data) {
+#' UI for the MIC table tab module.
+#'
+#' @param id  Module ID.
+#' @return    Module UI.
+ui <- function(id, data) {
   ns <- NS(id)
 
   tagList(
@@ -66,7 +70,14 @@ micPageUI <- function(id, data) {
   )
 }
 
-micPageServer <- function(id, reactiveData, processedGuideline, bp_log) {
+#' Server logic for the MIC table tab module.
+#'
+#' @param id                  The ID of the module.
+#' @param reactiveData        A reactive that returns the cleaned data to be explored.
+#' @param processedGuideline  A reactive that returns the guideline selected in data processing.
+#' @param bp_log              A reactive that returns the breakpoint log data.
+#' @return                    List of reactives relating to custom breakpoints and data with custom breakpoints applied.
+server <- function(id, reactiveData, processedGuideline, bp_log) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -370,6 +381,21 @@ micPageServer <- function(id, reactiveData, processedGuideline, bp_log) {
             UTI == isUti
           )
 
+        if (nrow(matchingData) == 0) {
+          shiny::showNotification(
+            paste0(
+              "Custom breakpoint ignored: no matching isolates found for ",
+              customBp$Microorganism,
+              " + ",
+              customBp$Antimicrobial,
+              if (customBp$uti) " (UTI = TRUE)." else " (UTI = FALSE)."
+            ),
+            type = "warning",
+            duration = 8
+          )
+          next # skip this breakpoint
+        }
+
         # Re-calculate MIC interpretations based on custom breakpoints
         newInterpretations <- data.frame(
           MIC = unique(matchingData$MIC)
@@ -392,6 +418,12 @@ micPageServer <- function(id, reactiveData, processedGuideline, bp_log) {
         bp_S <- customGuideline$breakpoint_S
         bp_R <- customGuideline$breakpoint_R
 
+        #' TODO: Documentation
+        #' [Summary]
+        #'
+        #' @param x [Description]
+        #'
+        #' @return [Description]
         parse_mic_interval <- function(x) {
           op <- str_match(x, "^(<=|>=|<|>|=)?\\s*([0-9.]+)$")[, 2]
           val <- as.numeric(str_match(x, "^(?:<=|>=|<|>|=)?\\s*([0-9.]+)$")[, 2])
@@ -412,6 +444,17 @@ micPageServer <- function(id, reactiveData, processedGuideline, bp_log) {
           )
         }
 
+        #' TODO: Documentation
+        #' [Summary]
+        #'
+        #' @param low [Description]
+        #' @param low_inc [Description]
+        #' @param high [Description]
+        #' @param high_inc [Description]
+        #' @param S [Description]
+        #' @param R [Description]
+        #'
+        #' @return [Description]
         classify_interval <- function(low, low_inc, high, high_inc, S, R) {
           entirely_S <- (high < S) | (high == S)
           entirely_R <- (low > R) | (low == R)
@@ -1001,3 +1044,8 @@ micPageServer <- function(id, reactiveData, processedGuideline, bp_log) {
     ))
   })
 }
+
+mic_table_tab <- list(
+  ui = ui,
+  server = server
+)

@@ -1,3 +1,12 @@
+#' This file contains utility functions used in the map tab.
+#'
+#' @keywords internal
+NULL
+
+#' Preprocess map shapefile data based on regions and subregions in the data.
+#'
+#' @param data  Dataframe with data used in the map plot.
+#' @return      Simple features dataframe with map shapefile data.
 preprocessMapData <- function(data) {
   uniqueRegions <- unique(data$Region)
   uniqueSubregions <- unique(data$Subregion)
@@ -23,6 +32,10 @@ preprocessMapData <- function(data) {
   return(map)
 }
 
+#' Preprocess data for plotting on map.
+#'
+#' @param data  Dataframe with data used in the map plot.
+#' @return      Dataframe processed for plotting on map.
 preprocessPlotData <- function(data) {
   if (is.null(data) || nrow(data) == 0) {
     return(NULL)
@@ -49,6 +62,12 @@ preprocessPlotData <- function(data) {
   return(mapData)
 }
 
+#' TODO: Documentation
+#' [Summary]
+#'
+#' @param map [Description]
+#' @param data [Description]
+#' @return [Description]
 matchSubregions <- function(map, data) {
   if (is.null(data) || nrow(data) == 0) {
     return(NULL)
@@ -58,6 +77,11 @@ matchSubregions <- function(map, data) {
 
   chunks <- split(data, rep(1:numCores, length.out = nrow(data)))
 
+  #' TODO: Documentation
+  #' [Summary]
+  #'
+  #' @param text [Description]
+  #' @return [Description]
   extract_locations <- function(text) {
     if (is.na(text) || text == "") {
       return(character(0)) # Return empty character vector for missing values

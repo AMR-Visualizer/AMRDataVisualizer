@@ -1,4 +1,8 @@
-filterPanelUI <- function(id) {
+#' UI for the filter panel module.
+#'
+#' @param id  Module ID.
+#' @return    Module UI.
+ui <- function(id) {
   ns <- NS(id)
   bsCollapse(
     id = "collapsePanel",
@@ -27,7 +31,7 @@ filterPanelUI <- function(id) {
   )
 }
 
-#' Filter module server.
+#' Server logic for the filter panel module.
 #'
 #' @param id                Module id.
 #' @param reactiveData      Df of data to filter (can be reactive or static).
@@ -36,7 +40,7 @@ filterPanelUI <- function(id) {
 #' @return                  List containing:
 #'                         - filteredData: Reactive filtered df.
 #'                        - activeFilters: Reactive selected filters.
-filterPanelServer <- function(id, data, default_filters, auto_populate = list()) {
+server <- function(id, data, default_filters, auto_populate = list()) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -208,6 +212,12 @@ filterPanelServer <- function(id, data, default_filters, auto_populate = list())
       NULL
     }
 
+    #' Apply default filters to the data.
+    #'
+    #' @param targetData    Dataframe to filter.
+    #' @param filters       Character vector of column names to apply default filters on.
+    #' @param auto_populate Named list of columns to auto-populate.
+    #' @return              Filtered dataframe.
     applyDefaultFilters <- function(targetData, filters, auto_populate) {
       filtered <- targetData
       for (col in filters) {
@@ -441,3 +451,8 @@ filterPanelServer <- function(id, data, default_filters, auto_populate = list())
     ))
   })
 }
+
+filter_panel <- list(
+  ui = ui,
+  server = server
+)
