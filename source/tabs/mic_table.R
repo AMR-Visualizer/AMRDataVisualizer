@@ -372,13 +372,24 @@ server <- function(id, reactiveData, processedGuideline, bp_log) {
           host_map$host
         ))
 
+        data <- data %>%
+          mutate(
+            mo = AMR::as.mo(Microorganism),
+            genus = AMR::mo_genus(mo)
+          )
+        
         # Data which matches the custom breakpoint criteria
+        bp_mo      <- AMR::as.mo(customBp$Microorganism)
+        bp_genus   <- AMR::mo_genus(bp_mo)
+        bp_species <- AMR::mo_species(bp_mo)
+        bp_ab      <- AMR::ab_name(customBp$Antimicrobial)
+        
         matchingData <- data %>%
-          filter(host %in% allowed_values) %>%
-          filter(
-            Antimicrobial == AMR::ab_name(customBp$Antimicrobial),
-            Microorganism == AMR::mo_name(customBp$Microorganism),
-            UTI == isUti
+          dplyr::filter(
+            host %in% allowed_values,
+            Antimicrobial == bp_ab,
+            UTI == isUti,
+            mo == bp_mo | genus == bp_genus   # species OR genus match
           )
 
         if (nrow(matchingData) == 0) {
@@ -395,7 +406,7 @@ server <- function(id, reactiveData, processedGuideline, bp_log) {
           )
           next # skip this breakpoint
         }
-
+        
         # Re-calculate MIC interpretations based on custom breakpoints
         newInterpretations <- data.frame(
           MIC = unique(matchingData$MIC)
@@ -603,19 +614,40 @@ server <- function(id, reactiveData, processedGuideline, bp_log) {
     output$customBreakpointsUI <- renderUI({
       req(!showErrorPanel())
       req(input$moFilter, input$abFilter, input$typeFilter, input$groupingVar)
-
-      existingBp <- allCustomBreakpoints() %>%
-        filter(
-          (Microorganism == input$moFilter | mo == AMR::as.mo(input$moFilter)),
+      
+      bp <- allCustomBreakpoints()
+      
+      if (nrow(bp) == 0) {
+        return(getCustomBpInputs())
+      }
+      
+      input_mo    <- AMR::as.mo(input$moFilter)
+      input_genus <- AMR::mo_genus(input_mo)
+      
+      existingBp <- bp %>%
+        dplyr::mutate(
+          mo_code = if ("mo" %in% names(.)) mo else AMR::as.mo(Microorganism),
+          genus   = AMR::mo_genus(mo_code)
+        ) %>%
+        dplyr::filter(
+          # species match OR mo code match OR genus match
+          (Microorganism == input$moFilter |
+             mo_code == input_mo |
+             genus == input_genus),
           (Antimicrobial == input$abFilter | ab == AMR::as.ab(input$abFilter)),
           host == selected_host()
         )
-
+      
       if (nrow(existingBp) == 0) {
         return(getCustomBpInputs())
       }
-      getCustomBpInputs(as.numeric(existingBp$breakpoint_S), as.numeric(existingBp$breakpoint_R))
+      
+      getCustomBpInputs(
+        as.numeric(existingBp$breakpoint_S[1]),
+        as.numeric(existingBp$breakpoint_R[1])
+      )
     })
+    
 
     # Only show the custom breakpoints message if there is a single microorganism selected
     output$breaksMessage <- renderUI({
@@ -671,19 +703,39 @@ server <- function(id, reactiveData, processedGuideline, bp_log) {
     #' @param data  The clinical breakpoints data to filter.
     #' @return      The filtered clinical breakpoints data.
     filter_by_filters <- function(data) {
-      is_uti <- input$typeFilter == "Urinary"
-      mo_val <- AMR::as.mo(input$moFilter)
-      ab_val <- AMR::as.ab(input$abFilter)
+      is_uti   <- input$typeFilter == "Urinary"
+      mo_val   <- AMR::as.mo(input$moFilter)
+      genus_val <- AMR::mo_genus(mo_val)
+      ab_val   <- AMR::as.ab(input$abFilter)
       host_val <- selected_host()
-
-      data <- data %>%
-        filter(method == "MIC") %>%
-        filter(uti == is_uti) %>%
-        filter(host == host_val) %>%
-        filter(mo == mo_val) %>%
-        filter(ab == ab_val)
-      return(data)
+      
+      base <- data %>%
+        dplyr::filter(
+          method == "MIC",
+          uti == is_uti,
+          host == host_val,
+          ab == ab_val
+        )
+      
+      # Try exact species match
+      exact <- base %>% dplyr::filter(mo == mo_val)
+      if (nrow(exact) > 0) {
+        return(exact)
+      }
+      
+      # Fallback to genu-level
+      genus_matched <- base %>%
+        dplyr::mutate(genus = AMR::mo_genus(mo)) %>%
+        dplyr::filter(genus == genus_val)
+      
+      if (nrow(genus_matched) > 0) {
+        return(genus_matched)
+      }
+      
+      # Nothing found -> return empty with same cols
+      base[0, , drop = FALSE]
     }
+    
 
     #' Get the UI inputs for custom breakpoints.
     #'
