@@ -577,18 +577,19 @@ server <- function(id, reactiveData, customBreakpoints, mic_or_sir, bp_log) {
         )
       })
       normalizedReport <- normalizePath(file.path(src, "Reports", "Antibiogram.qmd"))
-      stylesPath <- normalizePath(file.path(src, "www", "css", "report.css"))
-      logoPath <- normalizePath(file.path(src, "www", "img", "logoDark.png"))
-      bpImgPath <- normalizePath(file.path(src, "www", "img", "report-bp-example.png"))
-
-      uiUtilsPath <- normalizePath(file.path(src, "Functions", "uiUtilities.R"))
-      reportUtilsPath <- normalizePath(file.path(src, "Functions", "reportUtilities.R"))
-      generalUtilsPath <- normalizePath(file.path(src, "Functions", "generalUtilities.R"))
+      stylesPath       <- normalizePath(file.path(src, "www", "css", "report.css"))
+      logoPath         <- normalizePath(file.path(src, "www", "img", "logoDark.png"))
+      bpImgPath        <- normalizePath(file.path(src, "www", "img", "report-bp-example.png"))
+      
+      uiUtilsPath      <- normalizePath(file.path(src, "source", "utils", "ui_utils.R"))
+      reportUtilsPath  <- normalizePath(file.path(src, "source", "utils", "report_utils.R"))
+      generalUtilsPath <- normalizePath(file.path(src, "source", "utils", "utils.R"))
 
       file.copy(normalizedReport, "Antibiogram.qmd", overwrite = TRUE)
       file.copy(stylesPath, "report.css", overwrite = TRUE)
       file.copy(logoPath, "logo.png", overwrite = TRUE)
       file.copy(bpImgPath, "report-bp-example.png", overwrite = TRUE)
+      
       file.copy(uiUtilsPath, "ui_utils.R", overwrite = TRUE)
       file.copy(reportUtilsPath, "report_utils.R", overwrite = TRUE)
       file.copy(generalUtilsPath, "general_utils.R", overwrite = TRUE)

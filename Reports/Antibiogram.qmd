@@ -21,8 +21,8 @@ library(shiny)
 library(dplyr)
 library(stringr)
 
-source("report_utils.R")
 source("ui_utils.R")
+source("report_utils.R")
 source("general_utils.R")
 
 filters <- params$filters
