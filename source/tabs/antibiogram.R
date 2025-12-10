@@ -814,7 +814,7 @@ server <- function(id, reactiveData, customBreakpoints, mic_or_sir, bp_log) {
         withProgress(message = 'Rendering, please wait!', {
           tmp <- tempdir()
           download_html_report(tmp)
-          # file.rename("Antibiogram.html", file)
+          file.rename("Antibiogram.html", file)
           tmp_html <- file.path(tmp, "Antibiogram.html")
           if (file.exists(tmp_html)) {
             file.copy(tmp_html, file, overwrite = TRUE)
@@ -861,14 +861,48 @@ server <- function(id, reactiveData, customBreakpoints, mic_or_sir, bp_log) {
       },
       content = function(file) {
         sheets <- list()
-
+        
         if (outputType() == "classic") {
-          sheets[["Antibiogram"]] <- classicAbTableData() %>% select(-starts_with("colour_"))
+          
+          full_df <- classicAbTableData()
+          
+          main_df <- full_df %>% select(-starts_with("colour_"))
+          sheets[["Antibiogram"]] <- main_df
+          
+          sample_size_df <- full_df %>% select(1, starts_with("obs_"))
+          if (ncol(sample_size_df) > 1) {
+            sheets[["Sample Size"]] <- sample_size_df
+          }
+          
         } else if (outputType() == "classic_split") {
-          sheets[["Gram Negative"]] <- classicAbTableData() %>% select(-starts_with("colour_"))
-          sheets[["Gram Positive"]] <- classicAbTableData2() %>% select(-starts_with("colour_"))
+          
+          full_df_neg <- classicAbTableData()
+          full_df_pos <- classicAbTableData2()
+          
+          main_df_neg <- full_df_neg %>% select(-starts_with("colour_"),
+                                                -starts_with("obs_"))
+          main_df_pos <- full_df_pos %>% select(-starts_with("colour_"),
+                                                -starts_with("obs_"))
+          
+          sheets[["Gram Negative"]] <- main_df_neg
+          sheets[["Gram Positive"]] <- main_df_pos
+          
+          sample_size_neg <- full_df_neg %>% select(1, starts_with("obs_"))
+          if (ncol(sample_size_neg) > 1) {
+            sheets[["Gram Negative Sample Size"]] <- sample_size_neg
+          }
+          
+          sample_size_pos <- full_df_pos %>% select(1, starts_with("obs_"))
+          if (ncol(sample_size_pos) > 1) {
+            sheets[["Gram Positive Sample Size"]] <- sample_size_pos
+          }
         }
-
+        
+        ci_df <- clopper_pearson_ci()
+        if (ncol(ci_df) > 0) {
+          sheets[["Confidence Intervals"]] <- ci_df
+        }
+        
         writexl::write_xlsx(sheets, path = file)
       }
     )
