@@ -49,7 +49,7 @@ library(gt)
 library(leaflet)
 library(mapview)
 library(tigris)
-library(HatchedPolygons)
+library(sp)
 
 # Visualization - Plots
 library(plotly)
