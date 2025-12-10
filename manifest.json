@@ -68,7 +68,6 @@
         "Encoding": "UTF-8",
         "RoxygenNote": "7.3.1",
         "Config/pak/sysreqs": "libabsl-dev cmake libgdal-dev gdal-bin libgeos-dev\nlibssl-dev libproj-dev libsqlite3-dev libudunits2-dev",
-        "Repository": "https://statnmap.r-universe.dev",
         "Date/Publication": "2024-05-13 14:43:23 UTC",
         "RemoteUrl": "https://github.com/statnmap/HatchedPolygons",
         "RemoteRef": "HEAD",
