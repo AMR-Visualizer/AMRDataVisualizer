@@ -85,6 +85,7 @@ source("source/tabs/map/map.R")
 source("source/tabs/trends.R")
 source("source/tabs/mdr.R")
 source("source/tabs/explore.R")
+source("source/tabs/about.R")
 
 
 # ------------------------------------------------------------------------------

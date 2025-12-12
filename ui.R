@@ -37,7 +37,14 @@ dashboardPage(
     ),
 
     # Dynamically generated menu (e.g., based on presence of data)
-    uiOutput("menu")
+    uiOutput("menu"),
+    
+    tags$div(
+      sidebarMenu(
+        menuItem("About", tabName = "aboutTab", icon = icon("circle-question", class = "nav-icon"))
+      ),
+      style = "margin-top: auto;"
+    )
   ),
 
   # ---------------------------------------------------------------------------
@@ -83,7 +90,8 @@ dashboardPage(
       tabItem(tabName = "mapTab", map_tab$ui("mapModule")),
       tabItem(tabName = "trendsTab", trends_tab$ui("tsModule")),
       tabItem(tabName = "mdrTab", mdr_tab$ui("mdrModule")),
-      tabItem(tabName = "exploreTab", explore_tab$ui("exModule"))
+      tabItem(tabName = "exploreTab", explore_tab$ui("exModule")),
+      tabItem(tabName = "aboutTab", about_tab$ui("aboutModule"))
     )
   )
 
