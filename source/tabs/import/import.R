@@ -21,13 +21,13 @@ server <- function(id) {
     # Sub-modules
     # ------------------------------------------------------------------------------
 
-    changeLogDataMo <- change_log$server(
+    changeLogResultsMo <- change_log$server(
       "moChangeLog",
       changeLogData = mo_change_log,
       cleanedData = changeLogSource,
       availableData = availableData
     )
-    changeLogDataAb <- change_log$server(
+    changeLogResultsAb <- change_log$server(
       "abChangeLog",
       changeLogData = ab_change_log,
       cleanedData = changeLogSource,
@@ -810,6 +810,32 @@ server <- function(id) {
     # ------------------------------------------------------------------------------
     # Observes
     # ------------------------------------------------------------------------------
+
+    # Observe changes from the microorganism change log and update cleanedData
+    observe({
+      updatedData <- changeLogResultsMo$updatedCleanedData()
+      req(!is.null(updatedData))
+      
+      # Update the appropriate reactiveVal based on which data source was modified
+      if (!is.null(cleanedData()) && nrow(cleanedData()) > 0) {
+        cleanedData(updatedData)
+      } else if (!is.null(cleanedDataAllCultures())) {
+        cleanedDataAllCultures(updatedData)
+      }
+    }) %>% bindEvent(changeLogResultsMo$updatedCleanedData())
+
+    # Observe changes from the antimicrobial change log and update cleanedData
+    observe({
+      updatedData <- changeLogResultsAb$updatedCleanedData()
+      req(!is.null(updatedData))
+      
+      # Update the appropriate reactiveVal based on which data source was modified
+      if (!is.null(cleanedData()) && nrow(cleanedData()) > 0) {
+        cleanedData(updatedData)
+      } else if (!is.null(cleanedDataAllCultures())) {
+        cleanedDataAllCultures(updatedData)
+      }
+    }) %>% bindEvent(changeLogResultsAb$updatedCleanedData())
 
     # Logic to disable dropdown menu if file is uploaded
     observe({

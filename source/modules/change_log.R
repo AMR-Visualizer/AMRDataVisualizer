@@ -159,6 +159,9 @@ server <- function(id, changeLogData, cleanedData, availableData, type = "microo
     }) %>%
       bindEvent(input$updateTableData)
 
+    # Store the updated cleaned data to be returned to the parent module
+    updatedCleanedData <- reactiveVal(NULL)
+
     # Triggered on the save button click.
     observe({
       newData <- fromJSON(input$updateTableData)
@@ -183,8 +186,8 @@ server <- function(id, changeLogData, cleanedData, availableData, type = "microo
       #' changing target column values for the rows that are expected to be changed.
       #' This is a fail-safe in case there are any duplicates of names in the change log.
       oldChangeLogData <- currentChangeLogData()
-      cleanedData <- cleanedData()
-      availableData <- availableData() %>%
+      cleanedDataCopy <- cleanedData()
+      availableDataCopy <- availableData() %>%
         mutate(InternalID = as.character(InternalID))
 
       originalTargetColumn <- switch(
@@ -193,19 +196,19 @@ server <- function(id, changeLogData, cleanedData, availableData, type = "microo
         antimicrobial = "Antimicrobial"
       )
 
-      availableData <- availableData %>%
+      availableDataCopy <- availableDataCopy %>%
         filter(!!sym(originalTargetColumn) %in% updatedByUser$original)
 
-      for (x in seq_along(unique(availableData[[originalTargetColumn]]))) {
-        targetValue <- unique(availableData[[originalTargetColumn]])[x]
-        targetIDs <- availableData$InternalID[availableData[[originalTargetColumn]] == targetValue]
+      for (x in seq_along(unique(availableDataCopy[[originalTargetColumn]]))) {
+        targetValue <- unique(availableDataCopy[[originalTargetColumn]])[x]
+        targetIDs <- availableDataCopy$InternalID[availableDataCopy[[originalTargetColumn]] == targetValue]
         newValue <- updatedByUser$renamed[updatedByUser$original == targetValue]
-        cleanedData[[originalTargetColumn]][cleanedData$InternalID %in% targetIDs] <- newValue
+        cleanedDataCopy[[originalTargetColumn]][cleanedDataCopy$InternalID %in% targetIDs] <- newValue
         oldChangeLogData[, 2][oldChangeLogData[[originalTargetColumn]] == targetValue] <- newValue
       }
 
-      # Update the cleaned data with the new values changed by the user.
-      cleanedData(cleanedData)
+      # Store the updated data to be returned to the parent module
+      updatedCleanedData(cleanedDataCopy)
       currentChangeLogData(oldChangeLogData)
       shinyjs::runjs(sprintf('enableModalClose("%s");', type))
     }) %>%
@@ -215,8 +218,11 @@ server <- function(id, changeLogData, cleanedData, availableData, type = "microo
     # Module return
     # ------------------------------------------------------------------------------
 
-    # Return the current change log data reactive
-    return(tableChangeLogData)
+    # Return both the change log data and the updated cleaned data
+    return(list(
+      changeLogData = tableChangeLogData,
+      updatedCleanedData = updatedCleanedData
+    ))
   })
 }
 
