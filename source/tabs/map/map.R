@@ -326,7 +326,11 @@ server <- function(id, reactiveData) {
       }
       
       map_output <- leaflet(map) %>%
-        addProviderTiles(providers$CartoDB.Positron) %>%
+        #addProviderTiles(providers$CartoDB.Positron) %>%
+        addTiles(
+          urlTemplate =
+            "https://basemaps.cartocdn.com/rastertiles/positron/{z}/{x}/{y}.png?key=cb1_42cp_1_edf15bf7fb5b060ef0caebf3"
+        ) %>%
         addPolygons(
           data = map1,
           fillColor = ~ color_pal(get(colorColumn)),
@@ -345,6 +349,13 @@ server <- function(id, reactiveData) {
       }
       
       map_output <- map_output %>%
+      addPolygons(
+          data = baseMap(),
+          fillColor = "transparent",
+          color = "#777777",
+          weight = 1.5,
+          opacity = 1
+        ) %>%
         addPolygons(
           fillColor = "transparent",
           color = "#777777",
