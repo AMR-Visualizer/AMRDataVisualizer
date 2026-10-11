@@ -1467,8 +1467,8 @@ server <- function(id) {
           file.copy(src, "ProcessingLog.rmd", overwrite = TRUE)
 
           render_env <- new.env()
-          render_env$mo_change_log <- changeLogDataMo()
-          render_env$ab_change_log <- changeLogDataAb()
+          render_env$mo_change_log <- changeLogResultsMo$changeLogData()
+          render_env$ab_change_log <- changeLogResultsAb$changeLogData()
           render_env$bp_log <- bp_log()
           render_env$uti_log <- uti_log()
 
