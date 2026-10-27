@@ -23,9 +23,12 @@ To address this challenge, we developed a standardized, user-friendly AMR analys
 
 # Statement of Need
 
-AST data from diagnostic laboratories represent a valuable yet underutilized resource for epidemiologists, microbiologists, and clinicians in both human and veterinary medicine [@10.1093/ofid/ofw172.673]. This underuse limits the potential of AST data to inform empiric therapy and enhance AMR surveillance efforts [@doi:10.1128/jcm.00184-07]. Although not exclusive to AMR, microbiology laboratories often encounter significant barriers when implementing new technologies or modifying existing workflows. These include technology and personnel costs, limitations to staff expertise, privacy concerns, communication challenges, and the need for stakeholder buy-in [@10.1093/jac/dkae279]. By offering a tool that mitigates these barriers, it should be possible to unlock greater value from AST data that are already routinely collected but remain underexploited.  
-  
-Open-source code and packages for the rapid, standardized assessment of AMR data have been shown to reduce reporting time and improve result accuracy [@10.1093/jacamr/dlac143]. However, these tools require users to have at least a foundational knowledge of programming, which is not always held by those who manage AST data. There is a gap in tools that provide a graphical user interface (GUI) for non-programmers that also enable rapid and standardized exploratory data analysis, adhere to good practices in AMR data cleaning and interpretation, and remain open-source, and customizable for different contexts.
+Antimicrobial susceptibility test (AST) data from diagnostic laboratories are a valuable but underused resource for epidemiologists, microbiologists, and clinicians in human and veterinary medicine [@10.1093/ofid/ofw172.673]. This underuse limits their potential to inform empiric therapy and strengthen AMR surveillance [@doi:10.1128/jcm.00184-07]. Laboratories face barriers to adopting new tools, including costs, limited staff expertise, privacy concerns, and the need for stakeholder buy-in [@10.1093/jac/dkae279]. Open-source packages can reduce reporting time and improve accuracy [@10.1093/jacamr/dlac143], but they require programming skills that many people managing AST data lack. AMR Visualizer addresses this with an open-source, customizable graphical interface that supports rapid, standardized exploratory analysis and follows good practice in AMR data cleaning and interpretation.
+
+# State of the Field
+
+Existing AMR tools fall into three groups. The `AMR` R package [@JSSv104i03] is a peer-reviewed library for taxonomy resolution, EUCAST/CLSI interpretation, and resistance analysis. It accepts data in many formats, but only through user-written code. WHONET (<https://whonet.org>) is a free, widely adopted Windows desktop application that supports EUCAST and CLSI human and veterinary breakpoints and imports data from laboratory systems through its separate BacLink utility. Shiny applications such as RadaR (<https://github.com/ceefluz/radar>) target hospital stewardship data, and others visualize public datasets such as ATLAS.
+
 
 # Approach
 
@@ -39,11 +42,7 @@ The application accepts data in both wide format (one row per sample with multip
 
 ## *Harmonized Content*
 
-The application uses existing ontologies and controlled vocabulary lookup tables from the `AMR` R package [@JSSv104i03] to standardize microorganism and antimicrobial agent names through rule-based fuzzy matching and reference taxonomies. This process accommodates common inconsistencies such as misspellings, abbreviations, and synonymous drug names (e.g., generic vs. trade names). Additional attributes, such as antimicrobial class, and microorganism gram-stain appearance are similarly inferred using information from the same package.
-
-To support mapping functionality, users can provide region and subregion information, which the application processes using named entity recognition to match entries against locally stored geographic boundary files. Users may also choose to retain additional data columns for filtering or subgrouping purposes; however, these supplementary fields are not cleaned or standardized.
-
-These harmonization steps allow heterogeneous datasets to be transformed into a consistent format, enabling comparable and reproducible analyses across sources.
+Organism and antimicrobial names are standardized with the controlled vocabularies and taxonomies of the `AMR` R package [@JSSv104i03], applied through rule-based fuzzy matching. This handles misspellings, abbreviations, and synonyms such as generic versus trade drug names. Antimicrobial class and microorganism Gram-stain are inferred from the same package. For mapping, user-supplied region and subregion entries are matched against locally stored geographic boundary files. Additional columns can be retained for filtering or subgrouping but are not cleaned or standardized.
 
 ## *Analysis*
 
@@ -57,37 +56,33 @@ In adherence to data privacy considerations, all processing occurs locally withi
 
 # Software Design
 
-The AMR Visualizer was designed to balance flexibility, accessibility, and consistency for users working with heterogeneous antimicrobial susceptibility testing datasets.  We prioritized flexible data ingestion that accepts different file structures, imperfect naming conventions, and partially standardized metadata, then transforms the data into a common internal format for analysis. This increases implementation complexity, but reduces preprocessing demands on users and improves applicability across institutions.
-
-The application is built in R Shiny using separate components for data import, cleaning, transformation, and visualization. This structure improves maintainability and makes it easier to extend the software over time. Reactive programming allows users to filter and explore data interactively without rerunning the full pipeline. Existing packages such as `AMR` provide accepted methods for breakpoint interpretation, taxonomy cleaning, and antimicrobial lookups, and these capabilities are intentionally reused rather than recreated. However, those tools are primarily designed for code-based workflows. The purpose of developing new software was therefore not to replace existing methods, but to provide an accessible graphical interface that combines preprocessing, analysis, and reporting in a single workflow for users who do not work in programming environments.
+AMR Visualizer is built in R Shiny as separate modules for data import, cleaning, transformation, and visualization. This separation makes the software easier to maintain and extend, for example by adding new analysis tabs or guidelines without touching the ingestion pipeline. Cleaned data are held in a common internal format, and reactive programming lets users filter and explore results interactively without rerunning the cleaning steps. The main trade-off is that accepting heterogeneous input increases implementation complexity, which we accepted to reduce the preprocessing burden on users.
 
 # Research Impact Statement
 
-The AMR Visualizer was developed to address a common gap in antimicrobial resistance analytics. While several strong open-source tools exist, many professionals working with diagnostic laboratory data do not have the programming experience needed to use them efficiently. By lowering that barrier, the application makes antimicrobial susceptibility testing data more accessible for surveillance, empiric treatment guidance, and hypothesis generation. This software has been tested in academic and collaborative veterinary AMR settings to summarize historical susceptibility data, generate customized antibiograms, and examine temporal and geographic resistance patterns.
+Routinely collected AST data could guide empiric therapy and surveillance, but much of it goes unanalyzed because the people who hold it cannot use code-based tools. AMR Visualizer removes that barrier. It is a free, open-source application that takes minimally formatted laboratory exports through harmonization, breakpoint interpretation, and analysis in a single workflow, so a laboratory can go from raw export to antibiograms, geographic maps, temporal trends, and MDR patterns without writing code. Because every dataset passes through the same pipeline, results are comparable across institutions, and aggregated, anonymized summary tables can be shared when raw data cannot leave the laboratory.
 
-Its broader impact is supported by features that encourage adoption, transparency, and reproducibility. The application is open source, allowing users to inspect, adapt, and extend the code for their own needs. Public source code, sample datasets, and a demonstration video are available to support implementation. Outputs can be exported with applied filters and settings recorded, improving traceability and reproducibility of exploratory analyses. The software was also designed to remain useful as standards and user needs evolve, with scope for additional methods, guidelines, and reporting workflows over time. Together, these features position the AMR Visualizer as a practical and community-ready tool for expanding access to AMR analytics.
+The software has been tested in academic and collaborative veterinary AMR settings to summarize historical susceptibility data, generate customized antibiograms, and examine temporal and geographic resistance patterns. Sample data, a Docker image, and a demonstration video allow new users to reproduce these analyses.
 
 # Usage
 
-This tool is intended for professionals with access to clinical microbiology data and a working understanding of antimicrobial resistance. While no background in epidemiology, programming, or statistics is required, users should be aware of the limitations of diagnostic laboratory data and avoid overgeneralizing its applicability.  
-  
-Users can load data in three ways: by selecting from a set of publicly available files, uploading raw data in `.csv` or `.parquet` format, or uploading a previously cleaned file downloaded from the app. User-uploaded data are not stored after the app is closed, so users are encouraged to download their cleaned data following processing for later use.
+This tool is intended for professionals with access to clinical microbiology data and a working understanding of antimicrobial resistance. No background in epidemiology, programming, or statistics is required, but users should be aware of the limitations of diagnostic laboratory data and avoid overgeneralizing its applicability.
 
-When a new data file is uploaded, the app checks embedded metadata to determine whether it has already been cleaned. If the file has been previously processed, the cleaning step is skipped. Otherwise, the app guides the user through a series of data cleaning steps before analysis can proceed. User-uploaded data may include either pre-interpreted S/I/R (susceptible, intermediate, resistant) results or raw minimum inhibitory concentration (MIC) values. If MIC values are provided, users can select from a list of European Committee on Antimicrobial Susceptibility Testing (EUCAST) or Clinical and Laboratory Standards Institute (CLSI) breakpoint guidelines to interpret the data during processing. Once cleaned, files can be downloaded and reused to avoid reprocessing in the future. Multiple cleaned files can also be uploaded simultaneously and will be automatically merged—ideal for workflows involving routine updates (e.g., monthly data), as only the newest file requires cleaning before being appended to the existing dataset. For transparency, a log file is generated documenting any changes made to microorganism or antimicrobial columns. At this stage, users also have the option to manually adjust microorganism or antimicrobial names, if needed.
+Users can load bundled public sample data, upload raw .csv or .parquet files, or upload a previously cleaned file downloaded from the app. Uploaded data are not stored after the app is closed, so users are encouraged to download cleaned data for later use. On upload, the app checks embedded metadata to determine whether the file has already been cleaned; if so, cleaning is skipped. Otherwise, the app guides the user through column mapping and data cleaning before analysis. Data may be pre-interpreted susceptible/intermediate/resistant (S/I/R) results or raw minimum inhibitory concentration (MIC) values; for MICs, users choose a European Committee on Antimicrobial Susceptibility Testing (EUCAST) or Clinical and Laboratory Standards Institute (CLSI) breakpoint guideline for interpretation. Multiple cleaned files can be uploaded together and are merged automatically, so routine updates (e.g., monthly data) only require cleaning the newest file. A log documents all changes to organism and antimicrobial names, which users can also adjust manually.
 
 Following data processing, several analysis tabs become available to the user. Available tabs include:
 
--   **Overview** - Generate descriptive statistics and frequency plots to summarize the dataset.\
+-   **Overview** - Generate descriptive statistics and frequency plots to summarize the dataset.
 
--   **MIC Tables** - Interpretation tables summarizing how MIC values were interpreted according to the selected breakpoints.\
+-   **MIC Tables** - Interpretation tables summarizing how MIC values were interpreted according to the selected breakpoints.
 
--   **Antibiogram** - Rapidly construct customized antibiograms through a combination of data filters and controls.\
+-   **Antibiogram** - Rapidly construct customized antibiograms through a combination of data filters and controls.
 
--   **Maps** - Visualize regional antimicrobial susceptibility through choropleth maps.\
+-   **Maps** - Visualize regional antimicrobial susceptibility through choropleth maps.
 
--   **Trends** - Analyze temporal trends in antimicrobial susceptibility.\
+-   **Trends** - Analyze temporal trends in antimicrobial susceptibility.
 
--   **MDR** - Explore multidrug resistance (MDR) patterns using correlation matrices to identify relationships between resistance profiles.\
+-   **MDR** - Explore multidrug resistance (MDR) patterns using correlation matrices to identify relationships between resistance profiles.
 
 -   **Explore** - Generate customizable summary tables of susceptible, intermediate, and resistant isolates based on user-defined strata.
 
